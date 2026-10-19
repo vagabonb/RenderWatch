@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Media;
+using RenderWatch.Core.Hardware;
 using RenderWatch.Core.Models;
 using RenderWatch.Core.Tracking;
 
@@ -314,7 +315,7 @@ public class DashboardViewModel : ViewModelBase
             }
 
             // Sync categorized hardware groups
-            UpdateFanGroups(metrics.Fans);
+            UpdateFanGroups(metrics.Fans, metrics.IsLiquidCooling);
         }
         else
         {
@@ -375,15 +376,40 @@ public class DashboardViewModel : ViewModelBase
         return ("other", "ДОПОЛНИТЕЛЬНЫЕ КОНТУРЫ", 5);
     }
 
-    private void UpdateFanGroups(IList<FanMetric> rawFans)
+    private void UpdateFanGroups(IList<FanMetric> rawFans, bool isLiquidCooling = false)
     {
-        bool hasLiquidCoolingInSystem = rawFans.Any(f =>
-            (f.Role ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
-            (f.Role ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase) ||
-            (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase) ||
-            (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
-            (f.Id ?? "").Contains("aio", StringComparison.OrdinalIgnoreCase) ||
-            (f.Id ?? "").Contains("pump", StringComparison.OrdinalIgnoreCase));
+        bool isUserAirForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase);
+        bool isUserLiquidForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase);
+
+        bool hasLiquidCoolingInSystem;
+        if (isUserAirForced)
+        {
+            hasLiquidCoolingInSystem = false;
+        }
+        else if (isUserLiquidForced)
+        {
+            hasLiquidCoolingInSystem = true;
+        }
+        else
+        {
+            hasLiquidCoolingInSystem = isLiquidCooling;
+        }
+
+        // Sanitize any remaining liquid cooling tags if air cooled
+        if (!hasLiquidCoolingInSystem)
+        {
+            foreach (var f in rawFans)
+            {
+                if ((f.Role ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
+                    (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
+                    (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase))
+                {
+                    f.Role = "Корпус";
+                    f.DisplayName = $"Вентилятор ({f.Name})";
+                    f.Description = "Вентилятор, подключенный к разъему материнской платы";
+                }
+            }
+        }
 
         var rawGrouped = rawFans
             .Select(f => (Fan: f, Group: DetermineFanGroup(f, hasLiquidCoolingInSystem)))

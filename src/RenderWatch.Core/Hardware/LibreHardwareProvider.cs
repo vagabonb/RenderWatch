@@ -622,18 +622,16 @@ public class LibreHardwareProvider : IHardwareMonitor
             {
                 var (hw, sName, rpm, percent) = kvp.Value;
 
-                // Filter out empty disconnected motherboard pins with 0 RPM and 0% PWM unless designated CPU/GPU/Pump
+                // Filter out empty disconnected motherboard pins with 0 RPM and 0% PWM unless designated CPU/GPU
                 bool isDesignated = sName.Contains("CPU", StringComparison.OrdinalIgnoreCase) ||
-                                     sName.Contains("GPU", StringComparison.OrdinalIgnoreCase) ||
-                                     sName.Contains("Pump", StringComparison.OrdinalIgnoreCase) ||
-                                     sName.Contains("Помпа", StringComparison.OrdinalIgnoreCase);
+                                     sName.Contains("GPU", StringComparison.OrdinalIgnoreCase);
 
                 if (!isDesignated && (!rpm.HasValue || rpm.Value <= 0) && (!percent.HasValue || percent.Value <= 0))
                 {
                     continue;
                 }
 
-                var (role, desc, friendlyName) = ClassifyFan(hw.Name, sName, hw.HardwareType);
+                var (role, desc, friendlyName) = ClassifyFan(hw.Name, sName, hw.HardwareType, rpm);
 
                 metrics.Fans.Add(new FanMetric
                 {
@@ -813,7 +811,7 @@ public class LibreHardwareProvider : IHardwareMonitor
         }
     }
 
-    private static (string role, string description, string friendlyName) ClassifyFan(string hardwareName, string sensorName, HardwareType hwType)
+    private static (string role, string description, string friendlyName) ClassifyFan(string hardwareName, string sensorName, HardwareType hwType, double? rpm = null)
     {
         string s = sensorName.ToLowerInvariant().Trim();
         string h = hardwareName.ToLowerInvariant().Trim();
@@ -842,14 +840,28 @@ public class LibreHardwareProvider : IHardwareMonitor
             return ("GPU", desc, friendly);
         }
 
-        if (s.Contains("pump") || s.Contains("помпа") || s.Contains("aio") || s.Contains("water") || s.Contains("w_pump") || s.Contains("fan #6") || s == "fan 6")
+        // Pump / Water Cooling Header:
+        if (s.Contains("pump") || s.Contains("помпа") || s.Contains("aio") || s.Contains("water") || s.Contains("w_pump"))
         {
-            return ("Помпа", "Циркуляция охлаждающей жидкости замкнутого контура СЖО (AIO_PUMP)", "Помпа СЖО (AIO_PUMP)");
+            bool isAirForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase);
+            if (isAirForced)
+            {
+                return ("Корпус", "Вентилятор, подключенный к разъему PUMP_FAN материнской платы", $"Вентилятор ({sensorName})");
+            }
+
+            // Real AIO liquid cooling pumps spin at >= 1200 RPM.
+            // Slower fans plugged into PUMP_FAN headers are standard case fans.
+            if (rpm.HasValue && rpm.Value >= 1200)
+            {
+                return ("Помпа", "Циркуляция охлаждающей жидкости замкнутого контура СЖО (AIO_PUMP)", "Помпа СЖО (AIO_PUMP)");
+            }
+
+            return ("Корпус", "Вентилятор, подключенный к разъему PUMP_FAN материнской платы", $"Вентилятор ({sensorName})");
         }
 
         if (s.Contains("cpu_opt") || s.Contains("cpu opt") || s.Contains("fan #2") || s == "fan 2")
         {
-            return ("CPU", "Дополнительный вентилятор радиатора процессора или помпа (CPU_OPT)", "Кулер CPU_OPT / Вентилятор #2");
+            return ("CPU", "Дополнительный вентилятор радиатора процессора (CPU_OPT push-pull)", "Кулер CPU_OPT / Вентилятор #2");
         }
 
         if (s.Contains("cpu") || s.Contains("процессор") || s.Contains("fan #1") || s == "fan 1")

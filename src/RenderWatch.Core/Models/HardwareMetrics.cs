@@ -33,6 +33,7 @@ public class HardwareMetrics
     public string SensorSourceDetails { get; set; } = string.Empty;
 
     public List<FanMetric> Fans { get; set; } = new();
+    public bool IsLiquidCooling { get; set; }
     public int TotalFansCount => Fans.Count;
     public int ActiveFansCount => Fans.Count(f => f.IsActive);
     public string FansSummaryDisplay

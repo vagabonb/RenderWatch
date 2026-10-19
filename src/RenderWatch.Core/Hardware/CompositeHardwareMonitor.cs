@@ -387,6 +387,26 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 .ThenBy(f => f.Name)
                 .ToList();
 
+            // Determine whether system is liquid cooled (AIO) or air cooled (tower / box cooler)
+            var pumpFan = result.Fans.FirstOrDefault(f => f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) || f.DisplayName.Contains("Помпа", StringComparison.OrdinalIgnoreCase));
+            result.IsLiquidCooling = DetectIsLiquidCooling(result, pumpFan);
+
+            // If system is air cooled, sanitize any fan that was connected to a PUMP_FAN motherboard pin
+            if (!result.IsLiquidCooling)
+            {
+                foreach (var f in result.Fans)
+                {
+                    if (f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) ||
+                        (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
+                        (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase))
+                    {
+                        f.Role = "Корпус";
+                        f.DisplayName = $"Вентилятор ({f.Name})";
+                        f.Description = "Вентилятор, подключенный к разъему материнской платы (PUMP_FAN)";
+                    }
+                }
+            }
+
             if (result.Fans.Count > 0)
             {
                 sources.Add($"Fans({result.Fans.Count})");
@@ -824,13 +844,13 @@ public class CompositeHardwareMonitor : IHardwareMonitor
             if (string.Equals(UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase)) return false;
         }
 
-        // 2. Hardware pump sensor detected with active rotation (> 300 RPM)
-        if (pumpFan != null && pumpFan.Rpm.HasValue && pumpFan.Rpm.Value > 300)
+        // 2. Hardware pump sensor detected with active rotation (>= 1200 RPM)
+        if (pumpFan != null && pumpFan.Rpm.HasValue && pumpFan.Rpm.Value >= 1200)
         {
             return true;
         }
 
-        // 3. Default: Air cooling unless an actual liquid pump is physically detected
+        // 3. Default: Air cooling unless an actual liquid pump is physically detected and spinning
         return false;
     }
 
