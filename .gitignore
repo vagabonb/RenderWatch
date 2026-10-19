@@ -1,0 +1,25 @@
+﻿# Build outputs
+[Bb]in/
+[Oo]bj/
+publish*/
+publish-single/
+
+# Visual Studio / IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs & temp
+*.log
+*.tmp
+*.corrupt.bak
+
+# Binaries in root
+*.exe
+*.pdb
+*.zip
+!Assets/*.ico
+!Assets/*.png
+!Assets/PawnIO_setup.exe

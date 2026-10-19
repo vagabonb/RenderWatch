@@ -1,0 +1,534 @@
+<Window x:Class="RenderWatch.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:RenderWatch.App.Views"
+        xmlns:vm="clr-namespace:RenderWatch.App.ViewModels"
+        xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
+        Title="RENDER WATCH" Icon="/Assets/app.ico"
+        Height="780" Width="1180"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="{StaticResource BrushBg}">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="6"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- White Miniature Hardware Geometries -->
+        <Geometry x:Key="IconCpu">M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3</Geometry>
+        <Geometry x:Key="IconGpu">M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3</Geometry>
+        <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
+        <Geometry x:Key="IconVram">M 2,4 h 20 v 16 h -20 z M 7,8 L 12,16 L 17,8 M 5,1 h 3 v 3 h -3 z M 11,1 h 3 v 3 h -3 z M 17,1 h 3 v 3 h -3 z M 5,20 h 3 v 3 h -3 z M 11,20 h 3 v 3 h -3 z M 17,20 h 3 v 3 h -3 z</Geometry>
+
+        <!-- Window Caption Button Styles -->
+        <Style x:Key="CaptionButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#8C8C8C"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="#E0E0E0"/>
+                                <Setter Property="Background" Value="#242424"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1A1A1A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                    <Setter Property="Background" Value="#2A2A2A"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Prominent Compact Mode Button Style -->
+        <Style x:Key="CompactModeActionBtn" TargetType="Button">
+            <Setter Property="Background" Value="#1A1A1A"/>
+            <Setter Property="BorderBrush" Value="#383838"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#F0F0F0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontMain}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#A0A0A0"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#121212"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#4A4A4A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Compact Header Button Style with HitTestVisible & Hover States -->
+        <Style x:Key="CompactHeaderBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="7,3"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#252525"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#181818"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- ========================================== -->
+        <!-- 1. FULL NORMAL MODE INTERFACE               -->
+        <!-- ========================================== -->
+        <Grid x:Name="NormalModeGrid" Background="{StaticResource BrushBg}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="38"/>   <!-- 1. Custom Title Bar -->
+                <RowDefinition Height="46"/>   <!-- 2. Navigation Bar with Tabs & Compact Button -->
+                <RowDefinition Height="*"/>    <!-- 3. Dynamic Content View -->
+            </Grid.RowDefinitions>
+
+            <!-- 1. Title Bar: Clean Branding & Control Buttons -->
+            <Border Grid.Row="0" Background="#0E0E0E" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
+                <Grid Margin="16,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Clean Logo -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Image Source="/Assets/app.png" Width="16" Height="16" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <TextBlock Text="RENDER" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" FontFamily="{StaticResource FontDisplay}" Margin="0,0,5,0"/>
+                        <TextBlock Text="WATCH" Foreground="#A0A0A0" FontWeight="Bold" FontSize="14" FontFamily="{StaticResource FontDisplay}"/>
+                    </StackPanel>
+
+                    <!-- Center: Drag Area -->
+                    <Border Grid.Column="1" Background="Transparent"/>
+
+                    <!-- Right: Quick Title Bar Compact Toggle & Window Buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch" WindowChrome.IsHitTestVisibleInChrome="True">
+                        <!-- Minimize to System Tray Button -->
+                        <Button Click="OnMinimizeToTrayClicked"
+                                Style="{StaticResource CompactModeActionBtn}"
+                                Margin="0,5,5,5"
+                                Padding="7,2"
+                                ToolTip="Свернуть в системный трей">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="M 1,9 L 1,13 L 13,13 L 13,9 M 7,2 L 7,9 M 4,6 L 7,9 L 10,6"
+                                      Stroke="#FFFFFF" StrokeThickness="1.3" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="В трей" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Micro Floating Window Button -->
+                        <Button Click="OnMicroModeClicked"
+                                Style="{StaticResource CompactModeActionBtn}"
+                                Margin="0,5,5,5"
+                                Padding="7,2"
+                                ToolTip="Свернуть в отдельное микро-окошко">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="M 2,3 h 11 v 9 h -11 z M 2,5 h 11"
+                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Микро" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Taskbar Native Indicator Button -->
+                        <Button Click="OnMinimizeToPanelClicked"
+                                Style="{StaticResource CompactModeActionBtn}"
+                                Margin="0,5,5,5"
+                                Padding="7,2"
+                                ToolTip="Свернуть на панель задач (прозрачная кнопка слева от трея)">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="M 1,11 h 13 v 2 h -13 z M 8,5 h 5 v 4 h -5 z"
+                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="На панель" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Quick Compact Button in Title Bar -->
+                        <Button Click="OnCompactModeClicked"
+                                Style="{StaticResource CompactModeActionBtn}"
+                                Margin="0,5,10,5"
+                                Padding="8,2"
+                                ToolTip="Переключить в компактный режим">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⊞" Margin="0,0,4,0" Foreground="#FFFFFF"/>
+                                <TextBlock Text="Компактный" FontSize="11"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Minimize -->
+                        <Button Click="OnMinimizeClicked" Style="{StaticResource CaptionButtonStyle}" ToolTip="Свернуть">
+                            <Path Data="M 0,0 L 10,0"
+                                  Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                  StrokeThickness="1"
+                                  SnapsToDevicePixels="True"/>
+                        </Button>
+
+                        <!-- Maximize / Restore -->
+                        <Button Click="OnMaximizeClicked" Style="{StaticResource CaptionButtonStyle}" ToolTip="Развернуть">
+                            <Rectangle Width="10" Height="10"
+                                       Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                       StrokeThickness="1"
+                                       RadiusX="1" RadiusY="1"
+                                       SnapsToDevicePixels="True"/>
+                        </Button>
+
+                        <!-- Close -->
+                        <Button Click="OnCloseClicked" Style="{StaticResource CaptionCloseButtonStyle}" ToolTip="Закрыть">
+                            <Path Data="M 0,0 L 10,10 M 10,0 L 0,10"
+                                  Stroke="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                  StrokeThickness="1"
+                                  StrokeStartLineCap="Square"
+                                  StrokeEndLineCap="Square"
+                                  SnapsToDevicePixels="True"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 2. Navigation Tabs Bar (Clean - 3 Tabs) -->
+            <Border Grid.Row="1" Background="#121212" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <!-- Tab 1: Панель управления -->
+                    <Button Content="Панель управления"
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="0">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDashboardActive}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                        <Setter Property="Background" Value="#1A1A1A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Tab 2: Графики нагрузки -->
+                    <Button Content="Графики нагрузки"
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="1">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChartsActive}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                        <Setter Property="Background" Value="#1A1A1A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Tab 3: Конфигурация -->
+                    <Button Content="Конфигурация"
+                            Command="{Binding SelectTabCommand}"
+                            CommandParameter="2">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NavTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConfigActive}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                        <Setter Property="Background" Value="#1A1A1A"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Dynamic Content View -->
+            <Grid Grid.Row="2">
+                <ContentControl Content="{Binding CurrentView}">
+                    <ContentControl.Resources>
+                        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                            <views:DashboardView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:ChartsViewModel}">
+                            <views:ChartsView/>
+                        </DataTemplate>
+                        <DataTemplate DataType="{x:Type vm:ConfigurationViewModel}">
+                            <views:ConfigurationView/>
+                        </DataTemplate>
+                    </ContentControl.Resources>
+                </ContentControl>
+
+                <!-- Toast Notification Overlay -->
+                <Border Background="#161616" BorderBrush="#FFFFFF" BorderThickness="2,0,0,0" CornerRadius="6"
+                        Padding="16,12" Margin="0,0,24,24"
+                        Width="360"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Visibility="{Binding IsToastVisible, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding ToastTitle}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding ToastMessage}" Foreground="{StaticResource BrushTextSecondary}" FontSize="12" TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="✕" Command="{Binding DismissToastCommand}" Style="{StaticResource MinimalButton}" Padding="6,2" VerticalAlignment="Top"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ========================================== -->
+        <!-- 2. ULTRA-COMPACT FLOATING WIDGET MODE       -->
+        <!-- ========================================== -->
+        <Grid x:Name="CompactModeGrid"
+              Background="#0A0A0A"
+              Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>  <!-- Compact Title Bar with drag & controls -->
+                <RowDefinition Height="*"/>   <!-- 4 Compact Hardware Indicator Cards -->
+            </Grid.RowDefinitions>
+
+            <!-- Compact Title Bar -->
+            <Border Grid.Row="0" Background="#121212" BorderBrush="#202020" BorderThickness="0,0,0,1">
+                <Grid Margin="8,0,4,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Logo & Title (Draggable) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
+                                Background="Transparent" MouseLeftButtonDown="OnCompactHeaderMouseDown" Cursor="SizeAll">
+                        <Image Source="/Assets/app.png" Width="13" Height="13" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <TextBlock Text="RENDER WATCH" Foreground="#A0A0A0" FontWeight="Bold" FontSize="10" FontFamily="{StaticResource FontDisplay}"/>
+                    </StackPanel>
+
+                    <!-- Center: Drag Area -->
+                    <Border Grid.Column="1" Background="Transparent" MouseLeftButtonDown="OnCompactHeaderMouseDown" Cursor="SizeAll"/>
+
+                    <!-- Right: Compact Controls (WindowChrome HitTest Visible) -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                        <!-- Pin / Always On Top Toggle -->
+                        <Button Click="OnToggleTopmostClicked"
+                                Style="{StaticResource CompactHeaderBtn}"
+                                ToolTip="Закрепить поверх всех окон">
+                            <TextBlock Text="📌" FontSize="11"
+                                       Foreground="{Binding IsCompactTopmost, Converter={StaticResource HexToBrush}, ConverterParameter='#FFFFFF:#707070'}"/>
+                        </Button>
+
+                        <!-- Expand Back to Normal Window Button -->
+                        <Button Click="OnCompactModeClicked"
+                                Style="{StaticResource CompactHeaderBtn}"
+                                ToolTip="Развернуть в полную панель (Esc)">
+                            <TextBlock Text="⤢" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Compact Content: 4 Enlarged Hardware Miniature Cards -->
+            <Border Grid.Row="1" Padding="8,6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 1. CPU Card -->
+                    <Border Grid.Column="0" Background="#141414" BorderBrush="#242424" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource IconCpu}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="CPU" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#FFFFFF" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
+
+                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.CpuPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
+
+                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding Dashboard.CpuClockDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
+                                <TextBlock Text="{Binding Dashboard.CpuPowerDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Spacer -->
+                    <Rectangle Grid.Column="1" Fill="Transparent"/>
+
+                    <!-- 2. GPU Card -->
+                    <Border Grid.Column="2" Background="#141414" BorderBrush="#242424" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource IconGpu}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="GPU" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#FFFFFF" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
+
+                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.GpuPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
+
+                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding Dashboard.GpuClockDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
+                                <TextBlock Text="{Binding Dashboard.GpuPowerDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Spacer -->
+                    <Rectangle Grid.Column="3" Fill="Transparent"/>
+
+                    <!-- 3. RAM Card -->
+                    <Border Grid.Column="4" Background="#141414" BorderBrush="#242424" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource IconRam}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="RAM" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.RamPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
+
+                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.RamPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
+
+                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding Dashboard.RamDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Spacer -->
+                    <Rectangle Grid.Column="5" Fill="Transparent"/>
+
+                    <!-- 4. VRAM Card -->
+                    <Border Grid.Column="6" Background="#141414" BorderBrush="#242424" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Path Data="{StaticResource IconVram}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="VRAM" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="28" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
+
+                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.VramPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
+
+                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
+                                <TextBlock Text="{Binding Dashboard.VramDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

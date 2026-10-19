@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RenderWatch.App/RenderWatch.App.csproj" />
+    <Project Path="src/RenderWatch.Core/RenderWatch.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RenderWatch.Tests/RenderWatch.Tests.csproj" />
+  </Folder>
+</Solution>

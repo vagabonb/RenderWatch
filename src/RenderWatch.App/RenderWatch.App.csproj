@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\RenderWatch.Core\RenderWatch.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>RenderWatch</AssemblyName>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+
+    <!-- Single File Self-Contained Native Bundle (includes WPF PresentationNative & wpfgfx) -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <!-- Assembly Metadata for Windows Defender & SmartScreen Trust -->
+    <Company>RENDER WATCH</Company>
+    <Product>RENDER WATCH - Hardware &amp; Render Monitor</Product>
+    <Description>Профессиональный монитор аппаратных ресурсов ПК, рендеринга и конфигурации системы.</Description>
+    <Copyright>Copyright © 2026 RENDER WATCH</Copyright>
+    <Version>1.2.0.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
+
+    <!-- Optimized Memory: Workstation GC prevents 32 heaps on 32-thread CPUs, releases VM back to OS -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\app.png" />
+    <EmbeddedResource Include="Assets\PawnIO_setup.exe" />
+    <None Include="Assets\PawnIO_setup.exe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
