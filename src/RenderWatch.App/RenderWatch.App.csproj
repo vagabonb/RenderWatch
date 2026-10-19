@@ -27,9 +27,9 @@
     <Product>RENDER WATCH - Hardware &amp; Render Monitor</Product>
     <Description>Профессиональный монитор аппаратных ресурсов ПК, рендеринга и конфигурации системы.</Description>
     <Copyright>Copyright © 2026 RENDER WATCH</Copyright>
-    <Version>1.2.0.0</Version>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
+    <Version>1.2.1.0</Version>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
 
     <!-- Optimized Memory: Workstation GC prevents 32 heaps on 32-thread CPUs, releases VM back to OS -->
     <ServerGarbageCollection>false</ServerGarbageCollection>

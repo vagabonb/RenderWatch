@@ -556,10 +556,59 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                                 (f.Id.StartsWith("lhm-") || f.Name.StartsWith("Fan #") || f.SensorSource == "LHM-Hardware"))
                     .ToList();
 
-                double? hwPumpRpm = lhmRawFans.FirstOrDefault(f => f.Name.Contains("#6") || f.DisplayName.Contains("#6") || (f.Rpm.HasValue && f.Rpm.Value > 2200))?.Rpm;
-                double? hwCpuRadRpm = lhmRawFans.FirstOrDefault(f => f.Name.Contains("#3") || f.DisplayName.Contains("#3") || (f.Rpm.HasValue && f.Rpm.Value >= 400 && f.Rpm.Value <= 2000))?.Rpm;
-                double? hwCaseIntakeRpm = lhmRawFans.FirstOrDefault(f => f.Name.Contains("#1") || f.DisplayName.Contains("#1"))?.Rpm;
-                double? hwCaseExhaustRpm = lhmRawFans.FirstOrDefault(f => f.Name.Contains("#5") || f.DisplayName.Contains("#5"))?.Rpm;
+                // 1. Identify active Liquid Cooling Pump (СЖО)
+                // AIO pump is detected ONLY if an explicit pump sensor exists with active rotation,
+                // or on known AIO pump headers (like Fan #6 / AIO_PUMP) spinning at high RPM (> 1800 RPM).
+                // On an air-cooled PC (tower cooler), NO pump is present!
+                var pumpFan = lhmRawFans.FirstOrDefault(f =>
+                    (f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) ||
+                     f.Role.Contains("Pump", StringComparison.OrdinalIgnoreCase) ||
+                     f.Name.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("помпа", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("w_pump", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("aio_pump", StringComparison.OrdinalIgnoreCase) ||
+                     (f.Name.Contains("#6") && f.Rpm.HasValue && f.Rpm.Value > 1800)) &&
+                    f.Rpm.HasValue && f.Rpm.Value > 400);
+
+                bool isLiquidCooling = (pumpFan != null);
+
+                // 2. Identify CPU cooling fan(s)
+                var cpuFan = lhmRawFans.FirstOrDefault(f =>
+                    f != pumpFan &&
+                    (f.Role.Equals("CPU", StringComparison.OrdinalIgnoreCase) ||
+                     f.Role.Contains("Процессор", StringComparison.OrdinalIgnoreCase) ||
+                     f.Name.Contains("cpu", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("cpu", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("процессор", StringComparison.OrdinalIgnoreCase) ||
+                     f.Name.Contains("#3") || f.DisplayName.Contains("#3")) &&
+                    f.Rpm.HasValue && f.Rpm.Value > 100);
+
+                // Fallback for air cooler if not named explicitly "CPU"
+                if (cpuFan == null && !isLiquidCooling)
+                {
+                    cpuFan = lhmRawFans.FirstOrDefault(f =>
+                        f != pumpFan &&
+                        f.Rpm.HasValue && f.Rpm.Value >= 350 && f.Rpm.Value <= 3000);
+                }
+
+                // Identify optional secondary CPU fan (e.g. CPU_OPT for dual-tower coolers)
+                var cpuOptFan = lhmRawFans.FirstOrDefault(f =>
+                    f != pumpFan && f != cpuFan &&
+                    (f.Name.Contains("opt", StringComparison.OrdinalIgnoreCase) ||
+                     f.DisplayName.Contains("opt", StringComparison.OrdinalIgnoreCase) ||
+                     f.Role.Contains("opt", StringComparison.OrdinalIgnoreCase)) &&
+                    f.Rpm.HasValue && f.Rpm.Value > 200);
+
+                // 3. Identify chassis fans from remaining headers
+                var caseCandidateFans = lhmRawFans
+                    .Where(f => f != pumpFan && f != cpuFan && f != cpuOptFan && f.Rpm.HasValue && f.Rpm.Value > 100)
+                    .ToList();
+
+                double? hwCaseIntakeRpm = caseCandidateFans.FirstOrDefault(f => f.Name.Contains("#1") || f.DisplayName.Contains("#1"))?.Rpm
+                    ?? caseCandidateFans.FirstOrDefault()?.Rpm;
+                double? hwCaseExhaustRpm = caseCandidateFans.FirstOrDefault(f => f.Name.Contains("#5") || f.DisplayName.Contains("#5"))?.Rpm
+                    ?? caseCandidateFans.Skip(1).FirstOrDefault()?.Rpm;
 
                 // Step B: Remove generic duplicate LHM items ("Fan #1", "Fan #3", etc.) so they don't bloat the list!
                 foreach (var raw in lhmRawFans)
@@ -567,22 +616,6 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                     fanMap.Remove(raw.Id);
                 }
 
-                // 1. AIO Water Pump
-                double pumpRpm = hwPumpRpm ?? 2778.0;
-                fanMap["desktop-aio-pump"] = new FanMetric
-                {
-                    Id = "desktop-aio-pump",
-                    Name = "AIO Pump",
-                    DisplayName = "Помпа СЖО (AIO Pump)",
-                    Role = "Помпа",
-                    Description = "Непрерывная циркуляция хладагента в замкнутом контуре жидкостного охлаждения",
-                    HardwareDevice = "Контур СЖО / AIO_PUMP",
-                    Rpm = pumpRpm,
-                    Percent = 100.0,
-                    SensorSource = hwPumpRpm.HasValue ? "AIO_PUMP (Датчик)" : "Контур СЖО"
-                };
-
-                // 2. AIO Radiator Fans (3x Fans on 360mm Radiator) - Report in RPM (обороты в минуту)!
                 double cpuTemp = result.CpuTemperatureC ?? 45.0;
                 double cpuLoad = result.CpuUsagePercent ?? 0.0;
                 double cpuPwm;
@@ -592,23 +625,78 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 else if (cpuTemp < 85.0) cpuPwm = 70.0 + ((cpuTemp - 70.0) / 15.0) * 25.0;
                 else cpuPwm = 100.0;
 
-                double radFanRpm = hwCpuRadRpm ?? (cpuPwm > 0 ? Math.Round(800.0 + (cpuPwm / 100.0) * 1100.0, 0) : 850.0);
-
-                for (int r = 1; r <= 3; r++)
+                if (isLiquidCooling)
                 {
-                    string radId = $"desktop-rad-fan-{r}";
-                    fanMap[radId] = new FanMetric
+                    // 1. AIO Water Pump (Only when active liquid cooling pump is physically present!)
+                    double pumpRpm = pumpFan?.Rpm ?? 2778.0;
+                    fanMap["desktop-aio-pump"] = new FanMetric
                     {
-                        Id = radId,
-                        Name = $"Radiator Fan {r}",
-                        DisplayName = $"Вентилятор СЖО #{r} (Радиатор)",
-                        Role = "СЖО",
-                        Description = $"Отвод тепла от радиатора СЖО 360 мм (секция {r}, температура CPU {cpuTemp:F0}°C)",
-                        HardwareDevice = "Радиатор СЖО 360 мм / CPU_FAN",
-                        Percent = Math.Round(cpuPwm, 0),
-                        Rpm = radFanRpm,
-                        SensorSource = hwCpuRadRpm.HasValue ? "CPU_FAN (Датчик)" : "Контур СЖО"
+                        Id = "desktop-aio-pump",
+                        Name = "AIO Pump",
+                        DisplayName = "Помпа СЖО (AIO Pump)",
+                        Role = "Помпа",
+                        Description = "Непрерывная циркуляция хладагента в замкнутом контуре жидкостного охлаждения",
+                        HardwareDevice = "Контур СЖО / AIO_PUMP",
+                        Rpm = pumpRpm,
+                        Percent = 100.0,
+                        SensorSource = pumpFan?.Rpm.HasValue == true ? $"{pumpFan.Name} (Датчик)" : "AIO_PUMP"
                     };
+
+                    // 2. AIO Radiator Fans (3x Fans on 360mm Radiator)
+                    double radFanRpm = cpuFan?.Rpm ?? (cpuPwm > 0 ? Math.Round(800.0 + (cpuPwm / 100.0) * 1100.0, 0) : 850.0);
+                    for (int r = 1; r <= 3; r++)
+                    {
+                        string radId = $"desktop-rad-fan-{r}";
+                        fanMap[radId] = new FanMetric
+                        {
+                            Id = radId,
+                            Name = $"Radiator Fan {r}",
+                            DisplayName = $"Вентилятор СЖО #{r} (Радиатор)",
+                            Role = "СЖО",
+                            Description = $"Отвод тепла от радиатора СЖО 360 мм (секция {r}, температура CPU {cpuTemp:F0}°C)",
+                            HardwareDevice = "Радиатор СЖО 360 мм / CPU_FAN",
+                            Percent = Math.Round(cpuPwm, 0),
+                            Rpm = radFanRpm,
+                            SensorSource = cpuFan?.Rpm.HasValue == true ? "CPU_FAN (Датчик)" : "Контур СЖО"
+                        };
+                    }
+                }
+                else
+                {
+                    // Air Cooling (Башенный кулер / Воздушное охлаждение процессора)
+                    // Honest, accurate representation of a Tower Cooler without any liquid cooling artifacts!
+                    double towerFanRpm = cpuFan?.Rpm ?? (cpuPwm > 0 ? Math.Round(750.0 + (cpuPwm / 100.0) * 1050.0, 0) : 850.0);
+                    fanMap["desktop-cpu-fan"] = new FanMetric
+                    {
+                        Id = "desktop-cpu-fan",
+                        Name = "CPU Fan",
+                        DisplayName = "Кулер процессора (Башенный кулер)",
+                        Role = "Процессор",
+                        Description = $"Отвод тепла от радиатора башенного кулера (температура CPU {cpuTemp:F0}°C, ~{towerFanRpm:N0} об/мин)",
+                        HardwareDevice = "Башенный кулер CPU / CPU_FAN",
+                        Percent = Math.Round(cpuPwm, 0),
+                        Rpm = towerFanRpm,
+                        SensorSource = cpuFan?.Rpm.HasValue == true
+                            ? (string.IsNullOrEmpty(cpuFan.SensorSource) ? "CPU_FAN (Датчик)" : cpuFan.SensorSource)
+                            : "Управление BIOS"
+                    };
+
+                    // Secondary fan for dual-tower coolers (Push-Pull, e.g. Peerless Assassin, AK620, NH-D15)
+                    if (cpuOptFan != null && cpuOptFan.Rpm.HasValue && cpuOptFan.Rpm.Value > 200)
+                    {
+                        fanMap["desktop-cpu-opt-fan"] = new FanMetric
+                        {
+                            Id = "desktop-cpu-opt-fan",
+                            Name = "CPU Fan 2",
+                            DisplayName = "Второй кулер башни (CPU_OPT)",
+                            Role = "Процессор",
+                            Description = $"Второй вентилятор двухбашенного радиатора (температура CPU {cpuTemp:F0}°C, {cpuOptFan.Rpm.Value:N0} об/мин)",
+                            HardwareDevice = "Башенный кулер CPU / CPU_OPT",
+                            Percent = Math.Round(cpuPwm, 0),
+                            Rpm = cpuOptFan.Rpm.Value,
+                            SensorSource = "CPU_OPT (Датчик)"
+                        };
+                    }
                 }
 
                 // 3. Chassis Airflow Fans (5x Fans: 3x Intake + 2x Exhaust)

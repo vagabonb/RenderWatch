@@ -327,7 +327,7 @@ public class DashboardViewModel : ViewModelBase
         }
     }
 
-    private static (string GroupKey, string GroupName, int Order) DetermineFanGroup(FanMetric m)
+    private static (string GroupKey, string GroupName, int Order) DetermineFanGroup(FanMetric m, bool hasLiquidCoolingInSystem = false)
     {
         string id = (m.Id ?? string.Empty).ToLowerInvariant();
         string role = (m.Role ?? string.Empty).ToLowerInvariant();
@@ -344,7 +344,14 @@ public class DashboardViewModel : ViewModelBase
             role.Contains("помпа") || role.Contains("сжо") || role.Contains("радиатор") || role.Contains("cpu") || role.Contains("процессор") ||
             name.Contains("помпа") || name.Contains("сжо") || name.Contains("радиатор") || name.Contains("cpu"))
         {
-            return ("aio", "ПРОЦЕССОР И СЖО", 1);
+            if (hasLiquidCoolingInSystem)
+            {
+                return ("aio", "ПРОЦЕССОР И СЖО", 1);
+            }
+            else
+            {
+                return ("cpu", "ОХЛАЖДЕНИЕ ПРОЦЕССОРА", 1);
+            }
         }
 
         // 3. GPU / Graphics
@@ -370,8 +377,16 @@ public class DashboardViewModel : ViewModelBase
 
     private void UpdateFanGroups(IList<FanMetric> rawFans)
     {
+        bool hasLiquidCoolingInSystem = rawFans.Any(f =>
+            (f.Role ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
+            (f.Role ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase) ||
+            (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase) ||
+            (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
+            (f.Id ?? "").Contains("aio", StringComparison.OrdinalIgnoreCase) ||
+            (f.Id ?? "").Contains("pump", StringComparison.OrdinalIgnoreCase));
+
         var rawGrouped = rawFans
-            .Select(f => (Fan: f, Group: DetermineFanGroup(f)))
+            .Select(f => (Fan: f, Group: DetermineFanGroup(f, hasLiquidCoolingInSystem)))
             .GroupBy(x => x.Group.GroupKey)
             .ToList();
 
