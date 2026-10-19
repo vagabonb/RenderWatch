@@ -20,20 +20,34 @@ public class LibreHardwareProvider : IHardwareMonitor
     {
         try
         {
+            try
+            {
+                using var scCfg = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "sc.exe",
+                    Arguments = "config PawnIO start= auto",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                scCfg?.WaitForExit(1000);
+            }
+            catch { }
+
+            try
+            {
+                using var sc = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "sc.exe",
+                    Arguments = "start PawnIO",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                });
+                sc?.WaitForExit(2000);
+            }
+            catch { }
+
             if (LibreHardwareMonitor.PawnIo.PawnIo.IsInstalled)
             {
-                try
-                {
-                    using var sc = Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "sc.exe",
-                        Arguments = "start PawnIO",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    });
-                    sc?.WaitForExit(2000);
-                }
-                catch { }
                 return;
             }
 
@@ -635,32 +649,6 @@ public class LibreHardwareProvider : IHardwareMonitor
                 });
             }
 
-            // Expand 2-channel reporting into 3 physical fans for triple-fan graphics cards
-            var lhmGpuFans = metrics.Fans.Where(f => f.Role == "GPU").ToList();
-            if (lhmGpuFans.Count == 2 && FanMetric.IsTripleFanGpu(discreteGpuName))
-            {
-                var f1 = lhmGpuFans[0];
-                var f2 = lhmGpuFans[1];
-                f1.DisplayName = "Вентилятор GPU #1 (Левый)";
-                f1.Description = "Отвод тепла от графического процессора (GPU Core)";
-
-                f2.DisplayName = "Вентилятор GPU #2 (Центральный)";
-                f2.Description = "Обдув радиатора и силовых фаз питания (VRM)";
-
-                var f3 = new FanMetric
-                {
-                    Id = f1.Id.Replace("1", "3"),
-                    Name = "GPU Fan 3",
-                    DisplayName = "Вентилятор GPU #3 (Правый)",
-                    Role = "GPU",
-                    Description = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through",
-                    HardwareDevice = f1.HardwareDevice,
-                    Rpm = f1.Rpm,
-                    Percent = f1.Percent
-                };
-                metrics.Fans.Add(f3);
-            }
-
             // Direct physical hardware sensor selection (matching OCCT on both AMD Ryzen and Intel):
             // 1. AMD CCD1 (Tdie) - OCCT's selected sensor for Ryzen 9 9950X
             // 2. Intel CPU Package - OCCT's standard sensor for Intel CPUs
@@ -854,25 +842,25 @@ public class LibreHardwareProvider : IHardwareMonitor
             return ("GPU", desc, friendly);
         }
 
-        if (s.Contains("pump") || s.Contains("помпа") || s.Contains("aio") || s.Contains("water") || s.Contains("w_pump"))
+        if (s.Contains("pump") || s.Contains("помпа") || s.Contains("aio") || s.Contains("water") || s.Contains("w_pump") || s.Contains("fan #6") || s == "fan 6")
         {
-            return ("Помпа", "Циркуляция охлаждающей жидкости контура СВО", "Помпа СВО (Water Pump)");
+            return ("Помпа", "Циркуляция охлаждающей жидкости замкнутого контура СЖО (AIO_PUMP)", "Помпа СЖО (AIO_PUMP)");
         }
 
-        if (s.Contains("cpu_opt") || s.Contains("cpu opt"))
+        if (s.Contains("cpu_opt") || s.Contains("cpu opt") || s.Contains("fan #2") || s == "fan 2")
         {
-            return ("CPU", "Дополнительный вентилятор радиатора процессора или помпа", "Кулер CPU_OPT (Дополнительный)");
+            return ("CPU", "Дополнительный вентилятор радиатора процессора или помпа (CPU_OPT)", "Кулер CPU_OPT / Вентилятор #2");
         }
 
-        if (s.Contains("cpu") || s.Contains("процессор"))
+        if (s.Contains("cpu") || s.Contains("процессор") || s.Contains("fan #1") || s == "fan 1")
         {
-            return ("CPU", "Основное охлаждение радиатора центрального процессора", "Кулер процессора (CPU Fan)");
+            return ("CPU", "Основное охлаждение радиатора центрального процессора (CPU_FAN)", "Кулер процессора (CPU_FAN)");
         }
 
-        if (s.Contains("system") || s.Contains("sys_fan") || s.Contains("sysfan") || s.Contains("chassis") || s.Contains("cha_fan") || s.Contains("корпус"))
+        if (s.Contains("system") || s.Contains("sys_fan") || s.Contains("sysfan") || s.Contains("chassis") || s.Contains("cha_fan") || s.Contains("корпус") || s.StartsWith("fan #") || s.StartsWith("fan "))
         {
             string num = ExtractNumber(sensorName) ?? "1";
-            return ("Корпус", "Циркуляция и воздухообмен внутри системного блока", $"Вентилятор корпуса #{num}");
+            return ("Корпус", "Циркуляция и воздухообмен внутри системного блока (SYS_FAN)", $"Вентилятор корпуса #{num} (SYS_FAN)");
         }
 
         if (s.Contains("mos") || s.Contains("vrm") || s.Contains("pch") || s.Contains("chipset"))

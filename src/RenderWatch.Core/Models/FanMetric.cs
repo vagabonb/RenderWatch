@@ -21,18 +21,17 @@ public class FanMetric
     {
         get
         {
-            if (Rpm.HasValue && Rpm.Value > 0)
+            if (Rpm.HasValue)
             {
-                return $"{Math.Round(Rpm.Value):N0} об/мин";
-            }
-            if (Percent.HasValue && Percent.Value > 0)
-            {
-                double estRpm = Math.Round(800.0 + (Percent.Value / 100.0) * 1400.0, 0);
-                return $"{estRpm:N0} об/мин";
-            }
-            if (Rpm.HasValue || Percent.HasValue)
-            {
+                if (Rpm.Value > 0)
+                {
+                    return $"{Math.Round(Rpm.Value):N0} об/мин";
+                }
                 return "0 об/мин";
+            }
+            if (Percent.HasValue)
+            {
+                return $"{Math.Round(Percent.Value):F0}%";
             }
             return "0 об/мин";
         }

@@ -32,6 +32,7 @@ public class AppSettings
     public bool IsTaskbarStripLightMode { get; set; } = false;
 
     public string ActiveProfileId { get; set; } = "auto";
+    public string CoolingType { get; set; } = "auto";
     public List<RenderProfile> Profiles { get; set; } = RenderProfile.GetDefaultProfiles();
     public List<LaunchProfile> LaunchProfiles { get; set; } = new();
 }

@@ -316,5 +316,16 @@ public class PdhFrequencyTester
             computer.Close();
         }
     }
+    [Fact]
+    public async Task TestPrintAllFans()
+    {
+        var comp = new CompositeHardwareMonitor();
+        await comp.InitializeAsync();
+        var m = await comp.GetMetricsAsync();
+        _output.WriteLine($"=== TOTAL FANS: {m.Fans.Count} ===");
+        foreach (var f in m.Fans)
+        {
+            _output.WriteLine($"FAN: [{f.Id}] Role={f.Role} | Name='{f.DisplayName}' | RPM={f.Rpm} | %={f.Percent} | Device={f.HardwareDevice} | Source={f.SensorSource}");
+        }
+    }
 }
-

@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+using System.Windows.Input;
+using RenderWatch.Core.Hardware;
 using RenderWatch.Core.Models;
 using RenderWatch.Core.Settings;
 
@@ -100,6 +101,38 @@ public class SettingsViewModel : ViewModelBase
         set { _settings.StartWithWindows = value; OnPropertyChanged(); }
     }
 
+    public string CoolingType
+    {
+        get => _settings.CoolingType;
+        set
+        {
+            _settings.CoolingType = value;
+            CompositeHardwareMonitor.UserCoolingPreference = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsCoolingAuto));
+            OnPropertyChanged(nameof(IsCoolingLiquid));
+            OnPropertyChanged(nameof(IsCoolingAir));
+        }
+    }
+
+    public bool IsCoolingAuto
+    {
+        get => string.Equals(_settings.CoolingType, "auto", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(_settings.CoolingType);
+        set { if (value) CoolingType = "auto"; }
+    }
+
+    public bool IsCoolingLiquid
+    {
+        get => string.Equals(_settings.CoolingType, "liquid", StringComparison.OrdinalIgnoreCase);
+        set { if (value) CoolingType = "liquid"; }
+    }
+
+    public bool IsCoolingAir
+    {
+        get => string.Equals(_settings.CoolingType, "air", StringComparison.OrdinalIgnoreCase);
+        set { if (value) CoolingType = "air"; }
+    }
+
     public string StatusMessage { get => _statusMessage; set => SetField(ref _statusMessage, value); }
 
     public ICommand SaveCommand { get; }
@@ -113,11 +146,13 @@ public class SettingsViewModel : ViewModelBase
     public void Load(AppSettings settings)
     {
         _settings = settings;
+        CompositeHardwareMonitor.UserCoolingPreference = settings.CoolingType;
         OnPropertyChanged(string.Empty);
     }
 
     public async Task SaveAsync()
     {
+        CompositeHardwareMonitor.UserCoolingPreference = _settings.CoolingType;
         await _settingsManager.SaveSettingsAsync(_settings);
         StatusMessage = "Настройки успешно сохранены.";
     }

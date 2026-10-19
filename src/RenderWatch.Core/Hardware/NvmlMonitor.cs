@@ -98,6 +98,17 @@ public class NvmlMonitor : IHardwareMonitor
 
         [DllImport(NvmlDll, EntryPoint = "nvmlDeviceGetFanSpeed_v2")]
         public static extern NvmlReturn DeviceGetFanSpeed_v2(IntPtr device, uint fan, out uint speed);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NvmlFanSpeedInfo
+        {
+            public uint Version;
+            public uint Fan;
+            public uint Speed;
+        }
+
+        [DllImport(NvmlDll, EntryPoint = "nvmlDeviceGetFanSpeedRPM")]
+        public static extern NvmlReturn DeviceGetFanSpeedRPM(IntPtr device, ref NvmlFanSpeedInfo fanSpeed);
     }
 
     private bool _isInitialized;
@@ -245,61 +256,43 @@ public class NvmlMonitor : IHardwareMonitor
                 }
             }
 
-            // 6. Fan Speed & Fans Count
+            // 6. Fan Speed & Fans Count (Real physical hardware tachometers)
             if (Imports.DeviceGetNumFans(_deviceHandle, out uint numFans) == NvmlReturn.Success && numFans > 0)
             {
                 uint overallSpeed = 0;
                 Imports.DeviceGetFanSpeed(_deviceHandle, out overallSpeed);
 
-                bool isTripleFan = (numFans == 2 && FanMetric.IsTripleFanGpu(_deviceName));
-                uint targetFanCount = isTripleFan ? 3 : numFans;
-
-                uint indSpeed0 = overallSpeed;
-                uint indSpeed1 = overallSpeed;
-                if (Imports.DeviceGetFanSpeed_v2(_deviceHandle, 0, out uint s0) == NvmlReturn.Success) indSpeed0 = s0;
-                if (Imports.DeviceGetFanSpeed_v2(_deviceHandle, 1, out uint s1) == NvmlReturn.Success) indSpeed1 = s1;
-
-                for (uint f = 0; f < targetFanCount; f++)
+                for (uint f = 0; f < numFans; f++)
                 {
-                    uint fanSpeed;
-                    string fanName;
-                    string fanDisplayName;
-                    string fanDesc;
+                    uint fanSpeed = overallSpeed;
+                    if (Imports.DeviceGetFanSpeed_v2(_deviceHandle, f, out uint indSpeed) == NvmlReturn.Success)
+                    {
+                        fanSpeed = indSpeed;
+                    }
 
-                    if (isTripleFan)
+                    var info = new Imports.NvmlFanSpeedInfo
                     {
-                        if (f == 0)
-                        {
-                            fanSpeed = indSpeed0;
-                            fanName = "GPU Fan 1";
-                            fanDisplayName = "Вентилятор GPU #1 (Левый)";
-                            fanDesc = "Отвод тепла от графического процессора (GPU Core)";
-                        }
-                        else if (f == 1)
-                        {
-                            fanSpeed = indSpeed1;
-                            fanName = "GPU Fan 2";
-                            fanDisplayName = "Вентилятор GPU #2 (Центральный)";
-                            fanDesc = "Обдув радиатора и силовых фаз питания (VRM)";
-                        }
-                        else
-                        {
-                            fanSpeed = indSpeed0; // Hardware-linked in parallel to channel 0
-                            fanName = "GPU Fan 3";
-                            fanDisplayName = "Вентилятор GPU #3 (Правый)";
-                            fanDesc = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through";
-                        }
-                    }
-                    else
+                        Version = (uint)(Marshal.SizeOf<Imports.NvmlFanSpeedInfo>() | (1 << 24)),
+                        Fan = f,
+                        Speed = 0
+                    };
+
+                    double? fanRpm = null;
+                    if (Imports.DeviceGetFanSpeedRPM(_deviceHandle, ref info) == NvmlReturn.Success)
                     {
-                        fanSpeed = (f == 0) ? indSpeed0 : indSpeed1;
-                        string fanNum = (f + 1).ToString();
-                        fanName = $"GPU Fan {fanNum}";
-                        fanDisplayName = $"Вентилятор GPU #{fanNum}";
-                        fanDesc = numFans > 1
-                            ? (f == 0 ? "Отвод тепла от графического процессора (GPU Core)" : "Обдув подсистемы питания и видеопамяти (VRAM)")
-                            : "Охлаждение графического процессора и видеопамяти";
+                        fanRpm = info.Speed;
                     }
+                    else if (fanSpeed == 0 && metrics.GpuTemperatureC.GetValueOrDefault(0) < 55)
+                    {
+                        fanRpm = 0.0;
+                    }
+
+                    string fanNum = (f + 1).ToString();
+                    string fanName = $"GPU Fan {fanNum}";
+                    string fanDisplayName = numFans == 1 ? "Вентилятор видеокарты" : $"Вентилятор GPU #{fanNum}";
+                    string fanDesc = f == 0
+                        ? "Отвод тепла от графического процессора (GPU Core)"
+                        : (f == 1 ? "Обдув видеопамяти и подсистемы питания (VRM)" : "Сквозной обдув радиатора видеокарты");
 
                     metrics.Fans.Add(new FanMetric
                     {
@@ -310,7 +303,8 @@ public class NvmlMonitor : IHardwareMonitor
                         Description = fanDesc,
                         HardwareDevice = _deviceName,
                         Percent = fanSpeed,
-                        Rpm = (fanSpeed == 0 && metrics.GpuTemperatureC.GetValueOrDefault(0) < 55) ? 0.0 : null
+                        Rpm = fanRpm,
+                        SensorSource = (fanRpm.HasValue && fanRpm.Value > 0) ? "NVML (Датчик)" : (fanSpeed == 0 ? "Zero-RPM" : "NVML")
                     });
                 }
             }

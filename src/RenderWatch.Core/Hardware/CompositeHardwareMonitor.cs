@@ -19,6 +19,10 @@ public class CompositeHardwareMonitor : IHardwareMonitor
     private int _acpiProbeFailCount = 0;
     private DateTime _lastAcpiProbeTime = DateTime.MinValue;
     private string? _cachedGpuName;
+    private string? _cachedMotherboardProduct;
+    private string? _cachedCpuName;
+
+    public static string UserCoolingPreference { get; set; } = "auto";
 
     public CompositeHardwareMonitor()
     {
@@ -41,6 +45,36 @@ public class CompositeHardwareMonitor : IHardwareMonitor
         {
             _isMobileSystem = false;
         }
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("root\\cimv2", "SELECT Product, Manufacturer FROM Win32_BaseBoard");
+            using var results = searcher.Get();
+            foreach (ManagementObject obj in results)
+            {
+                using (obj)
+                {
+                    _cachedMotherboardProduct = (obj["Product"]?.ToString() ?? "") + " " + (obj["Manufacturer"]?.ToString() ?? "");
+                    break;
+                }
+            }
+        }
+        catch { }
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher("root\\cimv2", "SELECT Name FROM Win32_Processor");
+            using var results = searcher.Get();
+            foreach (ManagementObject obj in results)
+            {
+                using (obj)
+                {
+                    _cachedCpuName = obj["Name"]?.ToString();
+                    break;
+                }
+            }
+        }
+        catch { }
 
         try
         {
@@ -221,12 +255,12 @@ public class CompositeHardwareMonitor : IHardwareMonitor
         }
         catch { }
 
-        // 4b. Fan metrics collection & intelligent merging
+        // 4b. Fan metrics collection & honest hardware merging (Pure Physical Sensors - Zero Simulation)
         try
         {
             var fanMap = new Dictionary<string, FanMetric>(StringComparer.OrdinalIgnoreCase);
 
-            // Motherboard / System / CPU / Pump fans from LibreHardwareMonitor
+            // 1. Motherboard / System / CPU / Pump fans from LibreHardwareMonitor SuperIO
             if (lhmMetrics != null && lhmMetrics.Fans.Count > 0)
             {
                 foreach (var fan in lhmMetrics.Fans)
@@ -235,7 +269,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 }
             }
 
-            // GPU fans from NVML (rock-solid for NVIDIA GeForce / RTX GPUs)
+            // 2. GPU fans from NVML (rock-solid physical tachometers for NVIDIA GPUs)
             if (nvmlMetrics != null && nvmlMetrics.Fans.Count > 0)
             {
                 for (int f = 0; f < nvmlMetrics.Fans.Count; f++)
@@ -247,10 +281,14 @@ public class CompositeHardwareMonitor : IHardwareMonitor
 
                     if (matchingLhm != null)
                     {
-                        if (!matchingLhm.Percent.HasValue && nvFan.Percent.HasValue)
+                        if (nvFan.Percent.HasValue)
                             matchingLhm.Percent = nvFan.Percent;
-                        if (!matchingLhm.Rpm.HasValue && nvFan.Rpm.HasValue)
+
+                        if (nvFan.Rpm.HasValue)
+                        {
                             matchingLhm.Rpm = nvFan.Rpm;
+                            matchingLhm.SensorSource = nvFan.SensorSource ?? "NVML (Датчик)";
+                        }
                     }
                     else
                     {
@@ -259,214 +297,40 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 }
             }
 
-            // Triple-Fan Expansion Safety Net:
-            // Modern triple-fan desktop graphics cards (RTX 5070, 5080, 5090, 4070, 4080, 4090, etc.)
-            // wire fans into 1 or 2 PWM hardware channels. If fewer than 3 fans are reported, expand to all 3 physical fans:
-            var currentGpuFans = fanMap.Values
-                .Where(x => x.Role.Equals("GPU", StringComparison.OrdinalIgnoreCase) || x.Role.Contains("Видеокарта", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(x => x.Name)
-                .ToList();
-
-            if (string.IsNullOrEmpty(result.GpuName))
-            {
-                result.GpuName = GetGpuNameFallback();
-            }
-
-            if (FanMetric.IsTripleFanGpu(result.GpuName) || (!_isMobileSystem && !string.IsNullOrEmpty(result.GpuName) && !result.GpuName.Contains("Laptop", StringComparison.OrdinalIgnoreCase)) || (!_isMobileSystem && string.IsNullOrEmpty(result.GpuName)))
-            {
-                if (currentGpuFans.Count == 2)
-                {
-                    var g1 = currentGpuFans[0];
-                    var g2 = currentGpuFans[1];
-
-                    g1.DisplayName = "Вентилятор GPU #1 (Левый)";
-                    g1.Description = "Отвод тепла от графического процессора (GPU Core)";
-                    g1.Role = "GPU";
-
-                    g2.DisplayName = "Вентилятор GPU #2 (Центральный)";
-                    g2.Description = "Обдув радиатора и силовых фаз питания (VRM)";
-                    g2.Role = "GPU";
-
-                    var g3 = new FanMetric
-                    {
-                        Id = "gpu-fan-3-flowthrough",
-                        Name = "GPU Fan 3",
-                        DisplayName = "Вентилятор GPU #3 (Правый)",
-                        Role = "GPU",
-                        Description = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through",
-                        HardwareDevice = g1.HardwareDevice,
-                        Rpm = g1.Rpm,
-                        Percent = g1.Percent
-                    };
-                    fanMap[g3.Id] = g3;
-                }
-                else if (currentGpuFans.Count == 1)
-                {
-                    var g1 = currentGpuFans[0];
-                    g1.DisplayName = "Вентилятор GPU #1 (Левый)";
-                    g1.Description = "Отвод тепла от графического процессора (GPU Core)";
-                    g1.Role = "GPU";
-
-                    var g2 = new FanMetric
-                    {
-                        Id = "gpu-fan-2-vrm",
-                        Name = "GPU Fan 2",
-                        DisplayName = "Вентилятор GPU #2 (Центральный)",
-                        Role = "GPU",
-                        Description = "Обдув радиатора и силовых фаз питания (VRM)",
-                        HardwareDevice = g1.HardwareDevice,
-                        Rpm = g1.Rpm,
-                        Percent = g1.Percent
-                    };
-                    fanMap[g2.Id] = g2;
-
-                    var g3 = new FanMetric
-                    {
-                        Id = "gpu-fan-3-flowthrough",
-                        Name = "GPU Fan 3",
-                        DisplayName = "Вентилятор GPU #3 (Правый)",
-                        Role = "GPU",
-                        Description = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through",
-                        HardwareDevice = g1.HardwareDevice,
-                        Rpm = g1.Rpm,
-                        Percent = g1.Percent
-                    };
-                    fanMap[g3.Id] = g3;
-                }
-                else if (currentGpuFans.Count == 0 && !_isMobileSystem)
-                {
-                    string gpuDev = !string.IsNullOrEmpty(result.GpuName) ? result.GpuName : "Видеокарта (GPU)";
-                    double gpuPwm = ((result.GpuUsagePercent.HasValue && result.GpuUsagePercent.Value > 20) || (result.GpuTemperatureC.HasValue && result.GpuTemperatureC.Value > 50)) ? 40.0 : 0.0;
-                    double gpuRpm = gpuPwm > 0 ? Math.Round(1000.0 + (gpuPwm / 100.0) * 1500.0, 0) : 0.0;
-
-                    var g1 = new FanMetric
-                    {
-                        Id = "gpu-fan-1-core",
-                        Name = "GPU Fan 1",
-                        DisplayName = "Вентилятор GPU #1 (Левый)",
-                        Role = "GPU",
-                        Description = "Отвод тепла от графического процессора (GPU Core)",
-                        HardwareDevice = gpuDev,
-                        Rpm = gpuRpm,
-                        Percent = gpuPwm,
-                        SensorSource = gpuRpm > 0 ? "NVML" : "Zero-RPM"
-                    };
-                    var g2 = new FanMetric
-                    {
-                        Id = "gpu-fan-2-vrm",
-                        Name = "GPU Fan 2",
-                        DisplayName = "Вентилятор GPU #2 (Центральный)",
-                        Role = "GPU",
-                        Description = "Обдув радиатора и силовых фаз питания (VRM)",
-                        HardwareDevice = gpuDev,
-                        Rpm = gpuRpm,
-                        Percent = gpuPwm,
-                        SensorSource = gpuRpm > 0 ? "NVML" : "Zero-RPM"
-                    };
-                    var g3 = new FanMetric
-                    {
-                        Id = "gpu-fan-3-flowthrough",
-                        Name = "GPU Fan 3",
-                        DisplayName = "Вентилятор GPU #3 (Правый)",
-                        Role = "GPU",
-                        Description = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through",
-                        HardwareDevice = gpuDev,
-                        Rpm = gpuRpm,
-                        Percent = gpuPwm,
-                        SensorSource = gpuRpm > 0 ? "NVML" : "Zero-RPM"
-                    };
-                    fanMap[g1.Id] = g1;
-                    fanMap[g2.Id] = g2;
-                    fanMap[g3.Id] = g3;
-                }
-            }
-
-            // 4c. Mobile Laptop Fans & Precision Probing
+            // 3. Mobile Laptop Fans (honest OEM hardware registers if on laptop)
             if (_isMobileSystem)
             {
-                // Honest OEM Hardware Probing (ASUS, Acer, Alienware/Dell, Lenovo, HP, EC)
                 var oemReading = OemLaptopFanMonitor.ProbeLaptopFans();
 
-                double cpuTemp = result.CpuTemperatureC ?? 50.0;
-                double cpuLoad = result.CpuUsagePercent ?? 0.0;
-                double cpuPwm;
-                if (cpuTemp < 45.0 && cpuLoad < 10.0) cpuPwm = 0.0;
-                else if (cpuTemp < 55.0) cpuPwm = 30.0 + ((cpuTemp - 45.0) / 10.0) * 15.0;
-                else if (cpuTemp < 70.0) cpuPwm = 45.0 + ((cpuTemp - 55.0) / 15.0) * 20.0;
-                else if (cpuTemp < 85.0) cpuPwm = 65.0 + ((cpuTemp - 70.0) / 15.0) * 25.0;
-                else cpuPwm = 100.0;
-
-                double gpuTemp = result.GpuTemperatureC ?? 40.0;
-                double gpuLoad = result.GpuUsagePercent ?? 0.0;
-                double gpuPwm;
-                if (gpuTemp < 48.0 && gpuLoad < 15.0) gpuPwm = 0.0; // Modern gaming laptops stop GPU fan completely below 48°C
-                else if (gpuTemp < 60.0) gpuPwm = 35.0 + ((gpuTemp - 48.0) / 12.0) * 15.0;
-                else if (gpuTemp < 75.0) gpuPwm = 50.0 + ((gpuTemp - 60.0) / 15.0) * 25.0;
-                else gpuPwm = 75.0 + Math.Min(25.0, ((gpuTemp - 75.0) / 10.0) * 25.0);
-
-                double peakTemp = Math.Max(cpuTemp, gpuTemp);
-                double auxPwm;
-                if (peakTemp < 48.0) auxPwm = 0.0;
-                else if (peakTemp < 60.0) auxPwm = 25.0 + ((peakTemp - 48.0) / 12.0) * 15.0;
-                else auxPwm = 40.0 + Math.Min(60.0, ((peakTemp - 60.0) / 15.0) * 35.0);
-
-                // 1. CPU Fan (Laptop) - Honest Physical Sensor Precedence
-                double laptopCpuRpm;
                 if (oemReading.CpuRpm.HasValue && oemReading.CpuRpm.Value >= 0 && oemReading.CpuRpm.Value < 12000)
                 {
-                    laptopCpuRpm = oemReading.CpuRpm.Value;
-                }
-                else
-                {
-                    laptopCpuRpm = cpuPwm > 0 ? Math.Round(1800.0 + (cpuPwm / 100.0) * 3200.0, 0) : 0.0;
-                }
-
-                var existingCpu = fanMap.Values.FirstOrDefault(f => f.Role.Equals("CPU", StringComparison.OrdinalIgnoreCase) || f.Role.Contains("Процессор", StringComparison.OrdinalIgnoreCase));
-                if (existingCpu == null)
-                {
-                    fanMap["laptop-cpu-fan"] = new FanMetric
+                    var existingCpu = fanMap.Values.FirstOrDefault(f => f.Role.Equals("CPU", StringComparison.OrdinalIgnoreCase) || f.Role.Contains("Процессор", StringComparison.OrdinalIgnoreCase));
+                    if (existingCpu == null)
                     {
-                        Id = "laptop-cpu-fan",
-                        Name = "CPU Fan",
-                        DisplayName = "Кулер процессора (CPU Fan)",
-                        Role = "Процессор (CPU)",
-                        Description = laptopCpuRpm > 0
-                            ? $"Охлаждение центрального процессора (температура {cpuTemp:F0}°C, {laptopCpuRpm:N0} об/мин)"
-                            : $"Пассивный режим Zero-RPM (температура {cpuTemp:F0}°C)",
-                        HardwareDevice = "Система охлаждения ноутбука",
-                        Rpm = laptopCpuRpm,
-                        Percent = (laptopCpuRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopCpuRpm / 6000.0) * 100.0, 0))) : 0.0,
-                        SensorSource = oemReading.CpuRpm.HasValue ? oemReading.Source : "Датчик CPU"
-                    };
-                }
-                else
-                {
-                    existingCpu.Rpm = laptopCpuRpm;
-                    existingCpu.Percent = (laptopCpuRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopCpuRpm / 6000.0) * 100.0, 0))) : 0.0;
-                    existingCpu.Description = laptopCpuRpm > 0
-                        ? $"Охлаждение центрального процессора (температура {cpuTemp:F0}°C, {laptopCpuRpm:N0} об/мин)"
-                        : $"Пассивный режим Zero-RPM (температура {cpuTemp:F0}°C)";
-                    if (oemReading.CpuRpm.HasValue) existingCpu.SensorSource = oemReading.Source;
-                }
-
-                // 2. GPU Fan (Laptop) - Honest Physical Sensor Precedence (never force Zero-RPM if sensor reports rotation!)
-                if (!string.IsNullOrEmpty(result.GpuName) || result.VramTotalGb.HasValue || result.GpuTemperatureC.HasValue)
-                {
-                    string gpuDisplayName = !string.IsNullOrEmpty(result.GpuName) ? result.GpuName : "Видеокарта";
-                    double laptopGpuRpm;
-                    if (oemReading.GpuRpm.HasValue && oemReading.GpuRpm.Value >= 0 && oemReading.GpuRpm.Value < 12000)
-                    {
-                        laptopGpuRpm = oemReading.GpuRpm.Value;
-                    }
-                    else if (gpuTemp < 48.0 && gpuLoad < 15.0)
-                    {
-                        laptopGpuRpm = 0.0;
+                        fanMap["laptop-cpu-fan"] = new FanMetric
+                        {
+                            Id = "laptop-cpu-fan",
+                            Name = "CPU Fan",
+                            DisplayName = "Кулер процессора (CPU Fan)",
+                            Role = "Процессор (CPU)",
+                            Description = oemReading.CpuRpm.Value > 0
+                                ? $"Охлаждение центрального процессора ({oemReading.CpuRpm.Value:N0} об/мин)"
+                                : "Пассивный режим Zero-RPM",
+                            HardwareDevice = "Система охлаждения ноутбука",
+                            Rpm = oemReading.CpuRpm.Value,
+                            Percent = (oemReading.CpuRpm.Value > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((oemReading.CpuRpm.Value / 6000.0) * 100.0, 0))) : 0.0,
+                            SensorSource = oemReading.Source
+                        };
                     }
                     else
                     {
-                        laptopGpuRpm = Math.Round(1750.0 + (gpuPwm / 100.0) * 3250.0, 0);
+                        existingCpu.Rpm = oemReading.CpuRpm.Value;
+                        existingCpu.SensorSource = oemReading.Source;
                     }
+                }
 
+                if (oemReading.GpuRpm.HasValue && oemReading.GpuRpm.Value >= 0 && oemReading.GpuRpm.Value < 12000)
+                {
                     var existingGpu = fanMap.Values.FirstOrDefault(f => f.Role.Equals("GPU", StringComparison.OrdinalIgnoreCase) || f.Role.Contains("Видеокарта", StringComparison.OrdinalIgnoreCase));
                     if (existingGpu == null)
                     {
@@ -476,40 +340,24 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                             Name = "GPU Fan",
                             DisplayName = "Кулер видеокарты (GPU Fan)",
                             Role = "Видеокарта (GPU)",
-                            Description = laptopGpuRpm > 0
-                                ? $"Охлаждение {gpuDisplayName} (температура {gpuTemp:F0}°C, {laptopGpuRpm:N0} об/мин)"
-                                : $"Пассивный режим Zero-RPM (температура {gpuTemp:F0}°C)",
-                            HardwareDevice = gpuDisplayName,
-                            Rpm = laptopGpuRpm,
-                            Percent = (laptopGpuRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopGpuRpm / 6000.0) * 100.0, 0))) : 0.0,
-                            SensorSource = (oemReading.GpuRpm.HasValue && laptopGpuRpm > 0) ? oemReading.Source : "Датчик GPU"
+                            Description = oemReading.GpuRpm.Value > 0
+                                ? $"Охлаждение видеокарты ({oemReading.GpuRpm.Value:N0} об/мин)"
+                                : "Пассивный режим Zero-RPM",
+                            HardwareDevice = result.GpuName ?? "Видеокарта",
+                            Rpm = oemReading.GpuRpm.Value,
+                            Percent = (oemReading.GpuRpm.Value > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((oemReading.GpuRpm.Value / 6000.0) * 100.0, 0))) : 0.0,
+                            SensorSource = oemReading.Source
                         };
                     }
                     else
                     {
-                        existingGpu.Rpm = laptopGpuRpm;
-                        existingGpu.Percent = (laptopGpuRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopGpuRpm / 6000.0) * 100.0, 0))) : 0.0;
-                        existingGpu.Description = laptopGpuRpm > 0
-                            ? $"Охлаждение {gpuDisplayName} (температура {gpuTemp:F0}°C, {laptopGpuRpm:N0} об/мин)"
-                            : $"Пассивный режим Zero-RPM (температура {gpuTemp:F0}°C)";
-                        if (oemReading.GpuRpm.HasValue) existingGpu.SensorSource = oemReading.Source;
+                        existingGpu.Rpm = oemReading.GpuRpm.Value;
+                        existingGpu.SensorSource = oemReading.Source;
                     }
                 }
 
-                // 3. Mid / Aux Cooling Fan (Tri-Fan system on ASUS ROG Strix G16/G18, Scar, Zephyrus, etc.)
-                bool isTriFan = (oemReading.AuxRpm.HasValue && oemReading.AuxRpm.Value >= 0) || IsKnownTriFanLaptop();
-                if (isTriFan)
+                if (oemReading.AuxRpm.HasValue && oemReading.AuxRpm.Value >= 0 && oemReading.AuxRpm.Value < 12000)
                 {
-                    double laptopAuxRpm;
-                    if (oemReading.AuxRpm.HasValue && oemReading.AuxRpm.Value >= 0 && oemReading.AuxRpm.Value < 12000)
-                    {
-                        laptopAuxRpm = oemReading.AuxRpm.Value;
-                    }
-                    else
-                    {
-                        laptopAuxRpm = auxPwm > 0 ? Math.Round(1600.0 + (auxPwm / 100.0) * 3000.0, 0) : 0.0;
-                    }
-
                     if (!fanMap.ContainsKey("laptop-aux-fan"))
                     {
                         fanMap["laptop-aux-fan"] = new FanMetric
@@ -518,252 +366,27 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                             Name = "Mid Fan",
                             DisplayName = "Дополнительный кулер (Mid Fan)",
                             Role = "Корпус",
-                            Description = laptopAuxRpm > 0
-                                ? $"Охлаждение подсистемы питания VRM и корпуса ({laptopAuxRpm:N0} об/мин)"
-                                : $"Пассивный режим (пиковая температура {peakTemp:F0}°C)",
+                            Description = $"Охлаждение VRM и корпуса ({oemReading.AuxRpm.Value:N0} об/мин)",
                             HardwareDevice = "Система охлаждения ноутбука (Tri-Fan)",
-                            Rpm = laptopAuxRpm,
-                            Percent = (laptopAuxRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopAuxRpm / 6000.0) * 100.0, 0))) : 0.0,
-                            SensorSource = oemReading.AuxRpm.HasValue ? oemReading.Source : "Датчик Mid Fan"
+                            Rpm = oemReading.AuxRpm.Value,
+                            Percent = (oemReading.AuxRpm.Value > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((oemReading.AuxRpm.Value / 6000.0) * 100.0, 0))) : 0.0,
+                            SensorSource = oemReading.Source
                         };
                     }
                     else
                     {
                         var existingAux = fanMap["laptop-aux-fan"];
-                        existingAux.Rpm = laptopAuxRpm;
-                        existingAux.Percent = (laptopAuxRpm > 0) ? Math.Max(15.0, Math.Min(100.0, Math.Round((laptopAuxRpm / 6000.0) * 100.0, 0))) : 0.0;
-                        existingAux.Description = laptopAuxRpm > 0
-                            ? $"Охлаждение подсистемы питания VRM и корпуса ({laptopAuxRpm:N0} об/мин)"
-                            : $"Пассивный режим (пиковая температура {peakTemp:F0}°C)";
-                        if (oemReading.AuxRpm.HasValue) existingAux.SensorSource = oemReading.Source;
+                        existingAux.Rpm = oemReading.AuxRpm.Value;
+                        existingAux.SensorSource = oemReading.Source;
                     }
                 }
-            }
-            else
-            {
-                // Desktop PC Fan Detection: Exactly 13 physical fans (12 without power supply):
-                // 1. GPU Array: 3x Fans (GeForce RTX 5070 Tri-Fan: Left, Center, Right)
-                // 2. AIO Liquid Cooler: 1x High-speed Pump (AIO_PUMP)
-                // 3. AIO Radiator: 3x Fans (360mm Radiator, CPU_FAN tachometer RPM)
-                // 4. Chassis Airflow: 5x Fans (3x Front Intake + 2x Rear/Top Exhaust)
-                // 5. Power Supply: 1x PSU Fan (with smart hybrid Zero-RPM)
-                // Total = 13 fans!
-
-                // Step A: Extract live motherboard tachometer readings from LHM
-                var lhmRawFans = fanMap.Values
-                    .Where(f => !f.Role.Equals("GPU", StringComparison.OrdinalIgnoreCase) &&
-                                !f.Role.Contains("Видеокарта", StringComparison.OrdinalIgnoreCase) &&
-                                (f.Id.StartsWith("lhm-") || f.Name.StartsWith("Fan #") || f.SensorSource == "LHM-Hardware"))
-                    .ToList();
-
-                // 1. Identify active Liquid Cooling Pump (СЖО)
-                // AIO pump is detected ONLY if an explicit pump sensor exists with active rotation,
-                // or on known AIO pump headers (like Fan #6 / AIO_PUMP) spinning at high RPM (> 1800 RPM).
-                // On an air-cooled PC (tower cooler), NO pump is present!
-                var pumpFan = lhmRawFans.FirstOrDefault(f =>
-                    (f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) ||
-                     f.Role.Contains("Pump", StringComparison.OrdinalIgnoreCase) ||
-                     f.Name.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("помпа", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("w_pump", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("aio_pump", StringComparison.OrdinalIgnoreCase) ||
-                     (f.Name.Contains("#6") && f.Rpm.HasValue && f.Rpm.Value > 1800)) &&
-                    f.Rpm.HasValue && f.Rpm.Value > 400);
-
-                bool isLiquidCooling = (pumpFan != null);
-
-                // 2. Identify CPU cooling fan(s)
-                var cpuFan = lhmRawFans.FirstOrDefault(f =>
-                    f != pumpFan &&
-                    (f.Role.Equals("CPU", StringComparison.OrdinalIgnoreCase) ||
-                     f.Role.Contains("Процессор", StringComparison.OrdinalIgnoreCase) ||
-                     f.Name.Contains("cpu", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("cpu", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("процессор", StringComparison.OrdinalIgnoreCase) ||
-                     f.Name.Contains("#3") || f.DisplayName.Contains("#3")) &&
-                    f.Rpm.HasValue && f.Rpm.Value > 100);
-
-                // Fallback for air cooler if not named explicitly "CPU"
-                if (cpuFan == null && !isLiquidCooling)
-                {
-                    cpuFan = lhmRawFans.FirstOrDefault(f =>
-                        f != pumpFan &&
-                        f.Rpm.HasValue && f.Rpm.Value >= 350 && f.Rpm.Value <= 3000);
-                }
-
-                // Identify optional secondary CPU fan (e.g. CPU_OPT for dual-tower coolers)
-                var cpuOptFan = lhmRawFans.FirstOrDefault(f =>
-                    f != pumpFan && f != cpuFan &&
-                    (f.Name.Contains("opt", StringComparison.OrdinalIgnoreCase) ||
-                     f.DisplayName.Contains("opt", StringComparison.OrdinalIgnoreCase) ||
-                     f.Role.Contains("opt", StringComparison.OrdinalIgnoreCase)) &&
-                    f.Rpm.HasValue && f.Rpm.Value > 200);
-
-                // 3. Identify chassis fans from remaining headers
-                var caseCandidateFans = lhmRawFans
-                    .Where(f => f != pumpFan && f != cpuFan && f != cpuOptFan && f.Rpm.HasValue && f.Rpm.Value > 100)
-                    .ToList();
-
-                double? hwCaseIntakeRpm = caseCandidateFans.FirstOrDefault(f => f.Name.Contains("#1") || f.DisplayName.Contains("#1"))?.Rpm
-                    ?? caseCandidateFans.FirstOrDefault()?.Rpm;
-                double? hwCaseExhaustRpm = caseCandidateFans.FirstOrDefault(f => f.Name.Contains("#5") || f.DisplayName.Contains("#5"))?.Rpm
-                    ?? caseCandidateFans.Skip(1).FirstOrDefault()?.Rpm;
-
-                // Step B: Remove generic duplicate LHM items ("Fan #1", "Fan #3", etc.) so they don't bloat the list!
-                foreach (var raw in lhmRawFans)
-                {
-                    fanMap.Remove(raw.Id);
-                }
-
-                double cpuTemp = result.CpuTemperatureC ?? 45.0;
-                double cpuLoad = result.CpuUsagePercent ?? 0.0;
-                double cpuPwm;
-                if (cpuTemp < 45.0 && cpuLoad < 10.0) cpuPwm = 25.0;
-                else if (cpuTemp < 55.0) cpuPwm = 35.0 + ((cpuTemp - 45.0) / 10.0) * 15.0;
-                else if (cpuTemp < 70.0) cpuPwm = 50.0 + ((cpuTemp - 55.0) / 15.0) * 20.0;
-                else if (cpuTemp < 85.0) cpuPwm = 70.0 + ((cpuTemp - 70.0) / 15.0) * 25.0;
-                else cpuPwm = 100.0;
-
-                if (isLiquidCooling)
-                {
-                    // 1. AIO Water Pump (Only when active liquid cooling pump is physically present!)
-                    double pumpRpm = pumpFan?.Rpm ?? 2778.0;
-                    fanMap["desktop-aio-pump"] = new FanMetric
-                    {
-                        Id = "desktop-aio-pump",
-                        Name = "AIO Pump",
-                        DisplayName = "Помпа СЖО (AIO Pump)",
-                        Role = "Помпа",
-                        Description = "Непрерывная циркуляция хладагента в замкнутом контуре жидкостного охлаждения",
-                        HardwareDevice = "Контур СЖО / AIO_PUMP",
-                        Rpm = pumpRpm,
-                        Percent = 100.0,
-                        SensorSource = pumpFan?.Rpm.HasValue == true ? $"{pumpFan.Name} (Датчик)" : "AIO_PUMP"
-                    };
-
-                    // 2. AIO Radiator Fans (3x Fans on 360mm Radiator)
-                    double radFanRpm = cpuFan?.Rpm ?? (cpuPwm > 0 ? Math.Round(800.0 + (cpuPwm / 100.0) * 1100.0, 0) : 850.0);
-                    for (int r = 1; r <= 3; r++)
-                    {
-                        string radId = $"desktop-rad-fan-{r}";
-                        fanMap[radId] = new FanMetric
-                        {
-                            Id = radId,
-                            Name = $"Radiator Fan {r}",
-                            DisplayName = $"Вентилятор СЖО #{r} (Радиатор)",
-                            Role = "СЖО",
-                            Description = $"Отвод тепла от радиатора СЖО 360 мм (секция {r}, температура CPU {cpuTemp:F0}°C)",
-                            HardwareDevice = "Радиатор СЖО 360 мм / CPU_FAN",
-                            Percent = Math.Round(cpuPwm, 0),
-                            Rpm = radFanRpm,
-                            SensorSource = cpuFan?.Rpm.HasValue == true ? "CPU_FAN (Датчик)" : "Контур СЖО"
-                        };
-                    }
-                }
-                else
-                {
-                    // Air Cooling (Башенный кулер / Воздушное охлаждение процессора)
-                    // Honest, accurate representation of a Tower Cooler without any liquid cooling artifacts!
-                    double towerFanRpm = cpuFan?.Rpm ?? (cpuPwm > 0 ? Math.Round(750.0 + (cpuPwm / 100.0) * 1050.0, 0) : 850.0);
-                    fanMap["desktop-cpu-fan"] = new FanMetric
-                    {
-                        Id = "desktop-cpu-fan",
-                        Name = "CPU Fan",
-                        DisplayName = "Кулер процессора (Башенный кулер)",
-                        Role = "Процессор",
-                        Description = $"Отвод тепла от радиатора башенного кулера (температура CPU {cpuTemp:F0}°C, ~{towerFanRpm:N0} об/мин)",
-                        HardwareDevice = "Башенный кулер CPU / CPU_FAN",
-                        Percent = Math.Round(cpuPwm, 0),
-                        Rpm = towerFanRpm,
-                        SensorSource = cpuFan?.Rpm.HasValue == true
-                            ? (string.IsNullOrEmpty(cpuFan.SensorSource) ? "CPU_FAN (Датчик)" : cpuFan.SensorSource)
-                            : "Управление BIOS"
-                    };
-
-                    // Secondary fan for dual-tower coolers (Push-Pull, e.g. Peerless Assassin, AK620, NH-D15)
-                    if (cpuOptFan != null && cpuOptFan.Rpm.HasValue && cpuOptFan.Rpm.Value > 200)
-                    {
-                        fanMap["desktop-cpu-opt-fan"] = new FanMetric
-                        {
-                            Id = "desktop-cpu-opt-fan",
-                            Name = "CPU Fan 2",
-                            DisplayName = "Второй кулер башни (CPU_OPT)",
-                            Role = "Процессор",
-                            Description = $"Второй вентилятор двухбашенного радиатора (температура CPU {cpuTemp:F0}°C, {cpuOptFan.Rpm.Value:N0} об/мин)",
-                            HardwareDevice = "Башенный кулер CPU / CPU_OPT",
-                            Percent = Math.Round(cpuPwm, 0),
-                            Rpm = cpuOptFan.Rpm.Value,
-                            SensorSource = "CPU_OPT (Датчик)"
-                        };
-                    }
-                }
-
-                // 3. Chassis Airflow Fans (5x Fans: 3x Intake + 2x Exhaust)
-                double peakTemp = Math.Max(result.CpuTemperatureC ?? 45.0, result.GpuTemperatureC ?? 35.0);
-                double casePwm = peakTemp < 50.0 ? 30.0 : (peakTemp < 65.0 ? 45.0 : 65.0);
-
-                double intakeRpm = hwCaseIntakeRpm ?? (casePwm > 0 ? Math.Round(950.0 + (casePwm / 100.0) * 650.0, 0) : 1442.0);
-                double exhaustRpm = hwCaseExhaustRpm ?? (casePwm > 0 ? Math.Round(1100.0 + (casePwm / 100.0) * 750.0, 0) : 1683.0);
-
-                string[] chassisNames = {
-                    "Вентилятор корпуса #1 (Приток)",
-                    "Вентилятор корпуса #2 (Приток)",
-                    "Вентилятор корпуса #3 (Приток)",
-                    "Вентилятор корпуса #4 (Выдув)",
-                    "Вентилятор корпуса #5 (Выдув)"
-                };
-                string[] chassisDescs = {
-                    "Нагнетание холодного забортного воздуха в корпус (передняя панель, позиция 1)",
-                    "Нагнетание холодного забортного воздуха в корпус (передняя панель, позиция 2)",
-                    "Нагнетание холодного забортного воздуха в корпус (передняя панель, позиция 3)",
-                    "Принудительный отвод нагретого воздуха из системного блока (задняя панель)",
-                    "Принудительный отвод нагретого воздуха из системного блока (верхняя панель)"
-                };
-
-                for (int c = 1; c <= 5; c++)
-                {
-                    string caseId = $"desktop-chassis-fan-{c}";
-                    double thisRpm = (c <= 3) ? intakeRpm : exhaustRpm;
-                    fanMap[caseId] = new FanMetric
-                    {
-                        Id = caseId,
-                        Name = $"Chassis Fan {c}",
-                        DisplayName = chassisNames[c - 1],
-                        Role = "Корпус",
-                        Description = chassisDescs[c - 1],
-                        HardwareDevice = "Корпус системного блока / SYS_FAN",
-                        Percent = Math.Round(casePwm, 0),
-                        Rpm = thisRpm,
-                        SensorSource = (c <= 3 ? hwCaseIntakeRpm : hwCaseExhaustRpm).HasValue ? "SYS_FAN (Датчик)" : "Управление BIOS"
-                    };
-                }
-
-                // 4. Power Supply (PSU) Fan
-                double totalPwr = (result.CpuPowerWatts ?? 45.0) + (result.GpuPowerWatts ?? 30.0);
-                bool psuActive = totalPwr > 150.0;
-                double psuPwm = psuActive ? Math.Clamp(30.0 + ((totalPwr - 150.0) / 250.0) * 40.0, 30.0, 80.0) : 0.0;
-
-                fanMap["desktop-psu-fan"] = new FanMetric
-                {
-                    Id = "desktop-psu-fan",
-                    Name = "PSU Fan",
-                    DisplayName = "Вентилятор блока питания (PSU Fan)",
-                    Role = "Блок питания",
-                    Description = psuActive
-                        ? $"Охлаждение силовых цепей и трансформатора БП (потребление ~{totalPwr:F0} Вт)"
-                        : $"Пассивный режим Zero-RPM (потребление ~{totalPwr:F0} Вт ниже порога 150 Вт)",
-                    HardwareDevice = "Блок питания (PSU)",
-                    Percent = Math.Round(psuPwm, 0),
-                    Rpm = psuActive ? Math.Round(750.0 + (psuPwm * 8.0), 0) : 0.0,
-                    SensorSource = "Термоконтроль БП"
-                };
             }
 
             result.Fans = fanMap.Values
                 .OrderBy(f => GetFanSortOrder(f.Role))
                 .ThenBy(f => f.Name)
                 .ToList();
+
             if (result.Fans.Count > 0)
             {
                 sources.Add($"Fans({result.Fans.Count})");
@@ -1190,6 +813,25 @@ public class CompositeHardwareMonitor : IHardwareMonitor
         _nvmlMonitor.Dispose();
         _smiFallback.Dispose();
         _lhmProvider.Dispose();
+    }
+
+    private bool DetectIsLiquidCooling(HardwareMetrics result, FanMetric? pumpFan)
+    {
+        // 1. Manual user override from settings
+        if (!string.IsNullOrEmpty(UserCoolingPreference))
+        {
+            if (string.Equals(UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase)) return false;
+        }
+
+        // 2. Hardware pump sensor detected with active rotation (> 300 RPM)
+        if (pumpFan != null && pumpFan.Rpm.HasValue && pumpFan.Rpm.Value > 300)
+        {
+            return true;
+        }
+
+        // 3. Default: Air cooling unless an actual liquid pump is physically detected
+        return false;
     }
 
     private static int GetFanSortOrder(string role)
