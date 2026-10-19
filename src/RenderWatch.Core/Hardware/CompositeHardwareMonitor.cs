@@ -387,25 +387,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 .ThenBy(f => f.Name)
                 .ToList();
 
-            // Determine whether system is liquid cooled (AIO) or air cooled (tower / box cooler)
-            var pumpFan = result.Fans.FirstOrDefault(f => f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) || f.DisplayName.Contains("Помпа", StringComparison.OrdinalIgnoreCase));
-            result.IsLiquidCooling = DetectIsLiquidCooling(result, pumpFan);
-
-            // If system is air cooled, sanitize any fan that was connected to a PUMP_FAN motherboard pin
-            if (!result.IsLiquidCooling)
-            {
-                foreach (var f in result.Fans)
-                {
-                    if (f.Role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) ||
-                        (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
-                        (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase))
-                    {
-                        f.Role = "Корпус";
-                        f.DisplayName = $"Вентилятор ({f.Name})";
-                        f.Description = "Вентилятор, подключенный к разъему материнской платы (PUMP_FAN)";
-                    }
-                }
-            }
+            result.IsLiquidCooling = string.Equals(UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase);
 
             if (result.Fans.Count > 0)
             {
@@ -837,33 +819,15 @@ public class CompositeHardwareMonitor : IHardwareMonitor
 
     private bool DetectIsLiquidCooling(HardwareMetrics result, FanMetric? pumpFan)
     {
-        // 1. Manual user override from settings
-        if (!string.IsNullOrEmpty(UserCoolingPreference))
-        {
-            if (string.Equals(UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase)) return true;
-            if (string.Equals(UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase)) return false;
-        }
-
-        // 2. Hardware pump sensor detected with active rotation (>= 1200 RPM)
-        if (pumpFan != null && pumpFan.Rpm.HasValue && pumpFan.Rpm.Value >= 1200)
-        {
-            return true;
-        }
-
-        // 3. Default: Air cooling unless an actual liquid pump is physically detected and spinning
-        return false;
+        return string.Equals(UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase);
     }
 
     private static int GetFanSortOrder(string role)
     {
         if (role.Equals("CPU", StringComparison.OrdinalIgnoreCase) || role.Contains("Процессор", StringComparison.OrdinalIgnoreCase)) return 1;
-        if (role.Equals("Помпа", StringComparison.OrdinalIgnoreCase) || role.Contains("Pump", StringComparison.OrdinalIgnoreCase)) return 2;
-        if (role.Equals("СЖО", StringComparison.OrdinalIgnoreCase) || role.Contains("Радиатор", StringComparison.OrdinalIgnoreCase)) return 3;
-        if (role.Equals("GPU", StringComparison.OrdinalIgnoreCase) || role.Contains("Видеокарта", StringComparison.OrdinalIgnoreCase)) return 4;
-        if (role.Equals("Корпус", StringComparison.OrdinalIgnoreCase) || role.Contains("Case", StringComparison.OrdinalIgnoreCase) || role.Contains("Chassis", StringComparison.OrdinalIgnoreCase)) return 5;
-        if (role.Equals("VRM", StringComparison.OrdinalIgnoreCase) || role.Contains("Чипсет", StringComparison.OrdinalIgnoreCase)) return 6;
-        if (role.Equals("Блок питания", StringComparison.OrdinalIgnoreCase) || role.Contains("PSU", StringComparison.OrdinalIgnoreCase)) return 7;
-        return 8;
+        if (role.Equals("GPU", StringComparison.OrdinalIgnoreCase) || role.Contains("Видеокарта", StringComparison.OrdinalIgnoreCase)) return 2;
+        if (role.Equals("Корпус", StringComparison.OrdinalIgnoreCase) || role.Contains("Case", StringComparison.OrdinalIgnoreCase) || role.Contains("Chassis", StringComparison.OrdinalIgnoreCase)) return 3;
+        return 4;
     }
 }
 

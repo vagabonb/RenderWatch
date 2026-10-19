@@ -25,14 +25,14 @@ public class CoreTests
             VramUsedGb = null
         };
 
-        Assert.Equal("Недоступно", metrics.CpuUsageDisplay);
-        Assert.Equal("Недоступно", metrics.CpuTempDisplay);
-        Assert.Equal("Недоступно", metrics.CpuClockDisplay);
-        Assert.Equal("Недоступно", metrics.CpuPowerDisplay);
-        Assert.Equal("Недоступно", metrics.GpuUsageDisplay);
-        Assert.Equal("Недоступно", metrics.GpuTempDisplay);
-        Assert.Equal("Недоступно", metrics.RamDisplay);
-        Assert.Equal("Недоступно", metrics.VramDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.CpuUsageDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.CpuTempDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.CpuClockDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.CpuPowerDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.GpuUsageDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.GpuTempDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.RamDisplay);
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", metrics.VramDisplay);
     }
 
     [Fact]
@@ -57,24 +57,24 @@ public class CoreTests
         };
 
         Assert.Equal("43%", metrics.CpuUsageDisplay);
-        Assert.Equal("68°C", metrics.CpuTempDisplay);
-        Assert.Equal("4.85 ГГц", metrics.CpuClockDisplay);
-        Assert.Equal("120.4 Вт", metrics.CpuPowerDisplay);
+        Assert.Equal("68пїЅC", metrics.CpuTempDisplay);
+        Assert.Equal("4.85 пїЅпїЅпїЅ", metrics.CpuClockDisplay);
+        Assert.Equal("120.4 пїЅпїЅ", metrics.CpuPowerDisplay);
         Assert.Equal("99%", metrics.GpuUsageDisplay);
-        Assert.Equal("72°C", metrics.GpuTempDisplay);
-        Assert.Equal("24.5 / 64.0 ГБ (38%)", metrics.RamDisplay);
-        Assert.Equal("10.2 / 16.0 ГБ (64%)", metrics.VramDisplay);
+        Assert.Equal("72пїЅC", metrics.GpuTempDisplay);
+        Assert.Equal("24.5 / 64.0 пїЅпїЅ (38%)", metrics.RamDisplay);
+        Assert.Equal("10.2 / 16.0 пїЅпїЅ (64%)", metrics.VramDisplay);
     }
 
     [Fact]
     public void RenderStatusExtensions_ReturnsProperNamesAndColors()
     {
-        Assert.Equal("Ожидание", RenderStatus.Idle.ToDisplayName());
-        Assert.Equal("Идёт рендер", RenderStatus.Rendering.ToDisplayName());
-        Assert.Equal("Возможно завершен", RenderStatus.PossiblyCompleted.ToDisplayName());
-        Assert.Equal("Завершен", RenderStatus.Completed.ToDisplayName());
-        Assert.Equal("Возможно завис", RenderStatus.PossiblyFrozen.ToDisplayName());
-        Assert.Equal("Недостаточно данных", RenderStatus.InsufficientData.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", RenderStatus.Idle.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", RenderStatus.Rendering.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", RenderStatus.PossiblyCompleted.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ", RenderStatus.Completed.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ", RenderStatus.PossiblyFrozen.ToDisplayName());
+        Assert.Equal("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", RenderStatus.InsufficientData.ToDisplayName());
 
         Assert.StartsWith("#", RenderStatus.Rendering.GetStatusColorHex());
         Assert.StartsWith("#", RenderStatus.Completed.GetStatusColorHex());
@@ -203,5 +203,24 @@ public class CoreTests
         var res2 = launcher.Launch(new LaunchProfile { ExecutablePath = @"C:\NonExistentApp12345\fake.exe" });
         Assert.False(res2.Success);
         Assert.False(string.IsNullOrWhiteSpace(res2.Message));
+    }
+
+    [Fact]
+    public void FanMetric_CalculatePercent_ProducesHonestProportions()
+    {
+        var zero = new FanMetric { Rpm = 0 };
+        Assert.Equal(0.0, zero.CalculatePercent());
+
+        var idle = new FanMetric { Rpm = 848 };
+        Assert.Equal(42.4, idle.CalculatePercent());
+
+        var medium = new FanMetric { Rpm = 1467 };
+        Assert.Equal(73.4, medium.CalculatePercent());
+
+        var highSpeed = new FanMetric { Rpm = 2801 };
+        Assert.Equal(87.5, highSpeed.CalculatePercent());
+
+        var pwmGpu = new FanMetric { Percent = 65.0 };
+        Assert.Equal(65.0, pwmGpu.CalculatePercent());
     }
 }

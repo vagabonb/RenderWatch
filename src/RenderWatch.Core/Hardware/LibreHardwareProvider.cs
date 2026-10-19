@@ -816,6 +816,7 @@ public class LibreHardwareProvider : IHardwareMonitor
         string s = sensorName.ToLowerInvariant().Trim();
         string h = hardwareName.ToLowerInvariant().Trim();
 
+        // 1. GPU Fans (Directly on Graphics Card or NVML/driver)
         if (hwType == HardwareType.GpuNvidia || hwType == HardwareType.GpuAmd || hwType == HardwareType.GpuIntel ||
             h.Contains("geforce") || h.Contains("radeon") || h.Contains("rtx") || h.Contains("gtx") || s.Contains("gpu"))
         {
@@ -824,63 +825,37 @@ public class LibreHardwareProvider : IHardwareMonitor
             string friendly;
             if (num == "1")
             {
-                friendly = "Вентилятор GPU #1 (Левый)";
+                friendly = "Вентилятор GPU #1";
                 desc = "Отвод тепла от графического процессора (GPU Core)";
             }
             else if (num == "2")
             {
-                friendly = "Вентилятор GPU #2 (Центральный)";
+                friendly = "Вентилятор GPU #2";
                 desc = "Обдув радиатора и силовых фаз питания (VRM)";
             }
             else
             {
-                friendly = $"Вентилятор GPU #{num} (Правый)";
+                friendly = $"Вентилятор GPU #{num}";
                 desc = "Сквозной обдув видеопамяти (VRAM) и радиатора Flow-Through";
             }
             return ("GPU", desc, friendly);
         }
 
-        // Pump / Water Cooling Header:
-        if (s.Contains("pump") || s.Contains("помпа") || s.Contains("aio") || s.Contains("water") || s.Contains("w_pump"))
-        {
-            bool isAirForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase);
-            if (isAirForced)
-            {
-                return ("Корпус", "Вентилятор, подключенный к разъему PUMP_FAN материнской платы", $"Вентилятор ({sensorName})");
-            }
-
-            // Real AIO liquid cooling pumps spin at >= 1200 RPM.
-            // Slower fans plugged into PUMP_FAN headers are standard case fans.
-            if (rpm.HasValue && rpm.Value >= 1200)
-            {
-                return ("Помпа", "Циркуляция охлаждающей жидкости замкнутого контура СЖО (AIO_PUMP)", "Помпа СЖО (AIO_PUMP)");
-            }
-
-            return ("Корпус", "Вентилятор, подключенный к разъему PUMP_FAN материнской платы", $"Вентилятор ({sensorName})");
-        }
-
+        // 2. CPU Cooler Headers (CPU_FAN, CPU_OPT, Fan #1, Fan #2)
         if (s.Contains("cpu_opt") || s.Contains("cpu opt") || s.Contains("fan #2") || s == "fan 2")
         {
-            return ("CPU", "Дополнительный вентилятор радиатора процессора (CPU_OPT push-pull)", "Кулер CPU_OPT / Вентилятор #2");
+            return ("CPU", "Дополнительный кулер процессора (CPU_OPT)", "Кулер процессора (CPU_OPT)");
         }
 
         if (s.Contains("cpu") || s.Contains("процессор") || s.Contains("fan #1") || s == "fan 1")
         {
-            return ("CPU", "Основное охлаждение радиатора центрального процессора (CPU_FAN)", "Кулер процессора (CPU_FAN)");
+            return ("CPU", "Основной кулер процессора (CPU_FAN)", "Кулер процессора (CPU_FAN)");
         }
 
-        if (s.Contains("system") || s.Contains("sys_fan") || s.Contains("sysfan") || s.Contains("chassis") || s.Contains("cha_fan") || s.Contains("корпус") || s.StartsWith("fan #") || s.StartsWith("fan "))
-        {
-            string num = ExtractNumber(sensorName) ?? "1";
-            return ("Корпус", "Циркуляция и воздухообмен внутри системного блока (SYS_FAN)", $"Вентилятор корпуса #{num} (SYS_FAN)");
-        }
-
-        if (s.Contains("mos") || s.Contains("vrm") || s.Contains("pch") || s.Contains("chipset"))
-        {
-            return ("VRM", "Охлаждение подсистемы питания материнской платы", $"Вентилятор VRM/Чипсета ({sensorName})");
-        }
-
-        return ("Корпус", "Дополнительное охлаждение компонентов системы", sensorName);
+        // 3. Motherboard Chassis / System Fans (Fan #3..#N, SYS_FAN, CHA_FAN, PUMP_FAN)
+        // Strictly classified as Chassis Fans. Deterministic - NEVER jumping dynamically based on RPM!
+        string chassisNum = ExtractNumber(sensorName) ?? "1";
+        return ("Корпус", "Циркуляция и воздухообмен внутри системного блока (SYS_FAN)", $"Вентилятор корпуса #{chassisNum} (SYS_FAN)");
     }
 
     private static string? ExtractNumber(string text)

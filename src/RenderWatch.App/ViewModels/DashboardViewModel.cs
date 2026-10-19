@@ -39,7 +39,7 @@ public class FanMetricViewModel : ViewModelBase
         Description = metric.Description;
         HardwareDevice = metric.HardwareDevice;
         RpmDisplay = metric.RpmDisplay;
-        PercentValue = metric.Percent ?? (metric.IsActive ? 50.0 : 0.0);
+        PercentValue = metric.CalculatePercent();
         IsActive = metric.IsActive;
         StatusBadge = metric.StatusText;
         StatusColorHex = metric.IsActive ? "#A0A0A0" : "#606060";
@@ -328,91 +328,38 @@ public class DashboardViewModel : ViewModelBase
         }
     }
 
-    private static (string GroupKey, string GroupName, int Order) DetermineFanGroup(FanMetric m, bool hasLiquidCoolingInSystem = false)
+    private static (string GroupKey, string GroupName, int Order) DetermineFanGroup(FanMetric m)
     {
         string id = (m.Id ?? string.Empty).ToLowerInvariant();
         string role = (m.Role ?? string.Empty).ToLowerInvariant();
         string name = (m.DisplayName ?? string.Empty).ToLowerInvariant();
 
-        // 1. Laptop fans
+        // 1. Laptop fans (mobile)
         if (id.StartsWith("laptop-") || name.Contains("ноутбук") || role.Contains("ноутбук"))
         {
             return ("laptop", "ОХЛАЖДЕНИЕ НОУТБУКА", 1);
         }
 
-        // 2. Liquid Cooling (AIO Pump / Radiator) & CPU
-        if (id.Contains("pump") || id.Contains("aio") || id.Contains("rad") || id.Contains("cpu") ||
-            role.Contains("помпа") || role.Contains("сжо") || role.Contains("радиатор") || role.Contains("cpu") || role.Contains("процессор") ||
-            name.Contains("помпа") || name.Contains("сжо") || name.Contains("радиатор") || name.Contains("cpu"))
+        // 2. CPU Cooler -> Always "ОХЛАЖДЕНИЕ ПРОЦЕССОРА"
+        if (id.Contains("cpu") || role.Contains("cpu") || role.Contains("процессор") || name.Contains("cpu") || name.Contains("процессор"))
         {
-            if (hasLiquidCoolingInSystem)
-            {
-                return ("aio", "ПРОЦЕССОР И СЖО", 1);
-            }
-            else
-            {
-                return ("cpu", "ОХЛАЖДЕНИЕ ПРОЦЕССОРА", 1);
-            }
+            return ("cpu", "ОХЛАЖДЕНИЕ ПРОЦЕССОРА", 1);
         }
 
-        // 3. GPU / Graphics
+        // 3. GPU / Graphics -> Always "ВИДЕОКАРТА (GPU)"
         if (id.Contains("gpu") || role.Contains("gpu") || role.Contains("видеокарт") || name.Contains("gpu") || name.Contains("видеокарт"))
         {
             return ("gpu", "ВИДЕОКАРТА (GPU)", 2);
         }
 
-        // 4. Chassis / Case fans
-        if (id.Contains("chassis") || id.Contains("case") || role.Contains("корпус") || role.Contains("chassis") || name.Contains("корпус"))
-        {
-            return ("chassis", "КОРПУСНЫЕ ВЕНТИЛЯТОРЫ", 3);
-        }
-
-        // 5. Power Supply
-        if (id.Contains("psu") || role.Contains("блок питания") || role.Contains("psu") || name.Contains("блок питания") || name.Contains("psu"))
-        {
-            return ("psu", "БЛОК ПИТАНИЯ (PSU)", 4);
-        }
-
-        return ("other", "ДОПОЛНИТЕЛЬНЫЕ КОНТУРЫ", 5);
+        // 4. Chassis / Case fans -> Always "КОРПУСНЫЕ ВЕНТИЛЯТОРЫ"
+        return ("chassis", "КОРПУСНЫЕ ВЕНТИЛЯТОРЫ", 3);
     }
 
     private void UpdateFanGroups(IList<FanMetric> rawFans, bool isLiquidCooling = false)
     {
-        bool isUserAirForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "air", StringComparison.OrdinalIgnoreCase);
-        bool isUserLiquidForced = string.Equals(CompositeHardwareMonitor.UserCoolingPreference, "liquid", StringComparison.OrdinalIgnoreCase);
-
-        bool hasLiquidCoolingInSystem;
-        if (isUserAirForced)
-        {
-            hasLiquidCoolingInSystem = false;
-        }
-        else if (isUserLiquidForced)
-        {
-            hasLiquidCoolingInSystem = true;
-        }
-        else
-        {
-            hasLiquidCoolingInSystem = isLiquidCooling;
-        }
-
-        // Sanitize any remaining liquid cooling tags if air cooled
-        if (!hasLiquidCoolingInSystem)
-        {
-            foreach (var f in rawFans)
-            {
-                if ((f.Role ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
-                    (f.DisplayName ?? "").Contains("Помпа", StringComparison.OrdinalIgnoreCase) ||
-                    (f.DisplayName ?? "").Contains("СЖО", StringComparison.OrdinalIgnoreCase))
-                {
-                    f.Role = "Корпус";
-                    f.DisplayName = $"Вентилятор ({f.Name})";
-                    f.Description = "Вентилятор, подключенный к разъему материнской платы";
-                }
-            }
-        }
-
         var rawGrouped = rawFans
-            .Select(f => (Fan: f, Group: DetermineFanGroup(f, hasLiquidCoolingInSystem)))
+            .Select(f => (Fan: f, Group: DetermineFanGroup(f)))
             .GroupBy(x => x.Group.GroupKey)
             .ToList();
 

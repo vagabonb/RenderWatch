@@ -93,8 +93,8 @@
 
                     <StackPanel Margin="0,0,0,4">
                         <RadioButton GroupName="CoolingProfile" Content="Автоопределение (по датчикам оборудования и модели CPU)" IsChecked="{Binding IsCoolingAuto}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <RadioButton GroupName="CoolingProfile" Content="Жидкостное охлаждение / СЖО (Помпа + Радиатор 360 мм)" IsChecked="{Binding IsCoolingLiquid}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextSecondary}"/>
-                        <RadioButton GroupName="CoolingProfile" Content="Воздушное охлаждение (Башенный кулер CPU)" IsChecked="{Binding IsCoolingAir}" Foreground="{StaticResource BrushTextSecondary}"/>
+                        <RadioButton GroupName="CoolingProfile" Content="Жидкостное охлаждение (с помпой)" IsChecked="{Binding IsCoolingLiquid}" Margin="0,0,0,10" Foreground="{StaticResource BrushTextSecondary}"/>
+                        <RadioButton GroupName="CoolingProfile" Content="Воздушное охлаждение (башенный кулер CPU)" IsChecked="{Binding IsCoolingAir}" Foreground="{StaticResource BrushTextSecondary}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

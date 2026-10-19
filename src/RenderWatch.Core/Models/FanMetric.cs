@@ -41,6 +41,31 @@ public class FanMetric
         ? ((!string.IsNullOrEmpty(SensorSource) && SensorSource.Contains("Датчик")) ? "Активен (Датчик)" : "Активен")
         : "Пассивный (Zero-RPM)";
 
+    public double CalculatePercent()
+    {
+        if (Percent.HasValue && Percent.Value > 0)
+        {
+            return Math.Clamp(Percent.Value, 0.0, 100.0);
+        }
+
+        if (!Rpm.HasValue || Rpm.Value <= 0)
+        {
+            return 0.0;
+        }
+
+        double rpm = Rpm.Value;
+        double ratedMax;
+        if (rpm > 3500)
+            ratedMax = 6000.0;
+        else if (rpm > 2200)
+            ratedMax = 3200.0;
+        else
+            ratedMax = 2000.0;
+
+        double calculated = Math.Round((rpm / ratedMax) * 100.0, 1);
+        return Math.Clamp(calculated, 5.0, 100.0);
+    }
+
     public static bool IsTripleFanGpu(string? gpuName)
     {
         if (string.IsNullOrWhiteSpace(gpuName)) return false;
