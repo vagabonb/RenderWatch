@@ -183,6 +183,23 @@ public partial class TaskbarStripWindow : Window
         {
             PositionOnTaskbar();
             EnsureTopmost();
+
+            // When launching with Windows logon, re-verify position after shell and tray items settle
+            Task.Delay(1500).ContinueWith(_ =>
+            {
+                try
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (IsVisible && !_isDragging && !_savedLeft.HasValue)
+                        {
+                            PositionOnTaskbar();
+                            EnsureTopmost();
+                        }
+                    });
+                }
+                catch { }
+            });
         };
 
         // Periodic timer to maintain Topmost Z-order above taskbar (even when windows maximize and taskbar becomes grey/opaque)

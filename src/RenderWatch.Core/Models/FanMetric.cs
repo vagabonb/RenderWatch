@@ -13,6 +13,22 @@ public class FanMetric
     public double? Rpm { get; set; }
     public double? Percent { get; set; }
 
+    // Display reference, not a measured or inferred hardware speed limit.
+    // Keep it independent of current RPM so a rising speed never shrinks the bar.
+    public double? ReferenceMaxRpm { get; set; }
+
+    public double ScaleMaxRpm => ReferenceMaxRpm is double maximum && double.IsFinite(maximum) && maximum > 0
+        ? maximum
+        : (Id.StartsWith("laptop-", StringComparison.OrdinalIgnoreCase) ||
+           Role.Contains("помп", StringComparison.OrdinalIgnoreCase) ||
+           Role.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
+           Name.Contains("pump", StringComparison.OrdinalIgnoreCase) ||
+           Name.Contains("помп", StringComparison.OrdinalIgnoreCase) ? 6000.0 : 3000.0);
+
+    public string ScaleDescription => Rpm.HasValue
+        ? $"Шкала оборотов: 0–{ScaleMaxRpm:N0} об/мин. Это ориентир отображения, а не паспортный максимум кулера."
+        : "Шкала сигнала управления: 0–100%. Показания тахометра недоступны.";
+
     public string? SensorSource { get; set; }
 
     public bool IsActive => (Rpm.HasValue && Rpm.Value > 0) || (Percent.HasValue && Percent.Value > 0);
@@ -43,27 +59,18 @@ public class FanMetric
 
     public double CalculatePercent()
     {
-        if (Percent.HasValue && Percent.Value > 0)
+        // A control/PWM percentage is not an RPM percentage. Prefer the tachometer,
+        // including a real zero, even when the control signal is already at 100%.
+        if (Rpm.HasValue)
         {
-            return Math.Clamp(Percent.Value, 0.0, 100.0);
+            return double.IsFinite(Rpm.Value) && Rpm.Value > 0
+                ? Math.Clamp(Rpm.Value / ScaleMaxRpm, 0.0, 1.0) * 100.0
+                : 0.0;
         }
 
-        if (!Rpm.HasValue || Rpm.Value <= 0)
-        {
-            return 0.0;
-        }
-
-        double rpm = Rpm.Value;
-        double ratedMax;
-        if (rpm > 3500)
-            ratedMax = 6000.0;
-        else if (rpm > 2200)
-            ratedMax = 3200.0;
-        else
-            ratedMax = 2000.0;
-
-        double calculated = Math.Round((rpm / ratedMax) * 100.0, 1);
-        return Math.Clamp(calculated, 5.0, 100.0);
+        return Percent.HasValue && double.IsFinite(Percent.Value)
+            ? Math.Clamp(Percent.Value, 0.0, 100.0)
+            : 0.0;
     }
 
     public static bool IsTripleFanGpu(string? gpuName)

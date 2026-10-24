@@ -182,6 +182,32 @@ public class MainViewModel : ViewModelBase, IDisposable
 
     public bool IsTaskbarStripDarkMode => !IsTaskbarStripLightMode;
 
+    private bool _startWithWindows;
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (SetField(ref _startWithWindows, value))
+            {
+                OnPropertyChanged(nameof(IsAutostartDisabled));
+                if (Dashboard != null && Dashboard.StartWithWindows != value)
+                {
+                    Dashboard.StartWithWindows = value;
+                }
+                if (Settings != null && Settings.StartWithWindows != value)
+                {
+                    Settings.StartWithWindows = value;
+                }
+                _settings.StartWithWindows = value;
+                _ = Task.Run(() => StartupManager.SetAutostart(value));
+                _ = _settingsManager.SaveSettingsAsync(_settings);
+            }
+        }
+    }
+
+    public bool IsAutostartDisabled => !StartWithWindows;
+
     public string ToastMessage { get => _toastMessage; set => SetField(ref _toastMessage, value); }
     public bool IsToastVisible { get => _isToastVisible; set => SetField(ref _isToastVisible, value); }
 
@@ -193,6 +219,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ForceCompleteCommand { get; }
     public ICommand SetIntervalCommand { get; }
     public ICommand SetTaskbarStripThemeCommand { get; }
+    public ICommand SetAutostartCommand { get; }
     public ICommand ApplyUpdateCommand { get; }
 
     public MainViewModel(
@@ -216,6 +243,13 @@ public class MainViewModel : ViewModelBase, IDisposable
             if (IsTaskbarStripLightMode != mode)
             {
                 IsTaskbarStripLightMode = mode;
+            }
+        };
+        Dashboard.AutostartChanged += enabled =>
+        {
+            if (StartWithWindows != enabled)
+            {
+                StartWithWindows = enabled;
             }
         };
         Charts = new ChartsViewModel();
@@ -252,6 +286,19 @@ public class MainViewModel : ViewModelBase, IDisposable
             }
         });
 
+        SetAutostartCommand = new RelayCommand(p =>
+        {
+            if (p != null)
+            {
+                string s = p.ToString()!.ToLowerInvariant();
+                StartWithWindows = (s == "true" || s == "1" || s == "enable" || s == "enabled");
+            }
+            else
+            {
+                StartWithWindows = !StartWithWindows;
+            }
+        });
+
         ToggleMonitoringCommand = new RelayCommand(() => IsMonitoring = !IsMonitoring);
         ToggleCompactModeCommand = new RelayCommand(() => IsCompactMode = !IsCompactMode);
         ToggleCompactTopmostCommand = new RelayCommand(() => IsCompactTopmost = !IsCompactTopmost);
@@ -271,6 +318,18 @@ public class MainViewModel : ViewModelBase, IDisposable
     {
         _settings = await _settingsManager.LoadSettingsAsync();
         IsTaskbarStripLightMode = _settings.IsTaskbarStripLightMode;
+
+        // Synchronize autostart status with actual OS Task Scheduler / Registry state
+        bool isOsAutostart = StartupManager.IsAutostartEnabled();
+        _startWithWindows = _settings.StartWithWindows || isOsAutostart;
+        if (_startWithWindows != _settings.StartWithWindows)
+        {
+            _settings.StartWithWindows = _startWithWindows;
+            _ = _settingsManager.SaveSettingsAsync(_settings);
+        }
+        Dashboard.StartWithWindows = _startWithWindows;
+        Settings.StartWithWindows = _startWithWindows;
+
         Settings.Load(_settings);
         Charts.Initialize(_settings, _settingsManager);
 

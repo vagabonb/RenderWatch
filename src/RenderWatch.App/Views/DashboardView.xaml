@@ -365,7 +365,7 @@
                                                         </Grid>
 
                                                         <!-- Bottom Row: Speed MiniBarGauge (Subtle and Clean) -->
-                                                        <ctrl:MiniBarGauge Grid.Row="1" Value="{Binding PercentValue}" MaxValue="100" Height="3" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                                                        <ctrl:MiniBarGauge Grid.Row="1" Value="{Binding PercentValue}" MaxValue="100" ToolTip="{Binding ScaleDescription}" Height="3" VerticalAlignment="Center" Margin="0,8,0,0"/>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
@@ -391,92 +391,187 @@
                 </StackPanel>
             </Border>
 
-            <!-- 5. Taskbar Strip Theme Switcher Card (Below Fans) -->
-            <Border Background="{StaticResource BrushSurfaceCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="20,16" Margin="0,0,0,18">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+            <!-- 5. Settings & Preferences Grid (Autostart + Taskbar Theme) -->
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                    <!-- Left: Description -->
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="ЦВЕТОВАЯ ТЕМА ПАНЕЛИ ЗАДАЧ" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,3"/>
-                        <TextBlock Text="Цвет цифр виджета для тёмной или светлой темы Windows" Foreground="#D0D0D0" FontSize="12"/>
-                    </StackPanel>
+                <!-- Card 1: Автозапуск с Windows -->
+                <Border Grid.Column="0" Background="{StaticResource BrushSurfaceCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18,16" Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Right: Minimalist Segmented Switcher -->
-                    <Border Grid.Column="1" Background="#1C1C1C" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="6" Padding="3" VerticalAlignment="Center" Margin="16,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <!-- Dark Theme Button -->
-                            <Button Content="Тёмная"
-                                    Command="{Binding SetTaskbarStripThemeCommand}"
-                                    CommandParameter="dark"
-                                    Cursor="Hand">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888888"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Padding" Value="14,6"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsTaskbarStripDarkMode}" Value="True">
-                                                <Setter Property="Background" Value="#2E2E2E"/>
-                                                <Setter Property="Foreground" Value="#FFFFFF"/>
-                                                <Setter Property="FontWeight" Value="Bold"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-
-                            <!-- Light Theme Button -->
-                            <Button Content="Светлая"
-                                    Command="{Binding SetTaskbarStripThemeCommand}"
-                                    CommandParameter="light"
-                                    Cursor="Hand">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888888"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Padding" Value="14,6"/>
-                                        <Setter Property="FontSize" Value="11"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsTaskbarStripLightMode}" Value="True">
-                                                <Setter Property="Background" Value="#E0E0E0"/>
-                                                <Setter Property="Foreground" Value="#111111"/>
-                                                <Setter Property="FontWeight" Value="Bold"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                        <!-- Description -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock Text="АВТОЗАПУСК С WINDOWS" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,3"/>
+                            <TextBlock Text="Запуск на панель задач при входе в систему (без окна UAC)" Foreground="#D0D0D0" FontSize="12" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+
+                        <!-- Segmented Switcher [Включен] [Отключен] -->
+                        <Border Grid.Column="1" Background="#1C1C1C" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="6" Padding="3" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Enable Button -->
+                                <Button Content="Включен"
+                                        Command="{Binding SetAutostartCommand}"
+                                        CommandParameter="true"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888888"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="14,6"/>
+                                            <Setter Property="FontSize" Value="11"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StartWithWindows}" Value="True">
+                                                    <Setter Property="Background" Value="#2E2E2E"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- Disable Button -->
+                                <Button Content="Отключен"
+                                        Command="{Binding SetAutostartCommand}"
+                                        CommandParameter="false"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888888"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="14,6"/>
+                                            <Setter Property="FontSize" Value="11"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding StartWithWindows}" Value="False">
+                                                    <Setter Property="Background" Value="#2E2E2E"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Card 2: Цветовая тема панели задач -->
+                <Border Grid.Column="1" Background="{StaticResource BrushSurfaceCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="18,16" Margin="8,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Description -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                            <TextBlock Text="ЦВЕТОВАЯ ТЕМА ПАНЕЛИ ЗАДАЧ" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,3"/>
+                            <TextBlock Text="Цвет цифр виджета для тёмной или светлой темы" Foreground="#D0D0D0" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <!-- Right: Minimalist Segmented Switcher -->
+                        <Border Grid.Column="1" Background="#1C1C1C" BorderBrush="#2C2C2C" BorderThickness="1" CornerRadius="6" Padding="3" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Dark Theme Button -->
+                                <Button Content="Тёмная"
+                                        Command="{Binding SetTaskbarStripThemeCommand}"
+                                        CommandParameter="dark"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888888"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="14,6"/>
+                                            <Setter Property="FontSize" Value="11"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTaskbarStripDarkMode}" Value="True">
+                                                    <Setter Property="Background" Value="#2E2E2E"/>
+                                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <!-- Light Theme Button -->
+                                <Button Content="Светлая"
+                                        Command="{Binding SetTaskbarStripThemeCommand}"
+                                        CommandParameter="light"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888888"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="14,6"/>
+                                            <Setter Property="FontSize" Value="11"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTaskbarStripLightMode}" Value="True">
+                                                    <Setter Property="Background" Value="#E0E0E0"/>
+                                                    <Setter Property="Foreground" Value="#111111"/>
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
 
             <!-- 6. Bottom Sensor Details Badge -->
             <Border Background="#121212" BorderBrush="{StaticResource BrushBorderSubtle}" BorderThickness="1" CornerRadius="6" Padding="16,12">

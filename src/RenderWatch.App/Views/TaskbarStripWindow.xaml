@@ -74,10 +74,11 @@
                 <MenuItem Header="Тема: Тёмная (белый текст)" Command="{Binding SetTaskbarStripThemeCommand}" CommandParameter="dark" Foreground="#D0D0D0"/>
                 <MenuItem Header="Тема: Светлая (чёрный текст)" Command="{Binding SetTaskbarStripThemeCommand}" CommandParameter="light" Foreground="#D0D0D0"/>
                 <Separator Background="#222222"/>
+                <MenuItem Header="Автозапуск с Windows" Command="{Binding SetAutostartCommand}" Foreground="#D0D0D0"/>
                 <MenuItem Header="Свернуть в трей" Foreground="#D0D0D0" Click="OnContextMenuTrayClicked"/>
                 <MenuItem Header="Сбросить позицию к трею" Foreground="#999999" Click="OnContextMenuResetPosClicked"/>
                 <Separator Background="#222222"/>
-                <MenuItem Header="Закрыть RENDER WATCH" Foreground="#FF6B6B" Click="OnContextMenuExitClicked"/>
+                <MenuItem Header="Закрыть RENDER WATCH" Foreground="#999999" Click="OnContextMenuExitClicked"/>
             </ContextMenu>
         </Border.ContextMenu>
 

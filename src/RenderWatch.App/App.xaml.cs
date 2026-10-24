@@ -143,10 +143,16 @@ public partial class App : Application
 
             _mainWindow.AttachTrayManager(_trayManager);
 
-            bool startMinimized = e.Args.Contains("--minimized");
-            if (startMinimized)
+            bool startOnTaskbar = e.Args.Contains("--taskbar") || e.Args.Contains("--panel") || e.Args.Contains("--minimized");
+            bool startTrayOnly = e.Args.Contains("--tray");
+
+            if (startTrayOnly)
             {
                 _mainWindow.HideToTray();
+            }
+            else if (startOnTaskbar)
+            {
+                _mainWindow.MinimizeToTaskbarStrip();
             }
             else
             {

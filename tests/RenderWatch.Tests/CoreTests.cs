@@ -206,19 +206,19 @@ public class CoreTests
     }
 
     [Fact]
-    public void FanMetric_CalculatePercent_ProducesHonestProportions()
+    public void FanMetric_CalculatePercent_UsesAStableReference()
     {
         var zero = new FanMetric { Rpm = 0 };
         Assert.Equal(0.0, zero.CalculatePercent());
 
         var idle = new FanMetric { Rpm = 848 };
-        Assert.Equal(42.4, idle.CalculatePercent());
+        Assert.Equal(848.0 / 3000 * 100, idle.CalculatePercent(), 8);
 
         var medium = new FanMetric { Rpm = 1467 };
-        Assert.Equal(73.4, medium.CalculatePercent());
+        Assert.Equal(48.9, medium.CalculatePercent(), 8);
 
         var highSpeed = new FanMetric { Rpm = 2801 };
-        Assert.Equal(87.5, highSpeed.CalculatePercent());
+        Assert.Equal(2801.0 / 3000 * 100, highSpeed.CalculatePercent(), 8);
 
         var pwmGpu = new FanMetric { Percent = 65.0 };
         Assert.Equal(65.0, pwmGpu.CalculatePercent());

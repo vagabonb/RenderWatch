@@ -382,6 +382,14 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                 }
             }
 
+            // Laptop blowers use a stable wider reference, including LHM/NVML fans.
+            // Never infer this reference from the instantaneous RPM or PWM signal.
+            if (_isMobileSystem)
+            {
+                foreach (var fan in fanMap.Values)
+                    fan.ReferenceMaxRpm ??= 6000.0;
+            }
+
             result.Fans = fanMap.Values
                 .OrderBy(f => GetFanSortOrder(f.Role))
                 .ThenBy(f => f.Name)

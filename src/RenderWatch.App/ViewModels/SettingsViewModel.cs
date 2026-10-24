@@ -153,6 +153,7 @@ public class SettingsViewModel : ViewModelBase
     public async Task SaveAsync()
     {
         CompositeHardwareMonitor.UserCoolingPreference = _settings.CoolingType;
+        _ = Task.Run(() => RenderWatch.App.Services.StartupManager.SetAutostart(_settings.StartWithWindows));
         await _settingsManager.SaveSettingsAsync(_settings);
         StatusMessage = "Настройки успешно сохранены.";
     }

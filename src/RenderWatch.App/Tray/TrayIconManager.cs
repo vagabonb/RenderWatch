@@ -188,6 +188,24 @@ public class TrayIconManager : IDisposable
 
         _contextMenu.Items.Add(new Separator());
 
+        var autostartItem = new MenuItem
+        {
+            Header = "Автозапуск с Windows",
+            IsCheckable = true,
+            IsChecked = _mainViewModel.StartWithWindows,
+            Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E0E0E0"))
+        };
+        autostartItem.Click += (_, _) =>
+        {
+            _mainViewModel.StartWithWindows = !_mainViewModel.StartWithWindows;
+            autostartItem.IsChecked = _mainViewModel.StartWithWindows;
+        };
+        _contextMenu.Opened += (_, _) =>
+        {
+            autostartItem.IsChecked = _mainViewModel.StartWithWindows;
+        };
+        _contextMenu.Items.Add(autostartItem);
+
         var pauseItem = new MenuItem { Header = "Приостановить мониторинг" };
         pauseItem.Click += (_, _) => _mainViewModel.IsMonitoring = !_mainViewModel.IsMonitoring;
         _contextMenu.Items.Add(pauseItem);

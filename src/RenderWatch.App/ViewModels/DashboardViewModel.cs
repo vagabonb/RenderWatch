@@ -15,6 +15,7 @@ public class FanMetricViewModel : ViewModelBase
     private string _description = string.Empty;
     private string _hardwareDevice = string.Empty;
     private string _rpmDisplay = "—";
+    private string _scaleDescription = string.Empty;
     private string _statusBadge = "Остановлен";
     private string _statusColorHex = "#808080";
     private double _percentValue;
@@ -26,6 +27,7 @@ public class FanMetricViewModel : ViewModelBase
     public string Description { get => _description; set => SetField(ref _description, value); }
     public string HardwareDevice { get => _hardwareDevice; set => SetField(ref _hardwareDevice, value); }
     public string RpmDisplay { get => _rpmDisplay; set => SetField(ref _rpmDisplay, value); }
+    public string ScaleDescription { get => _scaleDescription; set => SetField(ref _scaleDescription, value); }
     public string StatusBadge { get => _statusBadge; set => SetField(ref _statusBadge, value); }
     public string StatusColorHex { get => _statusColorHex; set => SetField(ref _statusColorHex, value); }
     public double PercentValue { get => _percentValue; set => SetField(ref _percentValue, value); }
@@ -39,6 +41,7 @@ public class FanMetricViewModel : ViewModelBase
         Description = metric.Description;
         HardwareDevice = metric.HardwareDevice;
         RpmDisplay = metric.RpmDisplay;
+        ScaleDescription = metric.ScaleDescription;
         PercentValue = metric.CalculatePercent();
         IsActive = metric.IsActive;
         StatusBadge = metric.StatusText;
@@ -129,8 +132,26 @@ public class DashboardViewModel : ViewModelBase
 
     public bool IsTaskbarStripDarkMode => !IsTaskbarStripLightMode;
 
+    private bool _startWithWindows;
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (SetField(ref _startWithWindows, value))
+            {
+                OnPropertyChanged(nameof(IsAutostartDisabled));
+                AutostartChanged?.Invoke(value);
+            }
+        }
+    }
+
+    public bool IsAutostartDisabled => !StartWithWindows;
+
     public ICommand SetTaskbarStripThemeCommand { get; }
+    public ICommand SetAutostartCommand { get; }
     public event Action<bool>? TaskbarStripThemeChanged;
+    public event Action<bool>? AutostartChanged;
 
     public DashboardViewModel()
     {
@@ -143,6 +164,19 @@ public class DashboardViewModel : ViewModelBase
             {
                 string theme = p.ToString()!.ToLowerInvariant();
                 IsTaskbarStripLightMode = (theme == "light" || theme == "true" || theme == "1");
+            }
+        });
+
+        SetAutostartCommand = new RelayCommand(p =>
+        {
+            if (p != null)
+            {
+                string s = p.ToString()!.ToLowerInvariant();
+                StartWithWindows = (s == "true" || s == "1" || s == "enable" || s == "enabled");
+            }
+            else
+            {
+                StartWithWindows = !StartWithWindows;
             }
         });
     }
