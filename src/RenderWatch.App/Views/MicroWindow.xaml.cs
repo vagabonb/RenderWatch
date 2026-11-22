@@ -24,8 +24,7 @@ public partial class MicroWindow : Window
     private readonly Action? _hideToTrayAction;
     private readonly Action? _exitAction;
 
-    private static double? _savedLeft;
-    private static double? _savedTop;
+    private Point _dragStart;
 
     public MicroWindow(MainViewModel viewModel, Action restoreAction, Action? hideToTrayAction = null, Action? exitAction = null)
     {
@@ -54,10 +53,13 @@ public partial class MicroWindow : Window
 
     public void PositionNearTray()
     {
-        if (_savedLeft.HasValue && _savedTop.HasValue)
+        var placement = _viewModel.GetAppearanceLayout(_viewModel.Appearance).Micro;
+        if (placement != null && double.IsFinite(placement.Left) && double.IsFinite(placement.Top))
         {
-            Left = _savedLeft.Value;
-            Top = _savedTop.Value;
+            Left = Math.Clamp(placement.Left, SystemParameters.VirtualScreenLeft,
+                SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 80);
+            Top = Math.Clamp(placement.Top, SystemParameters.VirtualScreenTop,
+                SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - 38);
             return;
         }
 
@@ -72,27 +74,32 @@ public partial class MicroWindow : Window
 
     private void OnBorderMouseDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.ChangedButton != MouseButton.Left) return;
         if (e.ClickCount == 2)
         {
             _restoreAction();
+            e.Handled = true;
             return;
         }
-
-        if (e.ChangedButton == MouseButton.Left)
-        {
-            try
-            {
-                DragMove();
-                _savedLeft = Left;
-                _savedTop = Top;
-            }
-            catch { }
-        }
+        _dragStart = e.GetPosition(this);
     }
 
-    private void OnRestoreClicked(object sender, RoutedEventArgs e)
+    private void OnBorderMouseMove(object sender, MouseEventArgs e)
     {
-        _restoreAction();
+        if (e.LeftButton != MouseButtonState.Pressed) return;
+        Point current = e.GetPosition(this);
+        if (Math.Abs(current.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(current.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        try
+        {
+            DragMove();
+            _viewModel.GetAppearanceLayout(_viewModel.Appearance).Micro = new RenderWatch.Core.Models.WindowPlacement
+            {
+                Left = Left, Top = Top, Width = ActualWidth, Height = ActualHeight
+            };
+            _ = _viewModel.SaveAppearanceLayoutsAsync();
+        }
+        catch (InvalidOperationException) { }
     }
 
     private void OnContextMenuRestoreClicked(object sender, RoutedEventArgs e)

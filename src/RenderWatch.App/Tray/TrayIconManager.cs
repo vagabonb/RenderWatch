@@ -15,7 +15,7 @@ public class TrayIconManager : IDisposable
 {
     private const int WM_USER = 0x0400;
     private const int WM_TRAYICON = WM_USER + 101;
-    private const int WM_MOUSEMOVE = 0x0200;
+    private const int WM_LBUTTONUP = 0x0202;
     private const int WM_LBUTTONDBLCLK = 0x0203;
     private const int WM_RBUTTONUP = 0x0205;
 
@@ -25,7 +25,6 @@ public class TrayIconManager : IDisposable
 
     private const uint NIF_MESSAGE = 0x00000001;
     private const uint NIF_ICON = 0x00000002;
-    private const uint NIF_TIP = 0x00000004;
     private const uint NIF_INFO = 0x00000010;
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -132,10 +131,10 @@ public class TrayIconManager : IDisposable
             cbSize = (uint)Marshal.SizeOf<NOTIFYICONDATA>(),
             hWnd = hwnd,
             uID = 1001,
-            uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP,
+            uFlags = NIF_MESSAGE | NIF_ICON,
             uCallbackMessage = WM_TRAYICON,
             hIcon = hIcon,
-            szTip = "RENDER WATCH - Пульт рендер-станции"
+            szTip = string.Empty
         };
 
         _isAdded = Shell_NotifyIcon(NIM_ADD, ref _notifyData);
@@ -145,17 +144,17 @@ public class TrayIconManager : IDisposable
     {
         _contextMenu = new ContextMenu
         {
-            Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#14171C")),
-            BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#252B34")),
+            Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#303132")),
+            BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#454647")),
             BorderThickness = new Thickness(1),
-            Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F3F4F6"))
+            Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5F2EA"))
         };
 
         var titleItem = new MenuItem
         {
             Header = "RENDER WATCH (Открыть)",
             FontWeight = FontWeights.Bold,
-            Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#FFFFFF"))
+            Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5F2EA"))
         };
         titleItem.Click += (_, _) =>
         {
@@ -212,7 +211,7 @@ public class TrayIconManager : IDisposable
 
         _contextMenu.Items.Add(new Separator());
 
-        var exitItem = new MenuItem { Header = "Выход из приложения", Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#9CA3AF")) };
+        var exitItem = new MenuItem { Header = "Выход из приложения", Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B8B7B1")) };
         exitItem.Click += (_, _) =>
         {
             _hoverFlyout?.HideFlyout();
@@ -226,15 +225,7 @@ public class TrayIconManager : IDisposable
         if (msg == WM_TRAYICON)
         {
             int action = lParam.ToInt32();
-            if (action == WM_MOUSEMOVE)
-            {
-                if (_hoverFlyout == null)
-                {
-                    _hoverFlyout = new TrayHoverFlyout(_mainViewModel, _showWindowAction);
-                }
-                _hoverFlyout.KeepAlive();
-            }
-            else if (action == 0x0202) // WM_LBUTTONUP: single click also opens/holds flyout
+            if (action == WM_LBUTTONUP)
             {
                 if (_hoverFlyout == null)
                 {

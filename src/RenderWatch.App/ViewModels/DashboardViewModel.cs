@@ -222,6 +222,12 @@ public class DashboardViewModel : ViewModelBase
     public double GpuPercentValue { get => _gpuPercentValue; set => SetField(ref _gpuPercentValue, value); }
 
     public string RamDisplay { get => _ramDisplay; set => SetField(ref _ramDisplay, value); }
+    private string _ramCapacityDisplay = "Недоступно";
+    public string RamCapacityDisplay
+    {
+        get => _ramCapacityDisplay;
+        private set => SetField(ref _ramCapacityDisplay, value);
+    }
     public string RamCompactDisplay { get => _ramCompactDisplay; set => SetField(ref _ramCompactDisplay, value); }
     public string RamUsedDisplay { get => _ramUsedDisplay; set => SetField(ref _ramUsedDisplay, value); }
     public string RamAvailableDisplay { get => _ramAvailableDisplay; set => SetField(ref _ramAvailableDisplay, value); }
@@ -235,6 +241,12 @@ public class DashboardViewModel : ViewModelBase
     public string RamPercentDisplay { get => _ramPercentDisplay; set => SetField(ref _ramPercentDisplay, value); }
 
     public string VramDisplay { get => _vramDisplay; set => SetField(ref _vramDisplay, value); }
+    private string _vramCapacityDisplay = "Недоступно";
+    public string VramCapacityDisplay
+    {
+        get => _vramCapacityDisplay;
+        private set => SetField(ref _vramCapacityDisplay, value);
+    }
     public string VramUsedDisplay { get => _vramUsedDisplay; set => SetField(ref _vramUsedDisplay, value); }
     public string VramAvailableDisplay { get => _vramAvailableDisplay; set => SetField(ref _vramAvailableDisplay, value); }
     public string VramTotalDisplay { get => _vramTotalDisplay; set => SetField(ref _vramTotalDisplay, value); }
@@ -242,8 +254,54 @@ public class DashboardViewModel : ViewModelBase
 
     public string SensorSources { get => _sensorSources; set => SetField(ref _sensorSources, value); }
 
+    public sealed record DiskActivityDisplay(string Name, string Read, string Write);
+    private IReadOnlyList<DiskActivityDisplay> _physicalDisks = Array.Empty<DiskActivityDisplay>();
+    public IReadOnlyList<DiskActivityDisplay> PhysicalDisks
+    {
+        get => _physicalDisks;
+        private set => SetField(ref _physicalDisks, value);
+    }
+
+    private string _diskRead = "Недоступно";
+    private string _diskWrite = "Недоступно";
+    private string _networkReceive = "Недоступно";
+    private string _networkSend = "Недоступно";
+    private string _uptime = "—";
+    private string _diskCompact = "—";
+    private string _networkCompact = "—";
+
+    public string DiskRead { get => _diskRead; private set => SetField(ref _diskRead, value); }
+    public string DiskWrite { get => _diskWrite; private set => SetField(ref _diskWrite, value); }
+    public string NetworkReceive { get => _networkReceive; private set => SetField(ref _networkReceive, value); }
+    public string NetworkSend { get => _networkSend; private set => SetField(ref _networkSend, value); }
+    public string Uptime { get => _uptime; private set => SetField(ref _uptime, value); }
+    public string DiskCompact { get => _diskCompact; private set => SetField(ref _diskCompact, value); }
+    public string NetworkCompact { get => _networkCompact; private set => SetField(ref _networkCompact, value); }
+
+    private static string FormatCompactRates(double? received, double? sent) =>
+        received.HasValue && sent.HasValue
+            ? $"↓{received.Value / 1048576.0:F1} ↑{sent.Value / 1048576.0:F1} МБ/с"
+            : "—";
+
+    private static string FormatRate(double? bytesPerSecond) =>
+        bytesPerSecond.HasValue ? $"{bytesPerSecond.Value / 1048576.0:F2} МБ/с" : "Недоступно";
+
     public void Update(HardwareMetrics metrics, TrackerUpdateResult tracker)
     {
+        PhysicalDisks = metrics.PhysicalDisks.Select(disk =>
+            new DiskActivityDisplay("Диск " + disk.Name, FormatRate(disk.ReadBytesPerSecond), FormatRate(disk.WriteBytesPerSecond)))
+            .ToArray();
+        DiskRead = FormatRate(metrics.DiskReadBytesPerSecond);
+        DiskWrite = FormatRate(metrics.DiskWriteBytesPerSecond);
+        NetworkReceive = !metrics.NetworkAvailable ? "Недоступно" : metrics.NetworkOnline ? FormatRate(metrics.NetworkReceiveBytesPerSecond) : "Нет подключения";
+        NetworkSend = !metrics.NetworkAvailable ? "Недоступно" : metrics.NetworkOnline ? FormatRate(metrics.NetworkSendBytesPerSecond) : "Нет подключения";
+        DiskCompact = FormatCompactRates(metrics.DiskReadBytesPerSecond, metrics.DiskWriteBytesPerSecond);
+        NetworkCompact = FormatCompactRates(metrics.NetworkReceiveBytesPerSecond, metrics.NetworkSendBytesPerSecond);
+        var uptime = metrics.SystemUptime;
+        Uptime = uptime.Days > 0
+            ? $"{uptime.Days} д {uptime.Hours:00}:{uptime.Minutes:00}:{uptime.Seconds:00}"
+            : $"{(int)uptime.TotalHours:00}:{uptime.Minutes:00}:{uptime.Seconds:00}";
+
         AppName = tracker.AppName;
         SceneName = tracker.SceneName;
         StatusText = tracker.Status.ToDisplayName();
@@ -267,6 +325,7 @@ public class DashboardViewModel : ViewModelBase
         GpuPercentValue = metrics.GpuUsagePercent ?? 0.0;
 
         RamDisplay = metrics.RamDisplay;
+        RamCapacityDisplay = FormatMemoryCapacity(metrics.RamUsedGb, metrics.RamTotalGb);
         RamCompactDisplay = metrics.RamCompactDisplay;
         RamPercentValue = metrics.RamUsagePercent ?? 0.0;
 
@@ -284,6 +343,7 @@ public class DashboardViewModel : ViewModelBase
         RamPercentDisplay = metrics.RamPercentDisplay;
 
         VramDisplay = metrics.VramDisplay;
+        VramCapacityDisplay = FormatMemoryCapacity(metrics.VramUsedGb, metrics.VramTotalGb);
         VramPercentValue = metrics.VramUsagePercent ?? 0.0;
 
         if (metrics.VramUsedGb.HasValue)
@@ -361,6 +421,9 @@ public class DashboardViewModel : ViewModelBase
             _fanGroups.Clear();
         }
     }
+
+    private static string FormatMemoryCapacity(double? used, double? total) =>
+        used.HasValue && total.HasValue ? $"{used.Value:F1} / {total.Value:F1} ГБ" : "Недоступно";
 
     private static (string GroupKey, string GroupName, int Order) DetermineFanGroup(FanMetric m)
     {

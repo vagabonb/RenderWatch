@@ -9,6 +9,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
     public string ProviderName => "Composite Hardware Monitor";
     public bool IsAvailable => true;
 
+    private readonly SystemActivityMonitor _activityMonitor = new();
     private readonly NativeWin32Monitor _win32Monitor;
     private readonly NvmlMonitor _nvmlMonitor;
     private readonly NvidiaSmiFallback _smiFallback;
@@ -102,6 +103,8 @@ public class CompositeHardwareMonitor : IHardwareMonitor
         {
             Timestamp = DateTime.Now
         };
+
+        _activityMonitor.Update(result);
 
         var sources = new List<string>();
 
@@ -819,6 +822,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
 
     public void Dispose()
     {
+        _activityMonitor.Dispose();
         _win32Monitor.Dispose();
         _nvmlMonitor.Dispose();
         _smiFallback.Dispose();

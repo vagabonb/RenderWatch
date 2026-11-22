@@ -166,7 +166,7 @@ public class AutoUpdateService
     /// Launches the detached swap script that waits for the current process to close,
     /// replaces the existing RenderWatch.exe with the downloaded one, and restarts.
     /// </summary>
-    public static void ApplyUpdateAndRestart()
+    public static void ApplyUpdateAndRestart(bool shutdownApp = true)
     {
         if (!IsUpdateReady || !File.Exists(PendingExePath)) return;
 
@@ -178,6 +178,7 @@ public class AutoUpdateService
 
             // Generate clean batch updater script
             string scriptContent = $@"@echo off
+chcp 65001 >NUL
 set OLD_PID={currentPid}
 set TARGET_EXE=""{currentExe}""
 set NEW_EXE=""{PendingExePath}""
@@ -198,7 +199,7 @@ start """" %TARGET_EXE%
 del ""%~f0"" >NUL
 ";
 
-            File.WriteAllText(ScriptPath, scriptContent, System.Text.Encoding.ASCII);
+            File.WriteAllText(ScriptPath, scriptContent, new System.Text.UTF8Encoding(false));
 
             var psi = new ProcessStartInfo
             {
@@ -210,7 +211,7 @@ del ""%~f0"" >NUL
             };
 
             Process.Start(psi);
-            Application.Current?.Dispatcher?.Invoke(() =>
+            if (shutdownApp) Application.Current?.Dispatcher?.Invoke(() =>
             {
                 Application.Current.Shutdown();
             });

@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="BlackCardFill" Color="#171717"/>
+    <SolidColorBrush x:Key="BlackCardEdge" Color="#303030"/>
+    <SolidColorBrush x:Key="BlackButtonFill" Color="#232323"/>
+    <Style x:Key="BlackCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource BlackCardFill}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BlackCardEdge}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+</ResourceDictionary>

@@ -31,17 +31,21 @@ public partial class App : Application
 
     private const int SW_RESTORE = 9;
 
+    internal static string DataDirectory { get; } =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RenderWatch");
+
     private TrayIconManager? _trayManager;
     private MainWindow? _mainWindow;
 
     public App()
     {
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        Directory.CreateDirectory(DataDirectory);
         DispatcherUnhandledException += (s, e) =>
         {
             try
             {
-                File.AppendAllText("error.log", $"[{DateTime.Now}] Unhandled Exception: {e.Exception}\n");
+                File.AppendAllText(Path.Combine(DataDirectory, "error.log"), $"[{DateTime.Now}] Unhandled Exception: {e.Exception}\n");
             }
             catch { }
             MessageBox.Show($"Произошла ошибка:\n{e.Exception.Message}\n\nПодробности записаны в error.log", "RENDER WATCH Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -52,7 +56,7 @@ public partial class App : Application
         {
             try
             {
-                File.AppendAllText("error.log", $"[{DateTime.Now}] AppDomain Exception: {e.ExceptionObject}\n");
+                File.AppendAllText(Path.Combine(DataDirectory, "error.log"), $"[{DateTime.Now}] AppDomain Exception: {e.ExceptionObject}\n");
             }
             catch { }
         };
@@ -113,8 +117,8 @@ public partial class App : Application
             // Initialize Core Dependencies
             var hardwareMonitor = new CompositeHardwareMonitor();
             var tracker = new RenderProcessTracker();
-            var historyRepo = new JsonHistoryRepository();
-            var settingsManager = new JsonSettingsManager();
+            var historyRepo = new JsonHistoryRepository(Path.Combine(DataDirectory, "history.json"));
+            var settingsManager = new JsonSettingsManager(Path.Combine(DataDirectory, "settings.json"));
             var notificationService = new NotificationService();
             var launcher = new AppLauncher();
 
@@ -138,7 +142,6 @@ public partial class App : Application
                 exitAction: () =>
                 {
                     _mainWindow.Close();
-                    Shutdown();
                 });
 
             _mainWindow.AttachTrayManager(_trayManager);
@@ -190,7 +193,7 @@ public partial class App : Application
         {
             try
             {
-                File.AppendAllText("error.log", $"[{DateTime.Now}] OnStartup Exception: {ex}\n");
+                File.AppendAllText(Path.Combine(DataDirectory, "error.log"), $"[{DateTime.Now}] OnStartup Exception: {ex}\n");
             }
             catch { }
             MessageBox.Show($"Ошибка инициализации RENDER WATCH:\n{ex.Message}\n\nПодробности в error.log", "RENDER WATCH", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -206,11 +209,7 @@ public partial class App : Application
         }
         catch { }
 
-        if (AutoUpdateService.IsUpdateReady)
-        {
-            AutoUpdateService.ApplyUpdateAndRestart();
-            return;
-        }
+        AutoUpdateService.ApplyUpdateAndRestart(shutdownApp: false);
 
         base.OnExit(e);
         Environment.Exit(0);

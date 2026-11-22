@@ -1,0 +1,200 @@
+<UserControl x:Class="RenderWatch.App.Views.SidebarNavigation"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="SidebarButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="28,0"/>
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontMain}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="NavigationRow" Background="{TemplateBinding Background}">
+                            <Border x:Name="RaisedRow" CornerRadius="0" Margin="8,1"
+                                Background="{DynamicResource BlackButtonFill}" BorderBrush="{DynamicResource BlackCardEdge}" BorderThickness="0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsBlackStyle}" Value="True"/>
+                                                <Condition Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}}" Value="Active"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                        <Border Background="#0EFFFFFF" Opacity="0" x:Name="hover" CornerRadius="0"/>
+                            <Border x:Name="ActiveLine" Width="2" Height="19" VerticalAlignment="Center" Background="{TemplateBinding BorderBrush}" HorizontalAlignment="Left"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                                <Setter TargetName="ActiveLine" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="hover" Property="Margin" Value="8,1"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="hover" Property="Opacity" Value="1"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="hover" Property="Opacity" Value="1"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+    <Border>
+        <DockPanel LastChildFill="False">
+            <Grid DockPanel.Dock="Top" Height="36" Margin="0,11,0,56">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Image Source="/RenderWatch;component/Assets/app.png" Width="24" Height="24"
+                       HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
+                    <Image.Style>
+                        <Style TargetType="Image">
+                            <Setter Property="Margin" Value="26,0,0,0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                    <Setter Property="Margin" Value="16,0,0,0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                <TextBlock Grid.Column="1" Text="Render Watch" VerticalAlignment="Center" Margin="10,0,0,0"
+                           Foreground="{DynamicResource BrushTextPrimary}" FontSize="13"
+                           Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+            </Grid>
+
+            <Button DockPanel.Dock="Bottom" Margin="0,0,0,16" Command="{Binding ToggleSidebarCommand}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SidebarButton}">
+                        <Setter Property="ToolTip" Value="Свернуть боковое меню"/>
+                        <Setter Property="AutomationProperties.Name" Value="Свернуть боковое меню"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                <Setter Property="ToolTip" Value="Развернуть боковое меню"/>
+                                <Setter Property="AutomationProperties.Name" Value="Развернуть боковое меню"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <Path Width="16" Height="16" Stretch="Uniform" StrokeThickness="1.1"
+                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                    <Path.Style>
+                        <Style TargetType="Path">
+                            <Setter Property="Data" Value="M 1,2 H 15 V 14 H 1 Z M 6,2 V 14 M 11,5 L 8,8 L 11,11"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                    <Setter Property="Data" Value="M 1,2 H 15 V 14 H 1 Z M 6,2 V 14 M 8,5 L 11,8 L 8,11"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+            </Button>
+
+            <StackPanel DockPanel.Dock="Top">
+                <Button Command="{Binding SelectTabCommand}" CommandParameter="0" AutomationProperties.Name="Обзор" ToolTip="Обзор">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SidebarButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDashboardActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="Tag" Value="Active"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M 1,1 H 5 V 5 H 1 Z M 8,1 H 12 V 5 H 8 Z M 1,8 H 5 V 12 H 1 Z M 8,8 H 12 V 12 H 8 Z" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.1"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              VerticalAlignment="Center"/>
+                        <TextBlock Text="Обзор" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SelectTabCommand}" CommandParameter="1" AutomationProperties.Name="Графики нагрузки" ToolTip="Графики нагрузки">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SidebarButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChartsActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="Tag" Value="Active"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M 1,12 H 13 M 2,10 V 6 M 5.5,10 V 3 M 9,10 V 5 M 12,10 V 1" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.1"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              VerticalAlignment="Center"/>
+                        <TextBlock Text="Графики" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SelectTabCommand}" CommandParameter="2" AutomationProperties.Name="Конфигурация" ToolTip="Конфигурация">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SidebarButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConfigActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="Tag" Value="Active"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M 2,2 H 12 V 10 H 2 Z M 7,10 V 13 M 4,13 H 10 M 4,5 H 10" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.1"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              VerticalAlignment="Center"/>
+                        <TextBlock Text="Конфигурация" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding SelectTabCommand}" CommandParameter="3" AutomationProperties.Name="Конструктор" ToolTip="Конструктор">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SidebarButton}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConstructorActive}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BrushTextPrimary}"/>
+                                    <Setter Property="Tag" Value="Active"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M 2,3 H 12 M 2,7 H 12 M 2,11 H 12 M 5,1 V 5 M 9,5 V 9 M 5,9 V 13" Width="13" Height="13" Stretch="Uniform" StrokeThickness="1.1"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                              VerticalAlignment="Center"/>
+                        <TextBlock Text="Конструктор" VerticalAlignment="Center" Margin="12,0,0,0"
+                                   Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </DockPanel>
+    </Border>
+
+</UserControl>

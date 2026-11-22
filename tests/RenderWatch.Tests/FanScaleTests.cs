@@ -5,7 +5,7 @@ namespace RenderWatch.Tests;
 public class FanScaleTests
 {
     [Theory]
-    [InlineData(0, 0)]
+    [InlineData(0d, 0)]
     [InlineData(100, 3.3333333333)]
     [InlineData(1424, 47.4666666667)]
     [InlineData(2000, 66.6666666667)]
@@ -50,10 +50,10 @@ public class FanScaleTests
 
     [Theory]
     [InlineData(null, 0)]
-    [InlineData(-10, 0)]
-    [InlineData(0, 0)]
-    [InlineData(65, 65)]
-    [InlineData(150, 100)]
+    [InlineData(-10d, 0)]
+    [InlineData(0d, 0)]
+    [InlineData(65d, 65)]
+    [InlineData(150d, 100)]
     [InlineData(double.NaN, 0)]
     [InlineData(double.PositiveInfinity, 0)]
     public void WithoutTachometer_UsesOnlyAValidControlSignal(double? control, double expected)

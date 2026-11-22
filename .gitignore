@@ -23,3 +23,8 @@ publish-single/
 !Assets/*.ico
 !Assets/*.png
 !Assets/PawnIO_setup.exe
+.qa/
+.release/
+.dotnet-home/
+.nuget-temp/
+.temp/

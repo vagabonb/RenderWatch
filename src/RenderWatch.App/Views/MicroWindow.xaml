@@ -1,7 +1,8 @@
 <Window x:Class="RenderWatch.App.Views.MicroWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="RENDER WATCH Micro"
+        xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
+        Title="RENDER WATCH · Микро"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -20,13 +21,25 @@
         <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
     </Window.Resources>
 
-    <Border Background="#EB0E0E0E"
+    <Grid>
+        <Grid Visibility="{Binding IsBlackStyle, Converter={StaticResource BoolToVis}}">
+            <Grid.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/RenderWatch;component/Styles/BlackTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+
+        </ResourceDictionary>
+    </Grid.Resources>
+    <Border Background="{StaticResource BlackCardFill}"
             BorderThickness="0"
-            CornerRadius="7"
-            Padding="9,4"
+            CornerRadius="5"
+            Padding="8,4"
             Margin="4"
             Cursor="SizeAll"
             MouseLeftButtonDown="OnBorderMouseDown"
+            MouseMove="OnBorderMouseMove"
             ToolTip="RENDER WATCH — Микро-окно (Двойной клик: развернуть, перетаскивание: переместить)">
         <Border.ContextMenu>
             <ContextMenu Background="#101010" BorderBrush="#262626" BorderThickness="1">
@@ -37,49 +50,96 @@
                 <MenuItem Header="Закрыть RENDER WATCH" Foreground="#999999" Click="OnContextMenuExitClicked"/>
             </ContextMenu>
         </Border.ContextMenu>
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.55" Color="#000000"/>
-        </Border.Effect>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <!-- App Logo Indicator -->
-            <Image Source="/Assets/app.png" Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ctrl:MetricOrder.Value="{Binding Constructor.MetricOrder}">
 
             <!-- CPU Block: Temp + Load -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" ToolTip="Процессор: Температура и Загрузка">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Tag="CPU">
+                <StackPanel.ToolTip><ToolTip Background="#141414" BorderBrush="#333333" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="CPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
+<TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <StackPanel.Visibility>
+                    <MultiBinding Converter="{StaticResource AnyVisible}">
+                            <Binding Path="Constructor.ShowMicroCpu"/>
+                            <Binding Path="Constructor.ShowMicroCpuTemp"/>
+                        </MultiBinding>
+                </StackPanel.Visibility>
                 <TextBlock Text="CPU" Foreground="#757575" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                <TextBlock Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Separator -->
-            <Rectangle Width="1" Height="11" Fill="#242424" Margin="0,0,7,0" VerticalAlignment="Center"/>
 
             <!-- GPU Block: Temp + Load -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" ToolTip="Видеокарта: Температура и Загрузка">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Tag="GPU">
+                <StackPanel.ToolTip><ToolTip Background="#141414" BorderBrush="#333333" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="GPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
+<TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <StackPanel.Visibility>
+                    <MultiBinding Converter="{StaticResource AnyVisible}">
+                            <Binding Path="Constructor.ShowMicroGpu"/>
+                            <Binding Path="Constructor.ShowMicroGpuTemp"/>
+                        </MultiBinding>
+                </StackPanel.Visibility>
                 <TextBlock Text="GPU" Foreground="#757575" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                <TextBlock Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                <TextBlock Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Separator -->
-            <Rectangle Width="1" Height="11" Fill="#242424" Margin="0,0,7,0" VerticalAlignment="Center"/>
 
             <!-- RAM Block: Usage -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" ToolTip="Оперативная память">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Visibility="{Binding Constructor.ShowMicroRam, Converter={StaticResource BoolToVis}}" Tag="RAM">
+                <StackPanel.ToolTip><ToolTip Background="#141414" BorderBrush="#333333" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="RAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
                 <TextBlock Text="RAM" Foreground="#757575" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                 <TextBlock Text="{Binding Dashboard.RamCompactDisplay}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Separator -->
-            <Rectangle Width="1" Height="11" Fill="#242424" Margin="0,0,5,0" VerticalAlignment="Center"/>
 
-            <!-- Expand / Restore Button -->
-            <Button Click="OnRestoreClicked"
-                    Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="3,1" Margin="0,0,2,0"
-                    ToolTip="Развернуть в полное окно (или двойной клик)">
-                <TextBlock Text="⤢" Foreground="#777777" FontSize="11" FontWeight="Bold"/>
-            </Button>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Visibility="{Binding Constructor.ShowMicroVram, Converter={StaticResource BoolToVis}}" Tag="VRAM">
+                <StackPanel.ToolTip><ToolTip Background="#141414" BorderBrush="#333333" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="VRAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <TextBlock Text="VRAM" Foreground="#757575" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
 
+            <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroDisk, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Диски " Foreground="#999999" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.DiskCompact}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+            </StackPanel>
+            <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroNetwork, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Сеть " Foreground="#999999" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.NetworkCompact}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+            </StackPanel>
+            <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroUptime, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Время работы " Foreground="#999999" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.Uptime}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+            </StackPanel>
             <!-- Close / Exit Button -->
             <Button Click="OnCloseClicked"
                     Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="3,1"
@@ -88,4 +148,130 @@
             </Button>
         </StackPanel>
     </Border>
+
+        </Grid>
+        <Grid Visibility="{Binding IsGraphiteStyle, Converter={StaticResource BoolToVis}}">
+    <Border Background="{StaticResource GraphiteBackdrop}"
+            CornerRadius="6"
+            Margin="4"
+            Cursor="SizeAll"
+            MouseLeftButtonDown="OnBorderMouseDown"
+            MouseMove="OnBorderMouseMove"
+            ToolTip="RENDER WATCH — Микро-окно (Двойной клик: развернуть, перетаскивание: переместить)">
+        <Border.ContextMenu>
+            <ContextMenu Background="#2A2B2C" BorderBrush="#434445" BorderThickness="1">
+                <MenuItem Header="Открыть RENDER WATCH" FontWeight="Bold" Foreground="#F5F2EA" Click="OnContextMenuRestoreClicked"/>
+                <Separator Background="#404142"/>
+                <MenuItem Header="Свернуть в трей" Foreground="#D8D5CF" Click="OnContextMenuTrayClicked"/>
+                <Separator Background="#404142"/>
+                <MenuItem Header="Закрыть RENDER WATCH" Foreground="#BCBAB5" Click="OnContextMenuExitClicked"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.55" Color="#000000"/>
+        </Border.Effect>
+        <Grid>
+            <Border Background="{x:Static ctrl:GraphiteTexture.Grain}" CornerRadius="6" IsHitTestVisible="False"/>
+            <StackPanel Margin="11,7" Orientation="Horizontal" VerticalAlignment="Center" ctrl:MetricOrder.Value="{Binding Constructor.MetricOrder}">
+
+            <!-- CPU Block: Temp + Load -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Tag="CPU">
+                <StackPanel.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="CPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
+<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <StackPanel.Visibility>
+                    <MultiBinding Converter="{StaticResource AnyVisible}">
+                            <Binding Path="Constructor.ShowMicroCpu"/>
+                            <Binding Path="Constructor.ShowMicroCpuTemp"/>
+                        </MultiBinding>
+                </StackPanel.Visibility>
+                <TextBlock Text="CPU" Foreground="#ABA9A4" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="Normal" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#F5F2EA" FontSize="12" FontWeight="Light" VerticalAlignment="Center"/>
+            </StackPanel>
+
+
+            <!-- GPU Block: Temp + Load -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Tag="GPU">
+                <StackPanel.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="GPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
+<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <StackPanel.Visibility>
+                    <MultiBinding Converter="{StaticResource AnyVisible}">
+                            <Binding Path="Constructor.ShowMicroGpu"/>
+                            <Binding Path="Constructor.ShowMicroGpuTemp"/>
+                        </MultiBinding>
+                </StackPanel.Visibility>
+                <TextBlock Text="GPU" Foreground="#ABA9A4" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#B8B8B8" FontSize="11" FontWeight="Normal" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                <TextBlock Visibility="{Binding Constructor.ShowMicroGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#F5F2EA" FontSize="12" FontWeight="Light" VerticalAlignment="Center"/>
+            </StackPanel>
+
+
+            <!-- RAM Block: Usage -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Visibility="{Binding Constructor.ShowMicroRam, Converter={StaticResource BoolToVis}}" Tag="RAM">
+                <StackPanel.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="RAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <TextBlock Text="RAM" Foreground="#ABA9A4" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding Dashboard.RamCompactDisplay}" Foreground="#F5F2EA" FontSize="12" FontWeight="Light" VerticalAlignment="Center"/>
+            </StackPanel>
+
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,7,0" Visibility="{Binding Constructor.ShowMicroVram, Converter={StaticResource BoolToVis}}" Tag="VRAM">
+                <StackPanel.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
+    <StackPanel><TextBlock Text="VRAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
+    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/>
+</TextBlock>
+<ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Height="30" Width="220" HorizontalAlignment="Left"/>
+</StackPanel>
+</ToolTip></StackPanel.ToolTip>
+                <TextBlock Text="VRAM" Foreground="#ABA9A4" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                <TextBlock Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#F5F2EA" FontSize="12" FontWeight="Light" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroDisk, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Диски " Foreground="#BCBAB5" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.DiskCompact}" Foreground="White" FontSize="12" FontWeight="Light"/>
+            </StackPanel>
+            <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroNetwork, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Сеть " Foreground="#BCBAB5" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.NetworkCompact}" Foreground="White" FontSize="12" FontWeight="Light"/>
+            </StackPanel>
+            <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,7,0" VerticalAlignment="Center" Visibility="{Binding Constructor.ShowMicroUptime, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Время работы " Foreground="#BCBAB5" FontSize="10"/>
+                <TextBlock Text="{Binding Dashboard.Uptime}" Foreground="White" FontSize="12" FontWeight="Light"/>
+            </StackPanel>
+            <!-- Close / Exit Button -->
+            <Button Click="OnCloseClicked"
+                    Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="3,1"
+                    ToolTip="Закрыть RENDER WATCH">
+                <TextBlock Text="✕" Foreground="{StaticResource SoftInk}" FontSize="9"/>
+            </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+
+        </Grid>
+    </Grid>
 </Window>

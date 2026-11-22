@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using LibreHardwareMonitor.Hardware;
@@ -16,129 +15,8 @@ public class LibreHardwareProvider : IHardwareMonitor
     private Computer? _computer;
     private bool _isInitialized;
 
-    private static void EnsurePawnIoDriverInstalled()
-    {
-        try
-        {
-            try
-            {
-                using var scCfg = Process.Start(new ProcessStartInfo
-                {
-                    FileName = "sc.exe",
-                    Arguments = "config PawnIO start= auto",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-                scCfg?.WaitForExit(1000);
-            }
-            catch { }
-
-            try
-            {
-                using var sc = Process.Start(new ProcessStartInfo
-                {
-                    FileName = "sc.exe",
-                    Arguments = "start PawnIO",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-                sc?.WaitForExit(2000);
-            }
-            catch { }
-
-            if (LibreHardwareMonitor.PawnIo.PawnIo.IsInstalled)
-            {
-                return;
-            }
-
-            string tempPath = Path.Combine(Path.GetTempPath(), "RenderWatch_PawnIO_setup.exe");
-
-            // Look up embedded stream from Core assembly first, then entry assembly, then all domain assemblies
-            Stream? stream = null;
-            var coreAsm = typeof(LibreHardwareProvider).Assembly;
-            var coreRes = coreAsm.GetManifestResourceNames()
-                .FirstOrDefault(n => n.EndsWith("PawnIO_setup.exe", StringComparison.OrdinalIgnoreCase));
-            if (coreRes != null)
-            {
-                stream = coreAsm.GetManifestResourceStream(coreRes);
-            }
-
-            if (stream == null)
-            {
-                var entryAsm = Assembly.GetEntryAssembly();
-                if (entryAsm != null)
-                {
-                    var entryRes = entryAsm.GetManifestResourceNames()
-                        .FirstOrDefault(n => n.EndsWith("PawnIO_setup.exe", StringComparison.OrdinalIgnoreCase));
-                    if (entryRes != null)
-                    {
-                        stream = entryAsm.GetManifestResourceStream(entryRes);
-                    }
-                }
-            }
-
-            if (stream == null)
-            {
-                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    try
-                    {
-                        var resName = asm.GetManifestResourceNames()
-                            .FirstOrDefault(n => n.EndsWith("PawnIO_setup.exe", StringComparison.OrdinalIgnoreCase));
-                        if (resName != null)
-                        {
-                            stream = asm.GetManifestResourceStream(resName);
-                            if (stream != null) break;
-                        }
-                    }
-                    catch { }
-                }
-            }
-
-            if (stream != null)
-            {
-                using (stream)
-                using (var fs = File.Create(tempPath))
-                {
-                    stream.CopyTo(fs);
-                }
-
-                if (File.Exists(tempPath))
-                {
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = tempPath,
-                        Arguments = "-install -silent",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    using var proc = Process.Start(psi);
-                    proc?.WaitForExit(15000);
-
-                    try
-                    {
-                        using var sc = Process.Start(new ProcessStartInfo
-                        {
-                            FileName = "sc.exe",
-                            Arguments = "start PawnIO",
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        });
-                        sc?.WaitForExit(2000);
-                    }
-                    catch { }
-
-                    try { File.Delete(tempPath); } catch { }
-                }
-            }
-        }
-        catch { }
-    }
-
     public Task InitializeAsync()
     {
-        EnsurePawnIoDriverInstalled();
-
         try
         {
             _computer = new Computer
@@ -705,7 +583,7 @@ public class LibreHardwareProvider : IHardwareMonitor
             // Write live diagnostic log to telemetry_live.log
             try
             {
-                string logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "telemetry_live.log");
+                string logFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RenderWatch", "telemetry_live.log");
                 var sb = new StringBuilder();
                 sb.AppendLine($"[{DateTime.Now:HH:mm:ss.fff}] Elevated={isElevated}, PawnIoInstalled={LibreHardwareMonitor.PawnIo.PawnIo.IsInstalled}");
                 sb.AppendLine($"Selected: CpuTemp={metrics.CpuTemperatureC}°C, CpuPower={metrics.CpuPowerWatts}W");

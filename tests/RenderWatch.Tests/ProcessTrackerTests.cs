@@ -1,4 +1,4 @@
-﻿using RenderWatch.Core.Models;
+using RenderWatch.Core.Models;
 using RenderWatch.Core.Tracking;
 using Xunit;
 
@@ -11,6 +11,11 @@ public class ProcessTrackerTests
     {
         var tracker = new RenderProcessTracker();
         Assert.Equal(RenderStatus.Idle, tracker.CurrentStatus);
+
+        tracker.CurrentProfile = new RenderProfile
+        {
+            MainProcessNames = new() { $"RenderWatchTests-{Guid.NewGuid():N}" }
+        };
 
         var metrics = new HardwareMetrics { CpuUsagePercent = 5.0, GpuUsagePercent = 2.0 };
         var result = tracker.Update(metrics, 60);

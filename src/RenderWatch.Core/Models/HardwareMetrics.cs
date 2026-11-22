@@ -2,9 +2,22 @@ using System.Globalization;
 
 namespace RenderWatch.Core.Models;
 
+public sealed record DiskActivity(string Name, double? ReadBytesPerSecond, double? WriteBytesPerSecond);
+
 public class HardwareMetrics
 {
     public DateTime Timestamp { get; set; } = DateTime.Now;
+
+    public IReadOnlyList<DiskActivity> PhysicalDisks { get; set; } = Array.Empty<DiskActivity>();
+    public double? DiskReadBytesPerSecond { get; set; }
+    public double? DiskWriteBytesPerSecond { get; set; }
+    public double? NetworkReceiveBytesPerSecond { get; set; }
+    public double? NetworkSendBytesPerSecond { get; set; }
+    public bool NetworkOnline { get; set; }
+    public bool NetworkAvailable { get; set; }
+    public TimeSpan SystemUptime { get; set; }
+
+
 
     public double? CpuUsagePercent { get; set; }
     public double? CpuTemperatureC { get; set; }

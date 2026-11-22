@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Media;
 
 namespace RenderWatch.App.Controls;
@@ -35,8 +35,8 @@ public class MiniBarGauge : FrameworkElement
         set => SetValue(AccentColorProperty, value);
     }
 
-    private static readonly Brush TrackBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#222731"));
-    private static readonly Brush WhiteBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFFF"));
+    private static readonly Brush TrackBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#505152"));
+    private static readonly Brush WhiteBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E9E7DF"));
     private static readonly Brush AmberBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
     private static readonly Brush RedBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"));
 
@@ -56,13 +56,13 @@ public class MiniBarGauge : FrameworkElement
         double h = ActualHeight;
         if (w <= 0 || h <= 0) return;
 
+        double pct = double.IsFinite(Value) ? Math.Clamp(Value / Math.Max(1.0, MaxValue), 0.0, 1.0) : 0;
         double radius = h / 2.0;
 
         // Background track
         dc.DrawRoundedRectangle(TrackBrush, null, new Rect(0, 0, w, h), radius, radius);
 
         // Filled portion
-        double pct = Math.Clamp(Value / Math.Max(1.0, MaxValue), 0.0, 1.0);
         double fillWidth = w * pct;
 
         if (fillWidth > 0)

@@ -154,8 +154,6 @@ public partial class TaskbarStripWindow : Window
     private static double? _targetRightDip;
     private static double _lastScreenWidth;
 
-    private Point _dragStartPoint;
-    private bool _isDragging;
     private readonly DispatcherTimer _zOrderTimer;
 
     public TaskbarStripWindow(MainViewModel viewModel, Action restoreAction, Action? hideToTrayAction = null, Action? exitAction = null)
@@ -172,7 +170,7 @@ public partial class TaskbarStripWindow : Window
         // shift Left to the left so the right edge stays rigidly 14 DIPs left of the chevron ^
         SizeChanged += (_, e) =>
         {
-            if (!_isDragging && !_savedLeft.HasValue && _targetRightDip.HasValue && e.NewSize.Width > 40)
+            if (!_savedLeft.HasValue && _targetRightDip.HasValue && e.NewSize.Width > 40)
             {
                 Left = Math.Max(20, _targetRightDip.Value - e.NewSize.Width);
                 _autoPlacedLeft = Left;
@@ -191,7 +189,7 @@ public partial class TaskbarStripWindow : Window
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        if (IsVisible && !_isDragging && !_savedLeft.HasValue)
+                        if (IsVisible && !_savedLeft.HasValue)
                         {
                             PositionOnTaskbar();
                             EnsureTopmost();
@@ -477,7 +475,7 @@ public partial class TaskbarStripWindow : Window
 
                 try
                 {
-                    System.IO.File.WriteAllText(@"c:\Users\PC FOR GAMER\Documents\VIOD\tray_live.log",
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(App.DataDirectory, "tray_live.log"),
                         $"[{DateTime.Now:HH:mm:ss.fff}] Source={detectionSource}, trayLeftDip={trayLeftDip}, targetRight={targetRight}, Left={Left}, Width={currentWidth}, tbRight={taskbarRightDip}\r\n");
                 }
                 catch { }
@@ -518,42 +516,9 @@ public partial class TaskbarStripWindow : Window
         EnsureTopmost();
     }
 
-    private void OnPillMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        _dragStartPoint = e.GetPosition(this);
-        _isDragging = false;
-    }
-
-    private void OnPillMouseMove(object sender, MouseEventArgs e)
-    {
-        if (e.LeftButton == MouseButtonState.Pressed && !_isDragging)
-        {
-            Point current = e.GetPosition(this);
-            double dx = current.X - _dragStartPoint.X;
-            double dy = current.Y - _dragStartPoint.Y;
-            // Strict drag threshold: prevent normal clicks from triggering drag move
-            if (Math.Sqrt(dx * dx + dy * dy) > 14)
-            {
-                _isDragging = true;
-                _targetRightDip = null; // User manually positioned, disable auto right-edge anchor
-                try
-                {
-                    DragMove();
-                    _savedLeft = Left;
-                    _savedTop = Top;
-                }
-                catch { }
-            }
-        }
-    }
-
     private void OnPillMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (!_isDragging)
-        {
-            _restoreAction();
-        }
-        _isDragging = false;
+        _restoreAction();
     }
 
     private void OnContextMenuRestoreClicked(object sender, RoutedEventArgs e)

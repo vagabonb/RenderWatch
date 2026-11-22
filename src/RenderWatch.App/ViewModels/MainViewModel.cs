@@ -41,9 +41,11 @@ public class MainViewModel : ViewModelBase, IDisposable
     private CancellationTokenSource? _monitoringCts;
     private Task? _monitoringTask;
 
+    public SessionMetricsViewModel SessionMetrics { get; } = new();
     public DashboardViewModel Dashboard { get; }
     public ChartsViewModel Charts { get; }
     public ConfigurationViewModel Configuration { get; }
+    public DisplayConstructorViewModel Constructor { get; }
     public HistoryViewModel History { get; }
     public LauncherViewModel Launcher { get; }
     public SettingsViewModel Settings { get; }
@@ -81,11 +83,13 @@ public class MainViewModel : ViewModelBase, IDisposable
                     0 => Dashboard,
                     1 => Charts,
                     2 => Configuration,
+                    3 => Constructor,
                     _ => Dashboard
                 };
                 OnPropertyChanged(nameof(IsDashboardActive));
                 OnPropertyChanged(nameof(IsChartsActive));
                 OnPropertyChanged(nameof(IsConfigActive));
+                OnPropertyChanged(nameof(IsConstructorActive));
             }
         }
     }
@@ -93,6 +97,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public bool IsDashboardActive => ActiveTabIndex == 0;
     public bool IsChartsActive => ActiveTabIndex == 1;
     public bool IsConfigActive => ActiveTabIndex == 2;
+    public bool IsConstructorActive => ActiveTabIndex == 3;
 
     public double CurrentPollingIntervalSec
     {
@@ -211,6 +216,64 @@ public class MainViewModel : ViewModelBase, IDisposable
     public string ToastMessage { get => _toastMessage; set => SetField(ref _toastMessage, value); }
     public bool IsToastVisible { get => _isToastVisible; set => SetField(ref _isToastVisible, value); }
 
+    public string Appearance
+    {
+        get => IsGraphiteStyle ? "Graphite" : "Black";
+        private set
+        {
+            if (Appearance == value) return;
+            _settings.Appearance = value;
+            NotifyAppearanceChanged();
+            _ = SaveAppearanceLayoutsAsync();
+        }
+    }
+
+    public bool IsBlackStyle => !IsGraphiteStyle;
+    public bool IsGraphiteStyle => string.Equals(_settings.Appearance, "Graphite", StringComparison.OrdinalIgnoreCase);
+    public string AppearanceName => IsGraphiteStyle ? "Графит" : "Блэк";
+    public bool AreSettingsLoaded { get; private set; }
+    public ICommand SetAppearanceCommand { get; }
+
+    public AppearanceLayout GetAppearanceLayout(string appearance) =>
+        appearance switch
+        {
+            "Graphite" => _settings.GraphiteLayout ??= new AppearanceLayout(),
+            _ => _settings.BlackLayout ??= new AppearanceLayout()
+        };
+
+    public Task SaveAppearanceLayoutsAsync() => _settingsManager.SaveSettingsAsync(_settings);
+
+    private void NotifyAppearanceChanged()
+    {
+        OnPropertyChanged(nameof(IsBlackStyle));
+        OnPropertyChanged(nameof(IsGraphiteStyle));
+        OnPropertyChanged(nameof(AppearanceName));
+        NotifySidebarChanged();
+        OnPropertyChanged(nameof(Appearance));
+    }
+
+    public bool IsSidebarCollapsed
+    {
+        get => IsGraphiteStyle ? _settings.IsSidebarCollapsed : _settings.IsBlackSidebarCollapsed;
+        set
+        {
+            if (IsSidebarCollapsed == value) return;
+            if (IsGraphiteStyle) _settings.IsSidebarCollapsed = value;
+            else _settings.IsBlackSidebarCollapsed = value;
+            NotifySidebarChanged();
+            _ = _settingsManager.SaveSettingsAsync(_settings);
+        }
+    }
+
+    public GridLength SidebarWidth => new(IsSidebarCollapsed ? 56 : 194);
+    public ICommand ToggleSidebarCommand { get; }
+
+    private void NotifySidebarChanged()
+    {
+        OnPropertyChanged(nameof(IsSidebarCollapsed));
+        OnPropertyChanged(nameof(SidebarWidth));
+    }
+
     public ICommand SelectTabCommand { get; }
     public ICommand ToggleMonitoringCommand { get; }
     public ICommand ToggleCompactModeCommand { get; }
@@ -220,7 +283,6 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand SetIntervalCommand { get; }
     public ICommand SetTaskbarStripThemeCommand { get; }
     public ICommand SetAutostartCommand { get; }
-    public ICommand ApplyUpdateCommand { get; }
 
     public MainViewModel(
         IHardwareMonitor hardwareMonitor,
@@ -254,6 +316,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         };
         Charts = new ChartsViewModel();
         Configuration = new ConfigurationViewModel();
+        Constructor = new DisplayConstructorViewModel();
         History = new HistoryViewModel(historyRepository);
         Launcher = new LauncherViewModel(launcher, settingsManager);
         Settings = new SettingsViewModel(settingsManager);
@@ -261,6 +324,11 @@ public class MainViewModel : ViewModelBase, IDisposable
         _currentView = Dashboard;
         _activeTabIndex = 0;
 
+        SetAppearanceCommand = new RelayCommand(value =>
+        {
+            if (value is "Black" or "Graphite") Appearance = (string)value;
+        });
+        ToggleSidebarCommand = new RelayCommand(_ => IsSidebarCollapsed = !IsSidebarCollapsed);
         SelectTabCommand = new RelayCommand(p =>
         {
             if (p != null && int.TryParse(p.ToString(), out int idx))
@@ -309,14 +377,18 @@ public class MainViewModel : ViewModelBase, IDisposable
             _tracker.ForceCompleteCurrentSession("Принудительное завершение пользователем");
         });
 
-        ApplyUpdateCommand = new RelayCommand(() => AutoUpdateService.ApplyUpdateAndRestart());
-
         _notificationService.OnNotification += HandleNotification;
     }
 
     public async Task InitializeAsync()
     {
         _settings = await _settingsManager.LoadSettingsAsync();
+        _settings.Appearance = Appearance;
+        AreSettingsLoaded = true;
+        OnPropertyChanged(nameof(AreSettingsLoaded));
+        NotifyAppearanceChanged();
+        NotifySidebarChanged();
+        Constructor.Initialize(_settings, _settingsManager);
         IsTaskbarStripLightMode = _settings.IsTaskbarStripLightMode;
 
         // Synchronize autostart status with actual OS Task Scheduler / Registry state
@@ -358,6 +430,7 @@ public class MainViewModel : ViewModelBase, IDisposable
             var initialMetrics = await _hardwareMonitor.GetMetricsAsync();
             var initialTracker = _tracker.Update(initialMetrics, _settings.HangTimeoutSec);
             Dashboard.Update(initialMetrics, initialTracker);
+            SessionMetrics.Update(initialMetrics);
             Charts.AddPoints(
                 initialMetrics.CpuUsagePercent,
                 initialMetrics.GpuUsagePercent,
@@ -371,13 +444,16 @@ public class MainViewModel : ViewModelBase, IDisposable
 
         StartMonitoringLoop();
 
-        AutoUpdateService.UpdateReady += tag =>
-        {
-            ToastTitle = "Обновление готово";
-            ToastMessage = $"Версия {tag} загружена. Приложение обновится при следующем запуске или клике на уведомление.";
-            IsToastVisible = true;
-        };
+        AutoUpdateService.UpdateReady += OnUpdateReady;
         AutoUpdateService.StartBackgroundUpdateCheck();
+
+    }
+
+    private void OnUpdateReady(string tag)
+    {
+        ToastTitle = "Обновление готово";
+        ToastMessage = $"Версия {tag} загружена. Обновление установится при закрытии приложения.";
+        IsToastVisible = true;
     }
 
     public void SelectProfile(RenderProfile profile)
@@ -408,6 +484,7 @@ public class MainViewModel : ViewModelBase, IDisposable
                     {
                         CurrentTimeDisplay = DateTime.Now.ToString("HH:mm:ss");
                         Dashboard.Update(metrics, trackerResult);
+                        SessionMetrics.Update(metrics);
 
                         Charts.AddPoints(
                             metrics.CpuUsagePercent,
@@ -512,6 +589,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _monitoringCts?.Cancel();
+        AutoUpdateService.UpdateReady -= OnUpdateReady;
         _monitoringCts?.Dispose();
         _hardwareMonitor.Dispose();
     }

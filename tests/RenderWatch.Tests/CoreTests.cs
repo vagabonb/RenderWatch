@@ -25,14 +25,14 @@ public class CoreTests
             VramUsedGb = null
         };
 
-        Assert.Equal("����������", metrics.CpuUsageDisplay);
-        Assert.Equal("����������", metrics.CpuTempDisplay);
-        Assert.Equal("����������", metrics.CpuClockDisplay);
-        Assert.Equal("����������", metrics.CpuPowerDisplay);
-        Assert.Equal("����������", metrics.GpuUsageDisplay);
-        Assert.Equal("����������", metrics.GpuTempDisplay);
-        Assert.Equal("����������", metrics.RamDisplay);
-        Assert.Equal("����������", metrics.VramDisplay);
+        Assert.Equal("Недоступно", metrics.CpuUsageDisplay);
+        Assert.Equal("Недоступно", metrics.CpuTempDisplay);
+        Assert.Equal("Недоступно", metrics.CpuClockDisplay);
+        Assert.Equal("Недоступно", metrics.CpuPowerDisplay);
+        Assert.Equal("Недоступно", metrics.GpuUsageDisplay);
+        Assert.Equal("Недоступно", metrics.GpuTempDisplay);
+        Assert.Equal("Недоступно", metrics.RamDisplay);
+        Assert.Equal("Недоступно", metrics.VramDisplay);
     }
 
     [Fact]
@@ -57,24 +57,24 @@ public class CoreTests
         };
 
         Assert.Equal("43%", metrics.CpuUsageDisplay);
-        Assert.Equal("68�C", metrics.CpuTempDisplay);
-        Assert.Equal("4.85 ���", metrics.CpuClockDisplay);
-        Assert.Equal("120.4 ��", metrics.CpuPowerDisplay);
+        Assert.Equal("68°C", metrics.CpuTempDisplay);
+        Assert.Equal("4.85 ГГц", metrics.CpuClockDisplay);
+        Assert.Equal("120.4 Вт", metrics.CpuPowerDisplay);
         Assert.Equal("99%", metrics.GpuUsageDisplay);
-        Assert.Equal("72�C", metrics.GpuTempDisplay);
-        Assert.Equal("24.5 / 64.0 �� (38%)", metrics.RamDisplay);
-        Assert.Equal("10.2 / 16.0 �� (64%)", metrics.VramDisplay);
+        Assert.Equal("72°C", metrics.GpuTempDisplay);
+        Assert.Equal("24.5 / 64.0 ГБ (38%)", metrics.RamDisplay);
+        Assert.Equal("10.2 / 16.0 ГБ (64%)", metrics.VramDisplay);
     }
 
     [Fact]
     public void RenderStatusExtensions_ReturnsProperNamesAndColors()
     {
-        Assert.Equal("��������", RenderStatus.Idle.ToDisplayName());
-        Assert.Equal("��� ������", RenderStatus.Rendering.ToDisplayName());
-        Assert.Equal("�������� ��������", RenderStatus.PossiblyCompleted.ToDisplayName());
-        Assert.Equal("��������", RenderStatus.Completed.ToDisplayName());
-        Assert.Equal("�������� �����", RenderStatus.PossiblyFrozen.ToDisplayName());
-        Assert.Equal("������������ ������", RenderStatus.InsufficientData.ToDisplayName());
+        Assert.Equal("Ожидание", RenderStatus.Idle.ToDisplayName());
+        Assert.Equal("Идёт рендер", RenderStatus.Rendering.ToDisplayName());
+        Assert.Equal("Возможно завершен", RenderStatus.PossiblyCompleted.ToDisplayName());
+        Assert.Equal("Завершен", RenderStatus.Completed.ToDisplayName());
+        Assert.Equal("Возможно завис", RenderStatus.PossiblyFrozen.ToDisplayName());
+        Assert.Equal("Недостаточно данных", RenderStatus.InsufficientData.ToDisplayName());
 
         Assert.StartsWith("#", RenderStatus.Rendering.GetStatusColorHex());
         Assert.StartsWith("#", RenderStatus.Completed.GetStatusColorHex());
