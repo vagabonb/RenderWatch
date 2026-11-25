@@ -1,338 +1,422 @@
 <UserControl x:Class="RenderWatch.App.Views.DisplayConstructorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctrl="clr-namespace:RenderWatch.App.Controls">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Border>
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding DataContext.IsBlackStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource BlackCardFill}"/>
-                            <Setter Property="BorderBrush" Value="{DynamicResource BlackCardEdge}"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="CornerRadius" Value="8"/>
-                            <Setter Property="Margin" Value="24,18,24,24"/>
-                            <Setter Property="Padding" Value="22"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-        <StackPanel>
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
-                    <Setter Property="Margin" Value="37,17,37,25"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding DataContext.IsBlackStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                            <Setter Property="Margin" Value="0"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </StackPanel.Style>
-            <TextBlock Text="Конструктор" Style="{DynamicResource PageTitle}" Margin="0,0,0,18"/>
-            <Border Margin="0,0,0,14">
-                <StackPanel>
-                    <TextBlock Text="ПОРЯДОК ПОКАЗАТЕЛЕЙ" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                    <WrapPanel ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                        <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="CPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="CPU" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="CPU" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="GPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="GPU" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="GPU" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="RAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="RAM" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="RAM" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="VRAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="VRAM" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="VRAM" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="Диски" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="DISK" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="DISK" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="Сеть" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="NET" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="NET" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                        <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,10,6">
-                            <TextBlock Text="Время работы" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <Button Content="‹" Command="{Binding MoveMetricLeftCommand}" CommandParameter="UPTIME" Padding="6,2" ToolTip="Переместить влево"/>
-                            <Button Content="›" Command="{Binding MoveMetricRightCommand}" CommandParameter="UPTIME" Padding="6,2" Margin="3,0,0,0" ToolTip="Переместить вправо"/>
-                        </StackPanel>
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
-            <Grid Margin="0,3,0,22">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.45*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="32"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                    <RowDefinition Height="27"/>
-                </Grid.RowDefinitions>
-                <Border Grid.ColumnSpan="4" Background="{DynamicResource Hairline}" Height="1" VerticalAlignment="Bottom"/>
-                <TextBlock Grid.Column="1" Text="Панель задач" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                <TextBlock Grid.Column="2" Text="Микро" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                <TextBlock Grid.Column="3" Text="Компактный" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                <TextBlock Grid.Row="1" Text="Загрузка CPU" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="1" Grid.Column="1" IsChecked="{Binding ShowTaskbarCpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Загрузка CPU"/>
-                <CheckBox Grid.Row="1" Grid.Column="2" IsChecked="{Binding ShowMicroCpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Загрузка CPU"/>
-                <CheckBox Grid.Row="1" Grid.Column="3" IsChecked="{Binding ShowCompactCpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Загрузка CPU"/>
-                <TextBlock Grid.Row="2" Text="Температура CPU" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="2" Grid.Column="1" IsChecked="{Binding ShowTaskbarCpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Температура CPU"/>
-                <CheckBox Grid.Row="2" Grid.Column="2" IsChecked="{Binding ShowMicroCpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Температура CPU"/>
-                <CheckBox Grid.Row="2" Grid.Column="3" IsChecked="{Binding ShowCompactCpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Температура CPU"/>
-                <TextBlock Grid.Row="3" Text="Загрузка GPU" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="3" Grid.Column="1" IsChecked="{Binding ShowTaskbarGpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Загрузка GPU"/>
-                <CheckBox Grid.Row="3" Grid.Column="2" IsChecked="{Binding ShowMicroGpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Загрузка GPU"/>
-                <CheckBox Grid.Row="3" Grid.Column="3" IsChecked="{Binding ShowCompactGpu}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Загрузка GPU"/>
-                <TextBlock Grid.Row="4" Text="Температура GPU" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding ShowTaskbarGpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Температура GPU"/>
-                <CheckBox Grid.Row="4" Grid.Column="2" IsChecked="{Binding ShowMicroGpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Температура GPU"/>
-                <CheckBox Grid.Row="4" Grid.Column="3" IsChecked="{Binding ShowCompactGpuTemp}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Температура GPU"/>
-                <TextBlock Grid.Row="5" Text="Оперативная память" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="5" Grid.Column="1" IsChecked="{Binding ShowTaskbarRam}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Оперативная память"/>
-                <CheckBox Grid.Row="5" Grid.Column="2" IsChecked="{Binding ShowMicroRam}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Оперативная память"/>
-                <CheckBox Grid.Row="5" Grid.Column="3" IsChecked="{Binding ShowCompactRam}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Оперативная память"/>
-                <TextBlock Grid.Row="6" Text="Видеопамять" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="6" Grid.Column="1" IsChecked="{Binding ShowTaskbarVram}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Видеопамять"/>
-                <CheckBox Grid.Row="6" Grid.Column="2" IsChecked="{Binding ShowMicroVram}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Видеопамять"/>
-                <CheckBox Grid.Row="6" Grid.Column="3" IsChecked="{Binding ShowCompactVram}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Видеопамять"/>
-                <TextBlock Grid.Row="7" Text="Диски" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="7" Grid.Column="1" IsChecked="{Binding ShowTaskbarDisk}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Диски"/>
-                <CheckBox Grid.Row="7" Grid.Column="2" IsChecked="{Binding ShowMicroDisk}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Диски"/>
-                <CheckBox Grid.Row="7" Grid.Column="3" IsChecked="{Binding ShowCompactDisk}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Диски"/>
-                <TextBlock Grid.Row="8" Text="Сеть" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="8" Grid.Column="1" IsChecked="{Binding ShowTaskbarNetwork}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Сеть"/>
-                <CheckBox Grid.Row="8" Grid.Column="2" IsChecked="{Binding ShowMicroNetwork}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Сеть"/>
-                <CheckBox Grid.Row="8" Grid.Column="3" IsChecked="{Binding ShowCompactNetwork}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Сеть"/>
-                <TextBlock Grid.Row="9" Text="Время работы" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                <CheckBox Grid.Row="9" Grid.Column="1" IsChecked="{Binding ShowTaskbarUptime}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Панель задач · Время работы"/>
-                <CheckBox Grid.Row="9" Grid.Column="2" IsChecked="{Binding ShowMicroUptime}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Микро · Время работы"/>
-                <CheckBox Grid.Row="9" Grid.Column="3" IsChecked="{Binding ShowCompactUptime}"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          AutomationProperties.Name="Компактный · Время работы"/>
-            </Grid>
-            <TextBlock Text="ПРЕДПРОСМОТР" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-            <UniformGrid Columns="3">
-                <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Панель задач" FontSize="11" Foreground="{DynamicResource SoftInk}" Margin="0,0,0,5"/>
-                    <Border Background="#16000000" Padding="8">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"><StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                            <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility>
-                                    <MultiBinding Converter="{StaticResource AnyVisible}">
-                                        <Binding Path="ShowTaskbarCpu"/><Binding Path="ShowTaskbarCpuTemp"/>
-                                    </MultiBinding>
-                                </StackPanel.Visibility>
-                                <Path Data="M 4,4 H 20 V 20 H 4 Z M 8,8 H 16 V 16 H 8 Z M 8,1 V 4 M 16,1 V 4 M 8,20 V 23 M 16,20 V 23 M 1,8 H 4 M 1,16 H 4 M 20,8 H 23 M 20,16 H 23" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="CPU"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowTaskbarCpuTemp, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" Margin="0,0,3,0"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowTaskbarCpu, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+             xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
+             xmlns:conv="clr-namespace:RenderWatch.App.Converters"
+             xmlns:views="clr-namespace:RenderWatch.App.Views">
+    <UserControl.Resources>
+        <conv:TaskbarInkConverter x:Key="TaskbarInk"/>
+        <Style x:Key="EditorButton" TargetType="Button" BasedOn="{StaticResource MinimalButton}">
+            <Setter Property="Padding" Value="9,5"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+        <Style x:Key="MetricCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Margin" Value="0,0,14,9"/>
+            <Setter Property="BorderBrush" Value="#8AFFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style x:Key="EditorScroll" TargetType="ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="Padding" Value="0,2,8,6"/>
+        </Style>
+        <Style x:Key="EditorTab" TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Surface" Padding="12,7" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,2">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#10FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#16FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
+                                <Setter TargetName="Surface" Property="Background" Value="#16FFFFFF"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource WhiteInk}"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{x:Static ctrl:TelemetryPalette.Cyan}"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="EditorList" TargetType="ListBox">
+            <Setter Property="Background" Value="#14000000"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+        <Style x:Key="EditorListItem" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Padding="{TemplateBinding Padding}" Background="Transparent">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="#10FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="#20FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="24,18,24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Конструктор" Style="{DynamicResource PageTitle}" Margin="0,0,0,12"/>
+        <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource EditorTab}" SelectedIndex="{Binding SelectedPage, Mode=TwoWay}">
+            <TabControl.Template>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Margin="0,0,0,16" BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,0,1">
+                            <TabPanel IsItemsHost="True"/>
+                        </Border>
+                        <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                    </Grid>
+                </ControlTemplate>
+            </TabControl.Template>
+
+            <TabItem Header="На панель">
+                <ScrollViewer Style="{StaticResource EditorScroll}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Content="Тёмная панель" Style="{StaticResource EditorButton}" Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="dark"/>
+                                <Button Content="Светлая панель" Style="{StaticResource EditorButton}" Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="light"/>
                             </StackPanel>
-                            <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility>
-                                    <MultiBinding Converter="{StaticResource AnyVisible}">
-                                        <Binding Path="ShowTaskbarGpu"/><Binding Path="ShowTaskbarGpuTemp"/>
-                                    </MultiBinding>
-                                </StackPanel.Visibility>
-                                <Path Data="M 2,5 H 22 V 19 H 2 Z M 2,2 V 21 M 8,9 A 3,3 0 1 0 8.1,9 M 16,9 A 3,3 0 1 0 16.1,9 M 5,19 V 22 H 12 V 19" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="GPU"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowTaskbarGpuTemp, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" Margin="0,0,3,0"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowTaskbarGpu, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <Border CornerRadius="5" Padding="8" Margin="0,0,0,18">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="#111111"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsTaskbarStripLightMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Background" Value="#E5E5E5"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <views:TaskbarStripContent DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" Height="30"/>
+                            </ScrollViewer>
+                        </Border>
+                        <TextBlock Text="Отступы" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                        <UniformGrid Columns="2" Margin="0,0,0,8">
+                            <StackPanel Margin="0,0,13,10">
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.BlockGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
+                                    <TextBlock Text="Между блоками" Foreground="{DynamicResource SoftInk}"/>
+                                </DockPanel>
+                                <Slider Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding Taskbar.BlockGap, Mode=TwoWay}" AutomationProperties.Name="Между блоками"/>
                             </StackPanel>
-                            <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility><Binding Path="ShowTaskbarRam" Converter="{StaticResource BoolToVis}"/></StackPanel.Visibility>
-                                <Path Data="M 2,6 H 22 V 17 H 14 V 19 H 12 V 17 H 2 Z M 5,9 V 13 M 9,9 V 13 M 13,9 V 13 M 17,9 V 13" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="RAM"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+                            <StackPanel Margin="0,0,13,10">
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.LabelGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
+                                    <TextBlock Text="Между значком и значением" Foreground="{DynamicResource SoftInk}"/>
+                                </DockPanel>
+                                <Slider Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding Taskbar.LabelGap, Mode=TwoWay}" AutomationProperties.Name="Между значком и значением"/>
                             </StackPanel>
-                            <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility><Binding Path="ShowTaskbarVram" Converter="{StaticResource BoolToVis}"/></StackPanel.Visibility>
-                                <Path Data="M 2,4 H 22 V 20 H 2 Z M 7,8 L 12,16 L 17,8 M 7,1 V 4 M 17,1 V 4 M 7,20 V 23 M 17,20 V 23" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="VRAM"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
-                            </StackPanel><StackPanel Tag="DISK" Visibility="{Binding ShowTaskbarDisk, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <Path Data="M 4,3 H 20 V 21 H 4 Z M 4,15 H 20 M 7,18 H 9" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="Диски"/><TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-</StackPanel><StackPanel Tag="NET" Visibility="{Binding ShowTaskbarNetwork, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <Path Data="M 12,2 A 10,10 0 1 0 12.1,2 M 2,12 H 22 M 12,2 C 6,7 6,17 12,22 M 12,2 C 18,7 18,17 12,22" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="NET"/><TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="10" FontWeight="Normal"/>
-</StackPanel><StackPanel Tag="UPTIME" Visibility="{Binding ShowTaskbarUptime, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <Path Data="M 12,2 A 10,10 0 1 0 12.1,2 M 12,6 V 12 L 16,14" Stroke="#B8B8B8" StrokeThickness="1.15" Stretch="Uniform" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,4,0" AutomationProperties.Name="Время работы"/><TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-</StackPanel>
-                        </StackPanel></ScrollViewer>
-                    </Border>
-                </StackPanel>
-                <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Микро" FontSize="11" Foreground="{DynamicResource SoftInk}" Margin="0,0,0,5"/>
-                    <Border Background="#16000000" Padding="8">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"><StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                            <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility>
-                                    <MultiBinding Converter="{StaticResource AnyVisible}">
-                                        <Binding Path="ShowMicroCpu"/><Binding Path="ShowMicroCpuTemp"/>
-                                    </MultiBinding>
-                                </StackPanel.Visibility>
-                                <TextBlock Text="CPU " Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" Margin="0,0,3,0"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMicroCpu, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+                            <StackPanel Margin="0,0,13,10">
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.ValueGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
+                                    <TextBlock Text="Между температурой и нагрузкой" Foreground="{DynamicResource SoftInk}"/>
+                                </DockPanel>
+                                <Slider Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding Taskbar.ValueGap, Mode=TwoWay}" AutomationProperties.Name="Между температурой и нагрузкой"/>
                             </StackPanel>
-                            <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility>
-                                    <MultiBinding Converter="{StaticResource AnyVisible}">
-                                        <Binding Path="ShowMicroGpu"/><Binding Path="ShowMicroGpuTemp"/>
-                                    </MultiBinding>
-                                </StackPanel.Visibility>
-                                <TextBlock Text="GPU " Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" Margin="0,0,3,0"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMicroGpu, Converter={StaticResource BoolToVis}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+                            <StackPanel Margin="0,0,13,10">
+                                <DockPanel Margin="0,0,0,4">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.SidePadding, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
+                                    <TextBlock Text="По краям" Foreground="{DynamicResource SoftInk}"/>
+                                </DockPanel>
+                                <Slider Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        Value="{Binding Taskbar.SidePadding, Mode=TwoWay}" AutomationProperties.Name="По краям"/>
                             </StackPanel>
-                            <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility><Binding Path="ShowMicroRam" Converter="{StaticResource BoolToVis}"/></StackPanel.Visibility>
-                                <TextBlock Text="RAM " Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
+                        </UniformGrid>
+                        <TextBlock Text="Показатели" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                        <WrapPanel Margin="0,0,0,14">
+                        <CheckBox Content="CPU" IsChecked="{Binding ShowTaskbarCpu}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="CPU °C" IsChecked="{Binding ShowTaskbarCpuTemp}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="GPU" IsChecked="{Binding ShowTaskbarGpu}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="GPU °C" IsChecked="{Binding ShowTaskbarGpuTemp}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="RAM" IsChecked="{Binding ShowTaskbarRam}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="VRAM" IsChecked="{Binding ShowTaskbarVram}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Диски" IsChecked="{Binding ShowTaskbarDisk}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Сеть" IsChecked="{Binding ShowTaskbarNetwork}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Время работы" IsChecked="{Binding ShowTaskbarUptime}" Style="{StaticResource MetricCheck}"/>
+                        </WrapPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,16,0">
+                                <TextBlock Text="Порядок блоков" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                                <ListBox ItemsSource="{Binding Taskbar.Options}" SelectedItem="{Binding Taskbar.SelectedMetric, Mode=TwoWay}"
+                                         DisplayMemberPath="Name" Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
+                                         AutomationProperties.Name="Блок панели"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding Taskbar.MoveLeftCommand}" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding Taskbar.MoveRightCommand}" ToolTip="Сдвинуть вправо"/>
                             </StackPanel>
-                            <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,8,3">
-                                <StackPanel.Visibility><Binding Path="ShowMicroVram" Converter="{StaticResource BoolToVis}"/></StackPanel.Visibility>
-                                <TextBlock Text="VRAM " Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" FontSize="11" FontWeight="Bold"/>
-                            </StackPanel><StackPanel Tag="DISK" Visibility="{Binding ShowMicroDisk, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <TextBlock Text="Диски " Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-</StackPanel><StackPanel Tag="NET" Visibility="{Binding ShowMicroNetwork, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <TextBlock Text="Сеть " Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-</StackPanel><StackPanel Tag="UPTIME" Visibility="{Binding ShowMicroUptime, Converter={StaticResource BoolToVis}}" Orientation="Horizontal" Margin="0,0,8,3">
- <TextBlock Text="Время работы " Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/>
-</StackPanel>
-                        </StackPanel></ScrollViewer>
-                    </Border>
-                </StackPanel>
-                <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Компактный" FontSize="11" Foreground="{DynamicResource SoftInk}" Margin="0,0,0,5"/>
-                    <Border Background="#16000000" Padding="8">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                                <Border Tag="CPU" Padding="8,6" Margin="0,0,5,0" Width="100">
-                                    <Border.Visibility>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" DataContext="{Binding Taskbar.SelectedMetric}" Margin="0,0,0,8"
+                                        Width="440" HorizontalAlignment="Left">
+                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource WhiteInk}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,9"/>
+                                <CheckBox Content="Английская подпись вместо значка" IsChecked="{Binding UseText}" Style="{StaticResource MetricCheck}"/>
+                                <DockPanel Margin="0,0,0,7">
+                                    <Button DockPanel.Dock="Right" Tag="LabelColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значок или подпись">
+                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource TaskbarInk}" ConverterParameter="Label">
+                                                    <Binding Path="LabelBrush"/>
+                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
+                                             Text="{Binding LabelColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значок или подпись · HEX"/>
+                                    <TextBlock Text="Значок или подпись" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,7">
+                                    <Button DockPanel.Dock="Right" Tag="ValueColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значение">
+                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource TaskbarInk}">
+                                                    <Binding Path="ValueBrush"/>
+                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
+                                             Text="{Binding ValueColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значение · HEX"/>
+                                    <TextBlock Text="Значение" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,7" Visibility="{Binding HasTemperature, Converter={StaticResource BoolToVis}}">
+                                    <Button DockPanel.Dock="Right" Tag="TemperatureColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Температура">
+                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource TaskbarInk}">
+                                                    <Binding Path="TemperatureBrush"/>
+                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Background>
+                                        </Border>
+                                    </Button>
+                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
+                                             Text="{Binding TemperatureColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Температура · HEX"/>
+                                    <TextBlock Text="Температура" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,2,0,0">
+                                    <Button DockPanel.Dock="Right" Content="Сбросить цвета" Style="{StaticResource EditorButton}" Command="{Binding ResetColorsCommand}"/>
+                                    <TextBlock Text="HEX · пустое поле использует цвет по умолчанию" Foreground="{DynamicResource SoftInk}"
+                                               FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Микро">
+                <ScrollViewer Style="{StaticResource EditorScroll}">
+                    <StackPanel>
+                        <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                        <Border Padding="10,8" Background="#28000000" CornerRadius="4" Margin="0,0,0,18">
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
+                                <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,9,0">
+                                    <StackPanel.Visibility>
                                         <MultiBinding Converter="{StaticResource AnyVisible}">
-                                            <Binding Path="ShowCompactCpu"/><Binding Path="ShowCompactCpuTemp"/>
+                                            <Binding Path="ShowMicroCpu"/><Binding Path="ShowMicroCpuTemp"/>
                                         </MultiBinding>
-                                    </Border.Visibility>
-                                    <StackPanel>
-                                        <Grid>
-                                            <TextBlock Text="CPU" Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                            <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowCompactCpuTemp, Converter={StaticResource BoolToVis}}" Foreground="White" HorizontalAlignment="Right" FontSize="10"/>
-                                        </Grid>
-                                        <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowCompactCpu, Converter={StaticResource BoolToVis}}" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Tag="GPU" Padding="8,6" Margin="0,0,5,0" Width="100">
-                                    <Border.Visibility>
+                                    </StackPanel.Visibility>
+                                    <TextBlock Text="CPU" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Margin="0,0,4,0"
+                                               Visibility="{Binding ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Visibility="{Binding ShowMicroCpu, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                                <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,9,0">
+                                    <StackPanel.Visibility>
                                         <MultiBinding Converter="{StaticResource AnyVisible}">
-                                            <Binding Path="ShowCompactGpu"/><Binding Path="ShowCompactGpuTemp"/>
+                                            <Binding Path="ShowMicroGpu"/><Binding Path="ShowMicroGpuTemp"/>
                                         </MultiBinding>
-                                    </Border.Visibility>
-                                    <StackPanel>
-                                        <Grid>
-                                            <TextBlock Text="GPU" Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                            <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowCompactGpuTemp, Converter={StaticResource BoolToVis}}" Foreground="White" HorizontalAlignment="Right" FontSize="10"/>
-                                        </Grid>
-                                        <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowCompactGpu, Converter={StaticResource BoolToVis}}" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Tag="RAM" Padding="8,6" Margin="0,0,5,0" Width="100">
-                                    <Border.Visibility><Binding Path="ShowCompactRam" Converter="{StaticResource BoolToVis}"/></Border.Visibility>
-                                    <StackPanel>
-                                        <TextBlock Text="RAM" Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                        <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border>
-                                <Border Tag="VRAM" Padding="8,6" Margin="0,0,5,0" Width="100">
-                                    <Border.Visibility><Binding Path="ShowCompactVram" Converter="{StaticResource BoolToVis}"/></Border.Visibility>
-                                    <StackPanel>
-                                        <TextBlock Text="VRAM" Foreground="{DynamicResource SoftInk}" FontSize="10"/>
-                                        <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="18" FontWeight="Bold"/>
-                                    </StackPanel>
-                                </Border><Border Tag="DISK" Visibility="{Binding ShowCompactDisk, Converter={StaticResource BoolToVis}}" Padding="8,6" Margin="0,0,5,0" MinWidth="100">
- <StackPanel><TextBlock Text="Диски" Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/></StackPanel>
-</Border><Border Tag="NET" Visibility="{Binding ShowCompactNetwork, Converter={StaticResource BoolToVis}}" Padding="8,6" Margin="0,0,5,0" MinWidth="100">
- <StackPanel><TextBlock Text="Сеть" Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/></StackPanel>
-</Border><Border Tag="UPTIME" Visibility="{Binding ShowCompactUptime, Converter={StaticResource BoolToVis}}" Padding="8,6" Margin="0,0,5,0" MinWidth="100">
- <StackPanel><TextBlock Text="Время работы" Foreground="{DynamicResource SoftInk}" FontSize="10"/><TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="White" FontSize="11" FontWeight="Bold"/></StackPanel>
-</Border>
+                                    </StackPanel.Visibility>
+                                    <TextBlock Text="GPU" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Margin="0,0,4,0"
+                                               Visibility="{Binding ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Visibility="{Binding ShowMicroGpu, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                                <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroRam, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="RAM" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
+                                </StackPanel>
+                                <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroVram, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="VRAM" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
+                                </StackPanel>
+                                <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroDisk, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="Диски" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
+                                </StackPanel>
+                                <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroNetwork, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="Сеть" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
+                                </StackPanel>
+                                <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroUptime, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="Время работы" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
+                                </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                        <TextBlock Text="Показатели" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                        <WrapPanel Margin="0,0,0,16">
+                        <CheckBox Content="CPU" IsChecked="{Binding ShowMicroCpu}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="CPU °C" IsChecked="{Binding ShowMicroCpuTemp}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="GPU" IsChecked="{Binding ShowMicroGpu}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="GPU °C" IsChecked="{Binding ShowMicroGpuTemp}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="RAM" IsChecked="{Binding ShowMicroRam}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="VRAM" IsChecked="{Binding ShowMicroVram}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Диски" IsChecked="{Binding ShowMicroDisk}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Сеть" IsChecked="{Binding ShowMicroNetwork}" Style="{StaticResource MetricCheck}"/>
+                        <CheckBox Content="Время работы" IsChecked="{Binding ShowMicroUptime}" Style="{StaticResource MetricCheck}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Порядок блоков" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                        <WrapPanel ctrl:MetricOrder.Value="{Binding MetricOrder}">
+                            <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="CPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="CPU" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="CPU" ToolTip="Сдвинуть вправо"/>
                             </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-                </StackPanel>
-            </UniformGrid>
-        </StackPanel>
-        </Border>
-    </ScrollViewer>
+                            </StackPanel>
+                            <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="GPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="GPU" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="GPU" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                            <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="RAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="RAM" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="RAM" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                            <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="VRAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="VRAM" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="VRAM" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                            <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="Диски" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="DISK" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="DISK" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                            <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="Сеть" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="NET" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="NET" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                            <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,12,6">
+                                <TextBlock Text="Время работы" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="UPTIME" ToolTip="Сдвинуть влево"/>
+                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="UPTIME" ToolTip="Сдвинуть вправо"/>
+                            </StackPanel>
+                            </StackPanel>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Компактный">
+                <ScrollViewer Style="{StaticResource EditorScroll}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="340"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,14,0">
+                            <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
+                            <Border Padding="6" Background="#28000000" CornerRadius="5">
+                                <views:CompactChartStrip Height="422" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <DockPanel Margin="0,0,0,8">
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button Content="↑" Style="{StaticResource EditorButton}" Command="{Binding MoveCompactUpCommand}" ToolTip="Поднять выбранный график"/>
+                                    <Button Content="↓" Style="{StaticResource EditorButton}" Command="{Binding MoveCompactDownCommand}" ToolTip="Опустить выбранный график"/>
+                                </StackPanel>
+                                <TextBlock Text="Состав и порядок графиков" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                            </DockPanel>
+                            <ListBox ItemsSource="{Binding CompactOptions}" SelectedItem="{Binding SelectedCompactGraph, Mode=TwoWay}"
+                                     Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
+                                     AutomationProperties.Name="Графики компактного режима">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding IsEnabled}" Style="{StaticResource MetricCheck}"
+                                                      Margin="0" AutomationProperties.Name="{Binding Title}" ToolTip="Показать график"/>
+                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
 </UserControl>

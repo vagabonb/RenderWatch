@@ -44,7 +44,7 @@ public partial class MainWindow : Window
     private string _activeAppearance;
     private bool _closingAfterSave;
     private bool _savingBeforeClose;
-    private const double CompactCardWidth = 160;
+    private const double CompactWindowWidth = 350;
     private Point _compactDragStart;
 
     public MainWindow(MainViewModel viewModel)
@@ -58,17 +58,9 @@ public partial class MainWindow : Window
         {
             if (_viewModel.IsCompactMode &&
                 (string.IsNullOrEmpty(e.PropertyName) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactCpu) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactCpuTemp) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactGpu) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactGpuTemp) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactRam) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactVram) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactDisk) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactNetwork) ||
-                 e.PropertyName == nameof(DisplayConstructorViewModel.ShowCompactUptime)))
+                 e.PropertyName == nameof(DisplayConstructorViewModel.ActiveCompactGraphs)))
             {
-                UpdateCompactWidth();
+                UpdateCompactSize();
             }
         };
 
@@ -214,18 +206,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UpdateCompactWidth()
+    private void UpdateCompactSize()
     {
-        var options = _viewModel.Constructor;
-        int count = ((options.ShowCompactCpu || options.ShowCompactCpuTemp) ? 1 : 0) +
-                    ((options.ShowCompactGpu || options.ShowCompactGpuTemp) ? 1 : 0) +
-                    (options.ShowCompactRam ? 1 : 0) +
-                    (options.ShowCompactVram ? 1 : 0) +
-                    (options.ShowCompactDisk ? 1 : 0) +
-                    (options.ShowCompactNetwork ? 1 : 0) +
-                    (options.ShowCompactUptime ? 1 : 0);
-        Width = Math.Max(MinWidth, count * CompactCardWidth + 16);
+        int count = _viewModel.Constructor.ActiveCompactGraphs.Count;
+        Width = Math.Clamp(CompactWindowWidth, MinWidth,
+            Math.Max(MinWidth, SystemParameters.WorkArea.Width));
+        Height = Math.Clamp(count * CompactChartStrip.TileHeight + 38, MinHeight,
+            Math.Max(MinHeight, SystemParameters.WorkArea.Height));
+        if (double.IsFinite(Top))
+            Top = ClampCompactTop(Top);
     }
+
+    private double ClampCompactTop(double top) => Math.Clamp(top, SystemParameters.VirtualScreenTop,
+        Math.Max(SystemParameters.VirtualScreenTop,
+            SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - Height));
 
     private WindowPlacement CapturePlacement()
     {
@@ -275,15 +269,14 @@ public partial class MainWindow : Window
 
         if (compact)
         {
-            UpdateCompactWidth();
-            Height = _viewModel.IsBlackStyle ? 132 : 116;
+            UpdateCompactSize();
         }
         else
         {
             Width = placement != null && double.IsFinite(placement.Width)
-                ? Math.Max(MinWidth, placement.Width) : (_viewModel.IsBlackStyle ? 1180 : 1220);
+                ? Math.Max(MinWidth, placement.Width) : (_viewModel.UsesBlackLayout ? 1180 : 1220);
             Height = placement != null && double.IsFinite(placement.Height)
-                ? Math.Max(MinHeight, placement.Height) : (_viewModel.IsBlackStyle ? 780 : 800);
+                ? Math.Max(MinHeight, placement.Height) : (_viewModel.UsesBlackLayout ? 780 : 800);
         }
 
         if (placement != null && double.IsFinite(placement.Left) && double.IsFinite(placement.Top))
@@ -291,7 +284,7 @@ public partial class MainWindow : Window
             WindowStartupLocation = WindowStartupLocation.Manual;
             Left = Math.Clamp(placement.Left, SystemParameters.VirtualScreenLeft - Width + 80,
                 SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 80);
-            Top = Math.Clamp(placement.Top, SystemParameters.VirtualScreenTop,
+            Top = compact ? ClampCompactTop(placement.Top) : Math.Clamp(placement.Top, SystemParameters.VirtualScreenTop,
                 SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - 38);
         }
 
@@ -480,12 +473,6 @@ public partial class MainWindow : Window
         catch { }
         base.OnClosed(e);
 
-        // Terminate process completely to release any file/folder locks immediately
-        try
-        {
-            Application.Current?.Shutdown();
-        }
-        catch { }
-        Environment.Exit(0);
+        Application.Current?.Shutdown();
     }
 }

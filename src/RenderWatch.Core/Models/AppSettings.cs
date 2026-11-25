@@ -32,9 +32,11 @@ public class AppSettings
     public string Appearance { get; set; } = "Black";
     public AppearanceLayout BlackLayout { get; set; } = new();
     public AppearanceLayout GraphiteLayout { get; set; } = new();
+    public AppearanceLayout ColorLayout { get; set; } = new();
 
     public bool IsSidebarCollapsed { get; set; }
     public bool IsBlackSidebarCollapsed { get; set; }
+    public bool IsColorSidebarCollapsed { get; set; }
 
     public bool IsTaskbarStripLightMode { get; set; } = false;
 
@@ -68,6 +70,8 @@ public class AppSettings
     public bool ShowCompactUptime { get; set; }
 
     public string DisplayMetricOrder { get; set; } = "CPU,GPU,RAM,VRAM";
+    public TaskbarAppearanceSettings TaskbarAppearance { get; set; } = new();
+    public List<CompactGraphSetting>? CompactGraphs { get; set; }
 
     public string ActiveProfileId { get; set; } = "auto";
     public string CoolingType { get; set; } = "auto";

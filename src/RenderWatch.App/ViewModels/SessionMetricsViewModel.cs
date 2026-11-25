@@ -14,8 +14,10 @@ public class SessionMetricsViewModel : ViewModelBase
     public ObservableCollection<double> Vram { get; } = new();
     public ObservableCollection<double> NetworkReceive { get; } = new();
     public ObservableCollection<double> NetworkSend { get; } = new();
-    private double _networkReceiveScale = 256 * 1024;
-    private double _networkSendScale = 256 * 1024;
+    public TransferHistory DiskRead { get; } = new();
+    public TransferHistory DiskWrite { get; } = new();
+    private double _networkReceiveScale = TransferHistory.InitialScale;
+    private double _networkSendScale = TransferHistory.InitialScale;
     public double NetworkReceiveScale
     {
         get => _networkReceiveScale;
@@ -61,17 +63,6 @@ public class SessionMetricsViewModel : ViewModelBase
         if (points.Count > 120) points.RemoveAt(0);
     }
 
-    private static double AddNetworkPoint(ObservableCollection<double> points, double? value, double scale)
-    {
-        if (value.HasValue && double.IsFinite(value.Value) && value.Value >= 0)
-        {
-            AppendPoint(points, value.Value);
-            while (scale < value.Value && scale <= double.MaxValue / 2)
-                scale *= 2;
-        }
-        return scale;
-    }
-
     public void Update(HardwareMetrics metrics)
     {
         Add(CpuLoad, metrics.CpuUsagePercent, ref _cpuLoadMax, nameof(CpuLoadMax));
@@ -80,7 +71,9 @@ public class SessionMetricsViewModel : ViewModelBase
         Add(GpuTemp, metrics.GpuTemperatureC > 5 ? metrics.GpuTemperatureC : null, ref _gpuTempMax, nameof(GpuTempMax));
         Add(Ram, metrics.RamUsagePercent, ref _ramMax, nameof(RamMax));
         Add(Vram, metrics.VramUsagePercent, ref _vramMax, nameof(VramMax));
-        NetworkReceiveScale = AddNetworkPoint(NetworkReceive, metrics.NetworkReceiveBytesPerSecond, NetworkReceiveScale);
-        NetworkSendScale = AddNetworkPoint(NetworkSend, metrics.NetworkSendBytesPerSecond, NetworkSendScale);
+        NetworkReceiveScale = TransferHistory.Append(NetworkReceive, metrics.NetworkReceiveBytesPerSecond, NetworkReceiveScale);
+        NetworkSendScale = TransferHistory.Append(NetworkSend, metrics.NetworkSendBytesPerSecond, NetworkSendScale);
+        DiskRead.Add(metrics.DiskReadBytesPerSecond);
+        DiskWrite.Add(metrics.DiskWriteBytesPerSecond);
     }
 }

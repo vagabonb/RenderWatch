@@ -23,10 +23,19 @@
 
     <Window.Resources>
         <!-- White Miniature Hardware Geometries -->
-        <Geometry x:Key="IconCpu">M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3</Geometry>
-        <Geometry x:Key="IconGpu">M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3</Geometry>
-        <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
-        <Geometry x:Key="IconVram">M 2,4 h 20 v 16 h -20 z M 7,8 L 12,16 L 17,8 M 5,1 h 3 v 3 h -3 z M 11,1 h 3 v 3 h -3 z M 17,1 h 3 v 3 h -3 z M 5,20 h 3 v 3 h -3 z M 11,20 h 3 v 3 h -3 z M 17,20 h 3 v 3 h -3 z</Geometry>
+
+        <SolidColorBrush x:Key="ColorWindowBackground" Color="#191919"/>
+        <Style x:Key="BlackWindowSurface" TargetType="Grid">
+            <Setter Property="Background" Value="{DynamicResource BrushBg}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsColorStyle}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource ColorWindowBackground}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="BlackCompactSurface" TargetType="Grid" BasedOn="{StaticResource BlackWindowSurface}">
+            <Setter Property="Background" Value="#0A0A0A"/>
+        </Style>
 
         <!-- Window Caption Button Styles -->
         <Style x:Key="CaptionButtonStyle" TargetType="Button">
@@ -97,7 +106,7 @@
     </Window.Resources>
 
     <Grid>
-        <Grid x:Name="BlackInterface" Visibility="{Binding IsBlackStyle, Converter={StaticResource BoolToVis}}">
+        <Grid x:Name="BlackInterface" Visibility="{Binding UsesBlackLayout, Converter={StaticResource BoolToVis}}">
             <Grid.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -106,10 +115,6 @@
 
 
         <!-- White Miniature Hardware Geometries -->
-        <Geometry x:Key="IconCpu">M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3</Geometry>
-        <Geometry x:Key="IconGpu">M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3</Geometry>
-        <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
-        <Geometry x:Key="IconVram">M 2,4 h 20 v 16 h -20 z M 7,8 L 12,16 L 17,8 M 5,1 h 3 v 3 h -3 z M 11,1 h 3 v 3 h -3 z M 17,1 h 3 v 3 h -3 z M 5,20 h 3 v 3 h -3 z M 11,20 h 3 v 3 h -3 z M 17,20 h 3 v 3 h -3 z</Geometry>
 
         <!-- Window Caption Button Styles -->
         <Style x:Key="CaptionButtonStyle" TargetType="Button">
@@ -222,7 +227,7 @@
     </Grid.Resources>        <!-- ========================================== -->
         <!-- 1. FULL NORMAL MODE INTERFACE               -->
         <!-- ========================================== -->
-        <Grid x:Name="BlackNormalModeGrid" Background="{StaticResource BrushBg}"
+        <Grid x:Name="BlackNormalModeGrid" Style="{StaticResource BlackWindowSurface}"
               Visibility="{Binding IsCompactMode, Converter={StaticResource InverseBoolToVis}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{Binding SidebarWidth}"/>
@@ -233,7 +238,18 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Border Grid.RowSpan="2" Background="#0C0C0C"/>
+            <Border Grid.RowSpan="2">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#0C0C0C"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsColorStyle}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource ColorWindowBackground}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
 
             <Border Grid.Column="1" Grid.Row="0" Background="Transparent">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
@@ -335,7 +351,7 @@
         <!-- 2. ULTRA-COMPACT FLOATING WIDGET MODE       -->
         <!-- ========================================== -->
         <Grid x:Name="BlackCompactModeGrid"
-              Background="#0A0A0A"
+              Style="{StaticResource BlackCompactSurface}"
               Visibility="{Binding IsCompactMode, Converter={StaticResource BoolToVis}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>  <!-- Compact Title Bar with drag & controls -->
@@ -375,208 +391,8 @@
                 </Grid>
             </Border>
 
-            <!-- Compact Content -->
             <Border Grid.Row="1" Padding="5,4" Background="Transparent" MouseLeftButtonDown="OnCompactContentMouseDown">
-                <Grid>
-                <TextBlock Text="Нет показателей" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#A0A0A0" FontSize="12">
-                    <TextBlock.Visibility>
-                        <MultiBinding Converter="{StaticResource AllHiddenToVisibility}">
-                            <Binding Path="Constructor.ShowCompactCpu"/>
-                            <Binding Path="Constructor.ShowCompactCpuTemp"/>
-                            <Binding Path="Constructor.ShowCompactGpu"/>
-                            <Binding Path="Constructor.ShowCompactGpuTemp"/>
-                            <Binding Path="Constructor.ShowCompactRam"/>
-                            <Binding Path="Constructor.ShowCompactVram"/>
-                            <Binding Path="Constructor.ShowCompactDisk"/>
-                            <Binding Path="Constructor.ShowCompactNetwork"/>
-                            <Binding Path="Constructor.ShowCompactUptime"/>
-                        </MultiBinding>
-                    </TextBlock.Visibility>
-                </TextBlock>
-                <UniformGrid Rows="1" ctrl:MetricOrder.Value="{Binding Constructor.MetricOrder}">
-
-                    <!-- 1. CPU Card -->
-                    <Border Tag="CPU" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="{StaticResource BlackCardFill}" BorderBrush="#333333" BorderThickness="1" Padding="10">
-    <StackPanel><TextBlock Text="CPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Border.Visibility>
-                            <MultiBinding Converter="{StaticResource AnyVisible}">
-                            <Binding Path="Constructor.ShowCompactCpu"/>
-                            <Binding Path="Constructor.ShowCompactCpuTemp"/>
-                        </MultiBinding>
-                        </Border.Visibility>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconCpu}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="CPU" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#FFFFFF" FontSize="25" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Value="{Binding Dashboard.CpuPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuClockDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuPowerDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 2. GPU Card -->
-                    <Border Tag="GPU" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="{StaticResource BlackCardFill}" BorderBrush="#333333" BorderThickness="1" Padding="10">
-    <StackPanel><TextBlock Text="GPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Border.Visibility>
-                            <MultiBinding Converter="{StaticResource AnyVisible}">
-                            <Binding Path="Constructor.ShowCompactGpu"/>
-                            <Binding Path="Constructor.ShowCompactGpuTemp"/>
-                        </MultiBinding>
-                        </Border.Visibility>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconGpu}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="GPU" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#FFFFFF" FontSize="25" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Value="{Binding Dashboard.GpuPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuClockDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuPowerDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 3. RAM Card -->
-                    <Border Tag="RAM" Visibility="{Binding Constructor.ShowCompactRam, Converter={StaticResource BoolToVis}}" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="{StaticResource BlackCardFill}" BorderBrush="#333333" BorderThickness="1" Padding="10">
-    <StackPanel><TextBlock Text="RAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconRam}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="RAM" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.RamPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="25" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.RamPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding Dashboard.RamDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 4. VRAM Card -->
-                    <Border Tag="VRAM" Visibility="{Binding Constructor.ShowCompactVram, Converter={StaticResource BoolToVis}}" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="{StaticResource BlackCardFill}" BorderBrush="#333333" BorderThickness="1" Padding="10">
-    <StackPanel><TextBlock Text="VRAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#A0A0A0" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconVram}" Stroke="#FFFFFF" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="VRAM" Foreground="#707070" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="25" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.VramPercentValue}" MaxValue="100" Height="4" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding Dashboard.VramDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-                    <Border Tag="DISK" Visibility="{Binding Constructor.ShowCompactDisk, Converter={StaticResource BoolToVis}}" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <StackPanel><TextBlock Text="Диски" Foreground="#909090" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.DiskCompact}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Tag="NET" Visibility="{Binding Constructor.ShowCompactNetwork, Converter={StaticResource BoolToVis}}" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <StackPanel><TextBlock Text="Сеть" Foreground="#909090" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.NetworkCompact}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Tag="UPTIME" Visibility="{Binding Constructor.ShowCompactUptime, Converter={StaticResource BoolToVis}}" Margin="3,0" Background="{StaticResource BlackCardFill}" BorderBrush="{StaticResource BlackCardEdge}" BorderThickness="0" CornerRadius="5" Padding="8,6">
-                        <StackPanel><TextBlock Text="Время работы" Foreground="#909090" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.Uptime}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                </UniformGrid>
-                </Grid>
+                <views:CompactChartStrip/>
             </Border>
         </Grid>
 
@@ -721,211 +537,25 @@
                 </Button>
             </Grid>
 
-            <!-- Compact Content -->
             <Border Grid.Row="1" Padding="5,4" Background="Transparent" MouseLeftButtonDown="OnCompactContentMouseDown">
-                <Grid>
-                <TextBlock Text="Нет показателей" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#C4C1BB" FontSize="12">
-                    <TextBlock.Visibility>
-                        <MultiBinding Converter="{StaticResource AllHiddenToVisibility}">
-                            <Binding Path="Constructor.ShowCompactCpu"/>
-                            <Binding Path="Constructor.ShowCompactCpuTemp"/>
-                            <Binding Path="Constructor.ShowCompactGpu"/>
-                            <Binding Path="Constructor.ShowCompactGpuTemp"/>
-                            <Binding Path="Constructor.ShowCompactRam"/>
-                            <Binding Path="Constructor.ShowCompactVram"/>
-                            <Binding Path="Constructor.ShowCompactDisk"/>
-                            <Binding Path="Constructor.ShowCompactNetwork"/>
-                            <Binding Path="Constructor.ShowCompactUptime"/>
-                        </MultiBinding>
-                    </TextBlock.Visibility>
-                </TextBlock>
-                <UniformGrid Rows="1" ctrl:MetricOrder.Value="{Binding Constructor.MetricOrder}">
-
-                    <!-- 1. CPU Card -->
-                    <Border Tag="CPU" Margin="3,0" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
-    <StackPanel><TextBlock Text="CPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Border.Visibility>
-                            <MultiBinding Converter="{StaticResource AnyVisible}">
-                            <Binding Path="Constructor.ShowCompactCpu"/>
-                            <Binding Path="Constructor.ShowCompactCpuTemp"/>
-                        </MultiBinding>
-                        </Border.Visibility>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconCpu}" Stroke="#F5F2EA" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="CPU" Foreground="#ABA9A4" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#F5F2EA" FontSize="25" FontWeight="Light" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Value="{Binding Dashboard.CpuPercentValue}" MaxValue="100" Height="2" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuClockDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactCpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.CpuPowerDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 2. GPU Card -->
-                    <Border Tag="GPU" Margin="3,0" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
-    <StackPanel><TextBlock Text="GPU" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Border.Visibility>
-                            <MultiBinding Converter="{StaticResource AnyVisible}">
-                            <Binding Path="Constructor.ShowCompactGpu"/>
-                            <Binding Path="Constructor.ShowCompactGpuTemp"/>
-                        </MultiBinding>
-                        </Border.Visibility>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconGpu}" Stroke="#F5F2EA" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="GPU" Foreground="#ABA9A4" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpuTemp, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#F5F2EA" FontSize="25" FontWeight="Light" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Value="{Binding Dashboard.GpuPercentValue}" MaxValue="100" Height="2" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuClockDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Left"/>
-                                <TextBlock Visibility="{Binding Constructor.ShowCompactGpu, Converter={StaticResource BoolToVis}}" Text="{Binding Dashboard.GpuPowerDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 3. RAM Card -->
-                    <Border Tag="RAM" Visibility="{Binding Constructor.ShowCompactRam, Converter={StaticResource BoolToVis}}" Margin="3,0" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
-    <StackPanel><TextBlock Text="RAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconRam}" Stroke="#F5F2EA" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="RAM" Foreground="#ABA9A4" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.RamPercentValue, StringFormat={}{0:F0}%}" Foreground="#F5F2EA" FontSize="25" FontWeight="Light" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.RamPercentValue}" MaxValue="100" Height="2" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding Dashboard.RamCapacityDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-
-
-                    <!-- 4. VRAM Card -->
-                    <Border Tag="VRAM" Visibility="{Binding Constructor.ShowCompactVram, Converter={StaticResource BoolToVis}}" Margin="3,0" Padding="8,6">
-                        <Border.ToolTip><ToolTip Background="#303132" BorderThickness="0" Padding="10">
-    <StackPanel><TextBlock Text="VRAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Path Data="{StaticResource IconVram}" Stroke="#F5F2EA" StrokeThickness="1.2" Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="VRAM" Foreground="#ABA9A4" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#F5F2EA" FontSize="25" FontWeight="Light" FontFamily="{StaticResource FontDisplay}" Margin="0,1,0,3"/>
-
-                            <ctrl:MiniBarGauge Grid.Row="2" Value="{Binding Dashboard.VramPercentValue}" MaxValue="100" Height="2" HorizontalAlignment="Stretch" Margin="0,0,0,5"/>
-
-                            <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                                <TextBlock Text="{Binding Dashboard.VramCapacityDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                            </Grid>
-                        </Grid>
-                    </Border>
-                    <Border Tag="DISK" Visibility="{Binding Constructor.ShowCompactDisk, Converter={StaticResource BoolToVis}}" Margin="3,0" Padding="8,6">
-                        <StackPanel><TextBlock Text="Диски" Foreground="#B6B4AE" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.DiskCompact}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Tag="NET" Visibility="{Binding Constructor.ShowCompactNetwork, Converter={StaticResource BoolToVis}}" Margin="3,0" Padding="8,6">
-                        <StackPanel><TextBlock Text="Сеть" Foreground="#B6B4AE" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.NetworkCompact}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                    <Border Tag="UPTIME" Visibility="{Binding Constructor.ShowCompactUptime, Converter={StaticResource BoolToVis}}" Margin="3,0" Padding="8,6">
-                        <StackPanel><TextBlock Text="Время работы" Foreground="#B6B4AE" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Dashboard.Uptime}" Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,8,0,0" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Border>
-                </UniformGrid>
-                </Grid>
+                <views:CompactChartStrip/>
             </Border>
         </Grid>
 
         </Grid>
+        <Border Background="#303132" BorderBrush="#555657" BorderThickness="1" CornerRadius="6"
+                Padding="12,9" Margin="12,0,18,16" MaxWidth="340"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Visibility="{Binding IsUpdatePromptVisible, Converter={StaticResource BoolToVis}}">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="12,0,0,0"
+                            Visibility="{Binding IsUpdating, Converter={StaticResource InverseBoolToVis}}">
+                    <Button Content="Позже" Command="{Binding PostponeUpdateCommand}" Style="{StaticResource MinimalButton}" Padding="8,4" Margin="0,0,5,0"/>
+                    <Button Content="Да" Command="{Binding ApplyUpdateCommand}" Style="{StaticResource AccentButton}" Padding="9,4"/>
+                </StackPanel>
+                <TextBlock Text="{Binding UpdatePromptText}" Foreground="{StaticResource WhiteInk}"
+                           FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
+            </DockPanel>
+        </Border>
     </Grid>
 </Window>

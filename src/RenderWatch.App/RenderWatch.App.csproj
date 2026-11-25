@@ -2,12 +2,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RenderWatch.Core\RenderWatch.Core.csproj" />
+    <InternalsVisibleTo Include="Preview"/>
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>RenderWatch</AssemblyName>
+    <StartupObject>RenderWatch.App.Program</StartupObject>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Nullable>enable</Nullable>
@@ -27,9 +29,9 @@
     <Product>RENDER WATCH</Product>
     <Description>Профессиональный монитор аппаратных ресурсов ПК, рендеринга и конфигурации системы.</Description>
     <Copyright>Copyright © 2026 RENDER WATCH</Copyright>
-    <Version>2.0.0</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <Version>2.0.2</Version>
+    <AssemblyVersion>2.0.2.0</AssemblyVersion>
+    <FileVersion>2.0.2.0</FileVersion>
 
     <!-- Optimized Memory: Workstation GC prevents 32 heaps on 32-thread CPUs, releases VM back to OS -->
     <ServerGarbageCollection>false</ServerGarbageCollection>

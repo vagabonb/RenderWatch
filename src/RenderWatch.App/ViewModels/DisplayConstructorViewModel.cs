@@ -1,4 +1,6 @@
+using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Threading;
 using RenderWatch.Core.Models;
 using RenderWatch.Core.Settings;
 
@@ -8,16 +10,41 @@ public class DisplayConstructorViewModel : ViewModelBase
 {
     private AppSettings? _settings;
     private ISettingsManager? _settingsManager;
+    private readonly DispatcherTimer _saveTimer;
+    private IReadOnlyList<CompactGraphOption> _activeCompactGraphs = [];
+    private CompactGraphOption? _selectedCompactGraph;
+    private int _selectedPage;
+
+    public TaskbarAppearanceViewModel Taskbar { get; }
+    public int SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
+    public ObservableCollection<CompactGraphOption> CompactOptions { get; } = new();
+    public IReadOnlyList<CompactGraphOption> ActiveCompactGraphs
+    {
+        get => _activeCompactGraphs;
+        private set => SetField(ref _activeCompactGraphs, value);
+    }
+    public CompactGraphOption? SelectedCompactGraph
+    {
+        get => _selectedCompactGraph;
+        set
+        {
+            if (SetField(ref _selectedCompactGraph, value)) CommandManager.InvalidateRequerySuggested();
+        }
+    }
+    public ICommand MoveCompactUpCommand { get; }
+    public ICommand MoveCompactDownCommand { get; }
 
     public void Initialize(AppSettings settings, ISettingsManager settingsManager)
     {
         _settings = settings;
         _settingsManager = settingsManager;
         _metricOrder = NormalizeOrder(settings.DisplayMetricOrder);
+        Taskbar.Initialize(settings.TaskbarAppearance ??= new(), _metricOrder);
+        InitializeCompact(settings);
         OnPropertyChanged(string.Empty);
     }
 
-    private string _metricOrder = "CPU,GPU,RAM,VRAM";
+    private string _metricOrder = "CPU,GPU,RAM,VRAM,DISK,NET,UPTIME";
     public string MetricOrder
     {
         get => _metricOrder;
@@ -37,10 +64,106 @@ public class DisplayConstructorViewModel : ViewModelBase
     public ICommand MoveMetricLeftCommand { get; }
     public ICommand MoveMetricRightCommand { get; }
 
-    public DisplayConstructorViewModel()
+    public DisplayConstructorViewModel(SessionMetricsViewModel metrics)
     {
         MoveMetricLeftCommand = new RelayCommand(p => MoveMetric(p as string, -1));
         MoveMetricRightCommand = new RelayCommand(p => MoveMetric(p as string, 1));
+        MoveCompactUpCommand = new RelayCommand(() => MoveCompact(-1), () => CanMoveCompact(-1));
+        MoveCompactDownCommand = new RelayCommand(() => MoveCompact(1), () => CanMoveCompact(1));
+        _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _saveTimer.Tick += (_, _) =>
+        {
+            _saveTimer.Stop();
+            if (_settings != null && _settingsManager != null)
+                _ = _settingsManager.SaveSettingsAsync(_settings);
+        };
+        Taskbar = new TaskbarAppearanceViewModel(QueueSave);
+
+        CompactGraphOption[] options =
+        [
+            new("CPU", "CPU", "%", metrics.CpuLoad, 100, SaveCompact),
+            new("CPU-TEMP", "CPU °C", "°C", metrics.CpuTemp, 105, SaveCompact),
+            new("GPU", "GPU", "%", metrics.GpuLoad, 100, SaveCompact),
+            new("GPU-TEMP", "GPU °C", "°C", metrics.GpuTemp, 105, SaveCompact),
+            new("RAM", "RAM", "%", metrics.Ram, 100, SaveCompact),
+            new("VRAM", "VRAM", "%", metrics.Vram, 100, SaveCompact),
+            new("NET-RX", "Сеть · Приём", "Б/с", metrics.NetworkReceive, TransferHistory.InitialScale, SaveCompact),
+            new("NET-TX", "Сеть · Отправка", "Б/с", metrics.NetworkSend, TransferHistory.InitialScale, SaveCompact),
+            new("DISK-READ", "Диски · Чтение", "Б/с", metrics.DiskRead.Points, TransferHistory.InitialScale, SaveCompact),
+            new("DISK-WRITE", "Диски · Запись", "Б/с", metrics.DiskWrite.Points, TransferHistory.InitialScale, SaveCompact)
+        ];
+        foreach (var option in options) CompactOptions.Add(option);
+        InitializeCompact(new AppSettings());
+    }
+
+    private void InitializeCompact(AppSettings settings)
+    {
+        var saved = settings.CompactGraphs?.OfType<CompactGraphSetting>().ToArray();
+        var legacyOrder = _metricOrder.Split(',');
+        var byId = CompactOptions.ToDictionary(option => option.Id, StringComparer.Ordinal);
+        var order = saved is null
+            ? byId.Keys.OrderBy(id => Array.IndexOf(legacyOrder, id.Split('-')[0])).ToArray()
+            : saved.Select(item => item.Id).Where(id => id != null && byId.ContainsKey(id))
+                .Concat(byId.Keys).Distinct().ToArray();
+
+        for (int index = 0; index < order.Length; index++)
+        {
+            var option = byId[order[index]];
+            CompactOptions.Move(CompactOptions.IndexOf(option), index);
+            option.SetInitialVisibility(saved is null ? IsLegacyGraphEnabled(settings, option.Id) :
+                saved.FirstOrDefault(item => item.Id == option.Id)?.Enabled == true);
+        }
+        SelectedCompactGraph = CompactOptions[0];
+        RefreshCompactGraphs();
+    }
+
+    private static bool IsLegacyGraphEnabled(AppSettings settings, string id) => id switch
+    {
+        "CPU" => settings.ShowCompactCpu,
+        "CPU-TEMP" => settings.ShowCompactCpuTemp,
+        "GPU" => settings.ShowCompactGpu,
+        "GPU-TEMP" => settings.ShowCompactGpuTemp,
+        "RAM" => settings.ShowCompactRam,
+        "VRAM" => settings.ShowCompactVram,
+        "NET-RX" or "NET-TX" => settings.ShowCompactNetwork,
+        "DISK-READ" or "DISK-WRITE" => settings.ShowCompactDisk,
+        _ => false
+    };
+
+    private bool CanMoveCompact(int offset)
+    {
+        int index = SelectedCompactGraph is null ? -1 : CompactOptions.IndexOf(SelectedCompactGraph);
+        return index >= 0 && index + offset >= 0 && index + offset < CompactOptions.Count;
+    }
+
+    private void MoveCompact(int offset)
+    {
+        if (!CanMoveCompact(offset)) return;
+        int index = CompactOptions.IndexOf(SelectedCompactGraph!);
+        CompactOptions.Move(index, index + offset);
+        CommandManager.InvalidateRequerySuggested();
+        SaveCompact();
+    }
+
+    private void RefreshCompactGraphs() => ActiveCompactGraphs = CompactOptions.Where(option => option.IsEnabled).ToArray();
+
+    private void SaveCompact()
+    {
+        RefreshCompactGraphs();
+        if (_settings == null) return;
+        _settings.CompactGraphs = CompactOptions.Select(option => new CompactGraphSetting
+        {
+            Id = option.Id,
+            Enabled = option.IsEnabled
+        }).ToList();
+        QueueSave();
+    }
+
+    private void QueueSave()
+    {
+        if (_settings == null) return;
+        _saveTimer.Stop();
+        _saveTimer.Start();
     }
 
     private void MoveMetric(string? name, int direction)
@@ -133,42 +256,6 @@ public class DisplayConstructorViewModel : ViewModelBase
         {
             if (_settings == null || _settings.ShowMicroUptime == value) return;
             _settings.ShowMicroUptime = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactDisk
-    {
-        get => _settings?.ShowCompactDisk ?? false;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactDisk == value) return;
-            _settings.ShowCompactDisk = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactNetwork
-    {
-        get => _settings?.ShowCompactNetwork ?? false;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactNetwork == value) return;
-            _settings.ShowCompactNetwork = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactUptime
-    {
-        get => _settings?.ShowCompactUptime ?? false;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactUptime == value) return;
-            _settings.ShowCompactUptime = value;
             OnPropertyChanged();
             _ = _settingsManager!.SaveSettingsAsync(_settings);
         }
@@ -318,75 +405,4 @@ public class DisplayConstructorViewModel : ViewModelBase
         }
     }
 
-    public bool ShowCompactCpu
-    {
-        get => _settings?.ShowCompactCpu ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactCpu == value) return;
-            _settings.ShowCompactCpu = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactGpu
-    {
-        get => _settings?.ShowCompactGpu ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactGpu == value) return;
-            _settings.ShowCompactGpu = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactRam
-    {
-        get => _settings?.ShowCompactRam ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactRam == value) return;
-            _settings.ShowCompactRam = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactVram
-    {
-        get => _settings?.ShowCompactVram ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactVram == value) return;
-            _settings.ShowCompactVram = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactCpuTemp
-    {
-        get => _settings?.ShowCompactCpuTemp ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactCpuTemp == value) return;
-            _settings.ShowCompactCpuTemp = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
-
-    public bool ShowCompactGpuTemp
-    {
-        get => _settings?.ShowCompactGpuTemp ?? true;
-        set
-        {
-            if (_settings == null || _settings.ShowCompactGpuTemp == value) return;
-            _settings.ShowCompactGpuTemp = value;
-            OnPropertyChanged();
-            _ = _settingsManager!.SaveSettingsAsync(_settings);
-        }
-    }
 }

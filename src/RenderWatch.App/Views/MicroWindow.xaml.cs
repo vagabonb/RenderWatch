@@ -123,7 +123,6 @@ public partial class MicroWindow : Window
         else
         {
             Application.Current?.Shutdown();
-            Environment.Exit(0);
         }
     }
 
@@ -137,7 +136,6 @@ public partial class MicroWindow : Window
         else
         {
             Application.Current?.Shutdown();
-            Environment.Exit(0);
         }
     }
 }

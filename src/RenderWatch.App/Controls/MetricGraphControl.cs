@@ -17,12 +17,35 @@ public class MetricGraphControl : FrameworkElement
             typeof(MetricGraphControl),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnPointsSourceChanged));
 
-    public static readonly DependencyProperty LineBrushProperty =
-        DependencyProperty.Register(
-            nameof(LineBrush),
-            typeof(Brush),
-            typeof(MetricGraphControl),
-            new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty ShowMetricDetailsProperty = DependencyProperty.Register(
+        nameof(ShowMetricDetails), typeof(bool), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty HeaderIconProperty = DependencyProperty.Register(
+        nameof(HeaderIcon), typeof(ImageSource), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty TemperatureTextProperty = DependencyProperty.Register(
+        nameof(TemperatureText), typeof(string), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool ShowMetricDetails
+    {
+        get => (bool)GetValue(ShowMetricDetailsProperty);
+        set => SetValue(ShowMetricDetailsProperty, value);
+    }
+
+    public ImageSource? HeaderIcon
+    {
+        get => (ImageSource?)GetValue(HeaderIconProperty);
+        set => SetValue(HeaderIconProperty, value);
+    }
+
+    public string? TemperatureText
+    {
+        get => (string?)GetValue(TemperatureTextProperty);
+        set => SetValue(TemperatureTextProperty, value);
+    }
 
     public static readonly DependencyProperty TitleProperty =
         DependencyProperty.Register(
@@ -56,6 +79,26 @@ public class MetricGraphControl : FrameworkElement
         nameof(IsFlat), typeof(bool), typeof(MetricGraphControl),
         new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty IsTransferRateProperty = DependencyProperty.Register(
+        nameof(IsTransferRate), typeof(bool), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty IsMiniatureProperty = DependencyProperty.Register(
+        nameof(IsMiniature), typeof(bool), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool IsMiniature
+    {
+        get => (bool)GetValue(IsMiniatureProperty);
+        set => SetValue(IsMiniatureProperty, value);
+    }
+
+    public bool IsTransferRate
+    {
+        get => (bool)GetValue(IsTransferRateProperty);
+        set => SetValue(IsTransferRateProperty, value);
+    }
+
     public bool IsFlat
     {
         get => (bool)GetValue(IsFlatProperty);
@@ -66,12 +109,6 @@ public class MetricGraphControl : FrameworkElement
     {
         get => (IEnumerable<double>?)GetValue(PointsSourceProperty);
         set => SetValue(PointsSourceProperty, value);
-    }
-
-    public Brush LineBrush
-    {
-        get => (Brush)GetValue(LineBrushProperty);
-        set => SetValue(LineBrushProperty, value);
     }
 
     public string Title
@@ -191,51 +228,115 @@ public class MetricGraphControl : FrameworkElement
         double h = ActualHeight;
         if (w < 60 || h < 60) return;
 
+        bool mini = IsMiniature;
+        bool flatChart = IsFlat && !mini;
+        bool showDetails = !mini && ShowMetricDetails;
         if (!IsFlat)
-            dc.DrawRoundedRectangle(CardBrush, null, new Rect(0, 0, w, h), 8, 8);
+            dc.DrawRoundedRectangle(CardBrush, null, new Rect(0, 0, w, h), mini ? 4 : 8, mini ? 4 : 8);
 
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
         var pointsList = PointsSource as IList<double> ?? PointsSource?.ToList();
         int count = pointsList?.Count ?? 0;
         bool hasData = count > 0;
-        double paddingH = IsFlat ? 0 : 14;
-        double paddingTop = IsFlat ? 4 : 12;
+        int cap = Math.Max(2, Capacity);
+        int startIndex = Math.Max(0, count - cap);
+        double paddingH = mini ? 8 : IsFlat ? 0 : 14;
+        double paddingTop = mini ? 5 : IsFlat ? 4 : 12;
+        double scaleMax = Math.Max(1.0, MaxValue);
+        var (divisor, unit) = !IsTransferRate ? (1.0, Unit) : scaleMax switch
+        {
+            >= 1073741824 => (1073741824.0, " ГБ/с"),
+            >= 1048576 => (1048576.0, " МБ/с"),
+            _ => (1024.0, " КБ/с")
+        };
 
         FormattedText FormatText(string value, double size, Brush brush, Typeface typeface) =>
             new(value, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, size, brush, dpi);
 
-        var title = FormatText(Title.ToUpperInvariant(), 11, TextSecondaryBrush, TitleTypeface);
-        dc.DrawText(title, new Point(paddingH, paddingTop));
+        string reading = CurrentValueText;
+        if (string.IsNullOrWhiteSpace(reading))
+            reading = hasData ? $"{pointsList![count - 1] / divisor:F1} {unit.Trim()}" : "—";
+        double valueFontSize = mini ? 12 : flatChart ? (IsTransferRate ? 17 : 21) : IsTransferRate ? 16 : 20;
+        var valueTypeface = IsFlat ? ValueTypeface : BlackValueTypeface;
+        var value = FormatText(reading, valueFontSize, TextWhiteBrush, valueTypeface);
+        double valueX = w - paddingH - value.Width;
+
+        double titleX = paddingH;
+        if (showDetails && HeaderIcon is { } icon)
+        {
+            dc.DrawImage(icon, new Rect(paddingH, paddingTop + 2, 19, 19));
+            titleX += 30;
+        }
+        double titleFontSize = showDetails ? (flatChart ? 20 : 18) : flatChart ? 16 : 11;
+        var title = FormatText(showDetails || flatChart ? Title : Title.ToUpperInvariant(), titleFontSize,
+            showDetails || flatChart ? TextWhiteBrush : TextSecondaryBrush, flatChart ? ValueTypeface : TitleTypeface);
+        if ((showDetails || flatChart) && title.Width + 10 > valueX - titleX)
+        {
+            title.SetFontSize(16);
+            title.MaxTextWidth = Math.Max(1, valueX - titleX - 10);
+            title.MaxLineCount = 1;
+            title.Trimming = TextTrimming.CharacterEllipsis;
+        }
+        dc.DrawText(title, new Point(titleX, paddingTop));
 
         string stats = "МОНИТОРИНГ...";
-        if (hasData)
+        if (hasData && !mini)
         {
-            double minimum = pointsList![0];
+            int firstStatSample = showDetails ? startIndex : 0;
+            double minimum = pointsList![firstStatSample];
             double maximum = minimum;
             double total = 0;
-            for (int i = 0; i < count; i++)
+            for (int i = firstStatSample; i < count; i++)
             {
                 double sample = pointsList[i];
                 minimum = Math.Min(minimum, sample);
                 maximum = Math.Max(maximum, sample);
                 total += sample;
             }
-            stats = $"МИН: {minimum:F0}{Unit}   МАКС: {maximum:F0}{Unit}   СРЕДН: {total / count:F0}{Unit}";
+            double average = total / (count - firstStatSample);
+            stats = IsTransferRate
+                ? $"МИН: {minimum / divisor:0.#}   МАКС: {maximum / divisor:0.#}   СРЕДН: {average / divisor:0.#}{unit}"
+                : $"МИН: {minimum:F0}{unit}   МАКС: {maximum:F0}{unit}   СРЕДН: {average:F0}{unit}";
         }
-        dc.DrawText(FormatText(stats, 9.5, TextMutedBrush, AxisTypeface), new Point(paddingH, paddingTop + 16));
 
-        string reading = hasData ? $"{pointsList![count - 1]:F1} {Unit}" : "—";
-        var value = FormatText(reading, 20, TextWhiteBrush, IsFlat ? ValueTypeface : BlackValueTypeface);
-        dc.DrawText(value, new Point(w - paddingH - value.Width, paddingTop + 2));
+        dc.DrawText(value, new Point(valueX, paddingTop + (showDetails ? 0 : 2)));
 
-        double graphTop = paddingTop + 36;
-        double graphBottom = h - 14;
-        double graphLeft = paddingH + 38;
+        double graphLeft = paddingH + (mini ? (IsTransferRate ? 54 : 30) :
+            flatChart ? (IsTransferRate ? 80 : 46) : IsTransferRate ? 70 : 38);
         double graphRight = w - paddingH - 4;
         double graphWidth = graphRight - graphLeft;
+        var axisTypeface = flatChart ? ValueTypeface : AxisTypeface;
+        var footer = FormatText(stats, flatChart ? 12 : showDetails ? 10.5 : 9.5,
+            flatChart ? TextSecondaryBrush : TextMutedBrush, axisTypeface);
+        var temperature = showDetails && TemperatureText is { Length: > 0 } text
+            ? FormatText(text == "Недоступно" ? "— °C" : text, 18, TextWhiteBrush, TitleTypeface)
+            : null;
+        bool wrapFooter = temperature != null && footer.Width + temperature.Width + 14 > graphWidth;
+        double graphTop = paddingTop + (mini ? 19 : showDetails || flatChart ? 32 : 36);
+        double footerHeight = mini ? 10 : showDetails ? (wrapFooter ? 55 : 39) : flatChart ? 34 : 14;
+        double graphBottom = h - footerHeight;
         double graphHeight = graphBottom - graphTop;
         if (graphWidth <= 20 || graphHeight <= 20) return;
+
+        if (showDetails)
+        {
+            double footerX = IsTransferRate ? paddingH : graphLeft;
+            if (temperature != null)
+            {
+                dc.DrawText(temperature, new Point(graphLeft, graphBottom + 8));
+                if (!wrapFooter) footerX = graphRight - footer.Width;
+            }
+            dc.DrawText(footer, new Point(footerX, graphBottom + (wrapFooter ? 29 : flatChart ? 10 : 14)));
+        }
+        else if (flatChart)
+        {
+            dc.DrawText(footer, new Point(IsTransferRate ? paddingH : graphLeft, graphBottom + 10));
+        }
+        else if (!mini)
+        {
+            dc.DrawText(footer, new Point(paddingH, paddingTop + 16));
+        }
 
         if (!IsFlat)
         {
@@ -243,7 +344,6 @@ public class MetricGraphControl : FrameworkElement
             dc.DrawLine(AxisLinePen, new Point(graphRight, graphTop), new Point(graphRight, graphBottom));
         }
 
-        double scaleMax = Math.Max(1.0, MaxValue);
         dc.DrawLine(AxisLinePen, new Point(graphLeft, graphTop), new Point(graphLeft, graphBottom));
 
         for (int i = 1; i <= 3; i++)
@@ -259,17 +359,16 @@ public class MetricGraphControl : FrameworkElement
             dc.DrawLine(AxisLinePen, new Point(graphLeft - 3, y), new Point(graphLeft, y));
             var pen = tick == 0 ? BasePen : tick == 2 ? TopBoundaryPen : GridPen;
             dc.DrawLine(pen, new Point(graphLeft, y), new Point(graphRight, y));
-            var label = new FormattedText($"{scaleMax * fraction:F0}{Unit}", CultureInfo.InvariantCulture,
-                FlowDirection.LeftToRight, AxisTypeface, tick == 1 ? 9 : 9.5,
-                tick == 1 ? TextMutedBrush : AxisLabelBrush, dpi);
-            dc.DrawText(label, new Point(graphLeft - label.Width - 6, y - 6));
+            var tickText = IsTransferRate ? $"{scaleMax * fraction / divisor:0.#}{unit}" : $"{scaleMax * fraction:F0}{unit}";
+            var label = new FormattedText(tickText, CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight, axisTypeface, mini ? 8 : flatChart ? 11 : tick == 1 ? 9 : 9.5,
+                flatChart ? TextSecondaryBrush : tick == 1 ? TextMutedBrush : AxisLabelBrush, dpi);
+            dc.DrawText(label, new Point(graphLeft - label.Width - 6, y - (flatChart ? label.Height / 2 : 6)));
         }
 
         if (!hasData) return;
 
-        int cap = Math.Max(2, Capacity);
         double stepX = graphWidth / (cap - 1);
-        int startIndex = Math.Max(0, count - cap);
 
 
         var lineGeom = new StreamGeometry();
@@ -311,8 +410,8 @@ public class MetricGraphControl : FrameworkElement
         dc.Pop();
 
         if (!IsFlat)
-            dc.DrawEllipse(EndpointHaloBrush, null, new Point(lastX, lastY), 4.6, 4.6);
+            dc.DrawEllipse(EndpointHaloBrush, null, new Point(lastX, lastY), mini ? 3 : 4.6, mini ? 3 : 4.6);
 
-        dc.DrawEllipse(TextWhiteBrush, null, new Point(lastX, lastY), 1.8, 1.8);
+        dc.DrawEllipse(TextWhiteBrush, null, new Point(lastX, lastY), mini ? 1.4 : 1.8, mini ? 1.4 : 1.8);
     }
 }

@@ -51,7 +51,7 @@
                         <ctrl:MetricSparkline Capacity="40" Points="{Binding DataContext.SessionMetrics.CpuLoad, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6" ToolTip="Температура">
-                        <Path Data="M 6,2 A 2,2 0 0 1 10,2 V 11 A 4,4 0 1 1 6,11 Z M 8,5 V 14"
+                        <Path Data="{StaticResource IconTemperature}"
                               Stroke="{StaticResource WhiteInk}" StrokeThickness="1.2" Width="10" Height="17"
                               Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding CpuTempDisplay}" Style="{StaticResource OverviewTemperature}"/>
@@ -70,7 +70,7 @@
                         <ctrl:MetricSparkline Capacity="40" Points="{Binding DataContext.SessionMetrics.GpuLoad, RelativeSource={RelativeSource AncestorType=Window}}"/>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6" ToolTip="Температура">
-                        <Path Data="M 6,2 A 2,2 0 0 1 10,2 V 11 A 4,4 0 1 1 6,11 Z M 8,5 V 14"
+                        <Path Data="{StaticResource IconTemperature}"
                               Stroke="{StaticResource WhiteInk}" StrokeThickness="1.2" Width="10" Height="17"
                               Stretch="Uniform" Margin="0,0,7,0" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding GpuTempDisplay}" Style="{StaticResource OverviewTemperature}"/>
@@ -107,22 +107,22 @@
             </Grid>
 
             <Border Height="1" Background="{StaticResource Hairline}" Margin="0,0,0,17"/>
-            <Grid Margin="0,0,0,27">
+            <Grid Margin="0,0,0,27" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="44"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Grid.IsSharedSizeScope="True">
+                <StackPanel Grid.Column="0">
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="DiskRead"/>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="DiskWrite"/>
+                            <ColumnDefinition Width="103"/>
+                            <ColumnDefinition Width="103"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="ДИСКИ" Style="{StaticResource SectionLabel}" Margin="0"/>
-                        <TextBlock Grid.Column="1" Text="Чтение" Style="{StaticResource OverviewDetail}" HorizontalAlignment="Right" Margin="10,0,0,0"/>
-                        <TextBlock Grid.Column="2" Text="Запись" Style="{StaticResource OverviewDetail}" HorizontalAlignment="Right" Margin="12,0,0,0"/>
+                        <TextBlock Grid.Column="1" Text="Чтение" Style="{StaticResource ActivityColumnHeader}" Margin="6,0,0,0"/>
+                        <TextBlock Grid.Column="2" Text="Запись" Style="{StaticResource ActivityColumnHeader}" Margin="6,0,0,0"/>
                     </Grid>
                     <ItemsControl x:Name="DiskEntries" ItemsSource="{Binding PhysicalDisks}">
                         <ItemsControl.ItemTemplate>
@@ -130,12 +130,12 @@
                                 <Grid Margin="0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DiskRead"/>
-                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DiskWrite"/>
+                                        <ColumnDefinition Width="103"/>
+                                        <ColumnDefinition Width="103"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="{Binding Name}" Foreground="{StaticResource WhiteInk}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Read}" Foreground="{StaticResource WhiteInk}" HorizontalAlignment="Right" Margin="10,0,0,0"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding Write}" Foreground="{StaticResource WhiteInk}" HorizontalAlignment="Right" Margin="12,0,0,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Read}" Style="{StaticResource ActivityRate}" Margin="6,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Write}" Style="{StaticResource ActivityRate}" Margin="6,0,0,0"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -152,37 +152,33 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="88"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Получение" Foreground="{StaticResource SoftInk}" FontSize="12" VerticalAlignment="Center"/>
                             <ctrl:MetricSparkline Grid.Column="1" Height="30" MaxValue="{Binding DataContext.SessionMetrics.NetworkReceiveScale, RelativeSource={RelativeSource AncestorType=Window}}" Capacity="40" Margin="4,0,9,0"
                                 ToolTip="{Binding DataContext.SessionMetrics.NetworkReceiveScaleDisplay, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Points="{Binding DataContext.SessionMetrics.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"
                                 AutomationProperties.Name="Сеть · Получение"/>
-                            <TextBlock Grid.Column="2" Text="{Binding NetworkReceive}" Foreground="White"
-                                       FontSize="12" FontWeight="Normal" MinWidth="78" TextAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding NetworkReceive}" Style="{StaticResource ActivityRate}"/>
                         </Grid>
                         <Grid Margin="0,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="88"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Отправка" Foreground="{StaticResource SoftInk}" FontSize="12" VerticalAlignment="Center"/>
                             <ctrl:MetricSparkline Grid.Column="1" Height="30" MaxValue="{Binding DataContext.SessionMetrics.NetworkSendScale, RelativeSource={RelativeSource AncestorType=Window}}" Capacity="40" Margin="4,0,9,0"
                                 ToolTip="{Binding DataContext.SessionMetrics.NetworkSendScaleDisplay, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Points="{Binding DataContext.SessionMetrics.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"
                                 AutomationProperties.Name="Сеть · Отправка"/>
-                            <TextBlock Grid.Column="2" Text="{Binding NetworkSend}" Foreground="White"
-                                       FontSize="12" FontWeight="Normal" MinWidth="78" TextAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding NetworkSend}" Style="{StaticResource ActivityRate}"/>
                         </Grid>
                 </StackPanel>
             </Grid>
 
             <Border Height="1" Background="{StaticResource Hairline}" Margin="0,0,0,17"/>
             <DockPanel Margin="0,0,0,12">
-                <TextBlock DockPanel.Dock="Right" Text="{Binding FansSummaryText}" Style="{StaticResource OverviewDetail}"
-                           Visibility="{Binding HasFans, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Text="ОХЛАЖДЕНИЕ" Style="{StaticResource SectionLabel}" Margin="0"/>
             </DockPanel>
             <ItemsControl ItemsSource="{Binding FanGroups}" Visibility="{Binding HasFans, Converter={StaticResource BoolToVis}}">
@@ -193,7 +189,7 @@
                             <ItemsControl ItemsSource="{Binding Fans}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,4" ToolTip="{Binding ScaleDescription}">
+                                        <Grid Margin="0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="0.56*"/>

@@ -16,13 +16,10 @@
         TextOptions.TextRenderingMode="ClearType">
 
     <Window.Resources>
-        <Geometry x:Key="IconCpu">M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3</Geometry>
-        <Geometry x:Key="IconGpu">M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3</Geometry>
-        <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
     </Window.Resources>
 
     <Grid>
-        <Grid Visibility="{Binding IsBlackStyle, Converter={StaticResource BoolToVis}}">
+        <Grid Visibility="{Binding UsesBlackLayout, Converter={StaticResource BoolToVis}}">
             <Grid.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -42,7 +42,22 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- Sleek Pure Monochrome ProgressBar -->
+        <Style x:Key="DiskUsage" TargetType="ctrl:MiniBarGauge">
+            <Setter Property="UseLoadColors" Value="False"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="UseLoadColors" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HardwareIcon" TargetType="Path">
+            <Setter Property="Stroke" Value="#FFFFFF"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Stroke" Value="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
 
         </ResourceDictionary>
@@ -60,7 +75,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="Конфигурация" Foreground="#F2F2F2" FontSize="26" VerticalAlignment="Center"/>
+                <TextBlock Text="Конфигурация" Style="{DynamicResource PageTitle}" VerticalAlignment="Center"/>
 
                 <!-- Right: Copy & Refresh Actions -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -109,7 +124,7 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#1E1E1E" CornerRadius="5" Margin="0,0,12,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Path Data="M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3"
-                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                      Style="{StaticResource HardwareIcon}" Tag="{x:Static ctrl:TelemetryPalette.Blue}" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ПРОЦЕССОР" Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"/>
@@ -186,7 +201,7 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#1E1E1E" CornerRadius="5" Margin="0,0,12,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Path Data="M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7"
-                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                      Style="{StaticResource HardwareIcon}" Tag="{x:Static ctrl:TelemetryPalette.Violet}" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ОПЕРАТИВНАЯ ПАМЯТЬ" Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"/>
@@ -273,7 +288,7 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#1E1E1E" CornerRadius="5" Margin="0,0,12,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Path Data="M 3,3 h 18 v 18 h -18 z M 6,6 h 4 v 4 h -4 z M 14,6 h 4 v 2 h -4 z M 14,10 h 4 v 2 h -4 z M 6,14 h 6 v 4 h -6 z M 15,15 h 3 v 3 h -3 z"
-                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                      Style="{StaticResource HardwareIcon}" Tag="{x:Static ctrl:TelemetryPalette.Violet}" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="МАТЕРИНСКАЯ ПЛАТА" Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"/>
@@ -334,7 +349,7 @@
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#1E1E1E" CornerRadius="5" Margin="0,0,12,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Path Data="M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3"
-                                      Stroke="#FFFFFF" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                      Style="{StaticResource HardwareIcon}" Tag="{x:Static ctrl:TelemetryPalette.Green}" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ВИДЕОКАРТА" Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"/>
@@ -392,7 +407,7 @@
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" Width="36" Height="36" Background="#1E1E1E" CornerRadius="5" Margin="0,0,12,0" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Path Data="M 3,4 h 18 v 6 h -18 z M 3,14 h 18 v 6 h -18 z M 17,7 h 2 M 17,17 h 2 M 14,7 h 1 M 14,17 h 1"
-                                  Stroke="#FFFFFF" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                  Style="{StaticResource HardwareIcon}" Tag="{x:Static ctrl:TelemetryPalette.Cyan}" StrokeThickness="1.2" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="НАКОПИТЕЛИ И ДИСКИ" Foreground="{StaticResource BrushTextMuted}" FontSize="10" FontWeight="SemiBold"/>
@@ -482,7 +497,7 @@
                                         </Grid>
 
                                         <!-- Monochrome Progress Bar -->
-                                        <ctrl:MiniBarGauge Value="{Binding UsedPercent}" MaxValue="100" Height="5" ToolTip="{Binding UsedSpace}"/>
+                                        <ctrl:MiniBarGauge Style="{StaticResource DiskUsage}" Value="{Binding UsedPercent}" MaxValue="100" Height="5" ToolTip="{Binding UsedSpace}"/>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>

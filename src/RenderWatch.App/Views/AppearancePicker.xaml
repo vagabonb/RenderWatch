@@ -20,7 +20,7 @@
             </ControlTemplate>
         </Button.Template>
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding AppearanceName}" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding Appearance}" VerticalAlignment="Center"/>
             <Path Data="M 1,1 L 4,4 L 7,1" Width="7" Height="4" Margin="8,0,0,0" Stretch="Uniform"
                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1"/>
         </StackPanel>
@@ -69,10 +69,12 @@
                         </Setter>
                     </Style>
                 </ContextMenu.Resources>
-                <MenuItem Header="Блэк" IsChecked="{Binding IsBlackStyle, Mode=OneWay}"
+                <MenuItem Header="Black" IsChecked="{Binding IsBlackStyle, Mode=OneWay}"
                           Command="{Binding SetAppearanceCommand}" CommandParameter="Black"/>
-                <MenuItem Header="Графит" IsChecked="{Binding IsGraphiteStyle, Mode=OneWay}"
+                <MenuItem Header="Graphite" IsChecked="{Binding IsGraphiteStyle, Mode=OneWay}"
                           Command="{Binding SetAppearanceCommand}" CommandParameter="Graphite"/>
+                <MenuItem Header="Color" IsChecked="{Binding IsColorStyle, Mode=OneWay}"
+                          Command="{Binding SetAppearanceCommand}" CommandParameter="Color"/>
             </ContextMenu>
         </Button.ContextMenu>
     </Button>

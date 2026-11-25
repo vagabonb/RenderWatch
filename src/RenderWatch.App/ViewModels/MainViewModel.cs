@@ -205,20 +205,42 @@ public class MainViewModel : ViewModelBase, IDisposable
                     Settings.StartWithWindows = value;
                 }
                 _settings.StartWithWindows = value;
-                _ = Task.Run(() => StartupManager.SetAutostart(value));
+                _ = UpdateAutostartAsync(value);
                 _ = _settingsManager.SaveSettingsAsync(_settings);
             }
         }
     }
 
+    private readonly SemaphoreSlim _autostartLock = new(1, 1);
+
+    private async Task UpdateAutostartAsync(bool enable)
+    {
+        await _autostartLock.WaitAsync();
+        bool success;
+        try
+        {
+            if (enable != StartWithWindows) return;
+            success = await Task.Run(() => StartupManager.SetAutostart(enable));
+        }
+        finally
+        {
+            _autostartLock.Release();
+        }
+        if (!success)
+        {
+            ToastTitle = "Автозапуск";
+            ToastMessage = "Не удалось изменить автозапуск Windows. Проверьте права и настройки планировщика задач.";
+            IsToastVisible = true;
+        }
+    }
     public bool IsAutostartDisabled => !StartWithWindows;
 
     public string ToastMessage { get => _toastMessage; set => SetField(ref _toastMessage, value); }
-    public bool IsToastVisible { get => _isToastVisible; set => SetField(ref _isToastVisible, value); }
+    public bool IsToastVisible { get => _isToastVisible && !IsUpdatePromptVisible; set => SetField(ref _isToastVisible, value); }
 
     public string Appearance
     {
-        get => IsGraphiteStyle ? "Graphite" : "Black";
+        get => IsColorStyle ? "Color" : IsGraphiteStyle ? "Graphite" : "Black";
         private set
         {
             if (Appearance == value) return;
@@ -228,9 +250,10 @@ public class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
-    public bool IsBlackStyle => !IsGraphiteStyle;
+    public bool UsesBlackLayout => !IsGraphiteStyle;
+    public bool IsBlackStyle => UsesBlackLayout && !IsColorStyle;
     public bool IsGraphiteStyle => string.Equals(_settings.Appearance, "Graphite", StringComparison.OrdinalIgnoreCase);
-    public string AppearanceName => IsGraphiteStyle ? "Графит" : "Блэк";
+    public bool IsColorStyle => string.Equals(_settings.Appearance, "Color", StringComparison.OrdinalIgnoreCase);
     public bool AreSettingsLoaded { get; private set; }
     public ICommand SetAppearanceCommand { get; }
 
@@ -238,6 +261,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         appearance switch
         {
             "Graphite" => _settings.GraphiteLayout ??= new AppearanceLayout(),
+            "Color" => _settings.ColorLayout ??= new AppearanceLayout(),
             _ => _settings.BlackLayout ??= new AppearanceLayout()
         };
 
@@ -246,19 +270,22 @@ public class MainViewModel : ViewModelBase, IDisposable
     private void NotifyAppearanceChanged()
     {
         OnPropertyChanged(nameof(IsBlackStyle));
+        OnPropertyChanged(nameof(UsesBlackLayout));
         OnPropertyChanged(nameof(IsGraphiteStyle));
-        OnPropertyChanged(nameof(AppearanceName));
+        OnPropertyChanged(nameof(IsColorStyle));
         NotifySidebarChanged();
         OnPropertyChanged(nameof(Appearance));
     }
 
     public bool IsSidebarCollapsed
     {
-        get => IsGraphiteStyle ? _settings.IsSidebarCollapsed : _settings.IsBlackSidebarCollapsed;
+        get => IsColorStyle ? _settings.IsColorSidebarCollapsed :
+            IsGraphiteStyle ? _settings.IsSidebarCollapsed : _settings.IsBlackSidebarCollapsed;
         set
         {
             if (IsSidebarCollapsed == value) return;
-            if (IsGraphiteStyle) _settings.IsSidebarCollapsed = value;
+            if (IsColorStyle) _settings.IsColorSidebarCollapsed = value;
+            else if (IsGraphiteStyle) _settings.IsSidebarCollapsed = value;
             else _settings.IsBlackSidebarCollapsed = value;
             NotifySidebarChanged();
             _ = _settingsManager.SaveSettingsAsync(_settings);
@@ -279,6 +306,40 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ToggleCompactModeCommand { get; }
     public ICommand ToggleCompactTopmostCommand { get; }
     public ICommand DismissToastCommand { get; }
+    public ICommand ApplyUpdateCommand { get; }
+    public ICommand PostponeUpdateCommand { get; }
+
+    private readonly CancellationTokenSource _updateLifetime = new();
+    private AutoUpdateService.StableRelease? _updateOffer;
+    private bool _isUpdating;
+    private bool _isUpdatePromptVisible;
+    private string _updatePromptText = "";
+
+    public bool IsUpdatePromptVisible
+    {
+        get => _isUpdatePromptVisible;
+        private set
+        {
+            if (!SetField(ref _isUpdatePromptVisible, value)) return;
+            OnPropertyChanged(nameof(IsToastVisible));
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    public bool IsUpdating
+    {
+        get => _isUpdating;
+        private set
+        {
+            if (SetField(ref _isUpdating, value)) CommandManager.InvalidateRequerySuggested();
+        }
+    }
+
+    public string UpdatePromptText
+    {
+        get => _updatePromptText;
+        private set => SetField(ref _updatePromptText, value);
+    }
     public ICommand ForceCompleteCommand { get; }
     public ICommand SetIntervalCommand { get; }
     public ICommand SetTaskbarStripThemeCommand { get; }
@@ -316,7 +377,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         };
         Charts = new ChartsViewModel();
         Configuration = new ConfigurationViewModel();
-        Constructor = new DisplayConstructorViewModel();
+        Constructor = new DisplayConstructorViewModel(SessionMetrics);
         History = new HistoryViewModel(historyRepository);
         Launcher = new LauncherViewModel(launcher, settingsManager);
         Settings = new SettingsViewModel(settingsManager);
@@ -326,7 +387,7 @@ public class MainViewModel : ViewModelBase, IDisposable
 
         SetAppearanceCommand = new RelayCommand(value =>
         {
-            if (value is "Black" or "Graphite") Appearance = (string)value;
+            if (value is "Black" or "Graphite" or "Color") Appearance = (string)value;
         });
         ToggleSidebarCommand = new RelayCommand(_ => IsSidebarCollapsed = !IsSidebarCollapsed);
         SelectTabCommand = new RelayCommand(p =>
@@ -371,6 +432,13 @@ public class MainViewModel : ViewModelBase, IDisposable
         ToggleCompactModeCommand = new RelayCommand(() => IsCompactMode = !IsCompactMode);
         ToggleCompactTopmostCommand = new RelayCommand(() => IsCompactTopmost = !IsCompactTopmost);
         DismissToastCommand = new RelayCommand(() => IsToastVisible = false);
+        ApplyUpdateCommand = new RelayCommand(async () => await AcceptUpdateAsync(), () => IsUpdatePromptVisible && !IsUpdating);
+        PostponeUpdateCommand = new RelayCommand(() =>
+        {
+            if (IsUpdating) return;
+            _updateOffer = null;
+            IsUpdatePromptVisible = false;
+        }, () => IsUpdatePromptVisible && !IsUpdating);
 
         ForceCompleteCommand = new RelayCommand(() =>
         {
@@ -399,6 +467,7 @@ public class MainViewModel : ViewModelBase, IDisposable
             _settings.StartWithWindows = _startWithWindows;
             _ = _settingsManager.SaveSettingsAsync(_settings);
         }
+        if (_startWithWindows) _ = UpdateAutostartAsync(true);
         Dashboard.StartWithWindows = _startWithWindows;
         Settings.StartWithWindows = _startWithWindows;
 
@@ -444,16 +513,48 @@ public class MainViewModel : ViewModelBase, IDisposable
 
         StartMonitoringLoop();
 
-        AutoUpdateService.UpdateReady += OnUpdateReady;
-        AutoUpdateService.StartBackgroundUpdateCheck();
-
+        _ = CheckForUpdateAsync(_updateLifetime.Token);
     }
 
-    private void OnUpdateReady(string tag)
+    private async Task CheckForUpdateAsync(CancellationToken cancellationToken)
     {
-        ToastTitle = "Обновление готово";
-        ToastMessage = $"Версия {tag} загружена. Обновление установится при закрытии приложения.";
-        IsToastVisible = true;
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(4), cancellationToken);
+            var offer = await Task.Run(() => AutoUpdateService.CheckForUpdateAsync(cancellationToken), cancellationToken);
+            if (offer == null || cancellationToken.IsCancellationRequested) return;
+            ShowUpdateOffer(offer);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    internal void ShowUpdateOffer(AutoUpdateService.StableRelease offer)
+    {
+        _updateOffer = offer;
+        UpdatePromptText = $"Обновить до {offer.Tag.TrimStart('v')}?";
+        IsUpdatePromptVisible = true;
+    }
+
+    private async Task AcceptUpdateAsync()
+    {
+        if (IsUpdating || _updateOffer is not { } offer || Application.Current?.MainWindow is not { } window) return;
+        var token = _updateLifetime.Token;
+        IsUpdating = true;
+        UpdatePromptText = "Скачивание…";
+        try
+        {
+            await Task.Run(() => AutoUpdateService.DownloadAndStartAsync(offer, token), token);
+            window.Close();
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (Exception)
+        {
+            UpdatePromptText = "Повторить обновление?";
+        }
+        finally
+        {
+            IsUpdating = false;
+        }
     }
 
     public void SelectProfile(RenderProfile profile)
@@ -589,7 +690,8 @@ public class MainViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _monitoringCts?.Cancel();
-        AutoUpdateService.UpdateReady -= OnUpdateReady;
+        _updateLifetime.Cancel();
+        _updateLifetime.Dispose();
         _monitoringCts?.Dispose();
         _hardwareMonitor.Dispose();
     }

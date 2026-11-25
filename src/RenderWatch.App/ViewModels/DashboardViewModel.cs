@@ -254,7 +254,26 @@ public class DashboardViewModel : ViewModelBase
 
     public string SensorSources { get => _sensorSources; set => SetField(ref _sensorSources, value); }
 
-    public sealed record DiskActivityDisplay(string Name, string Read, string Write);
+    public sealed class DiskActivityDisplay(string deviceName) : ViewModelBase
+    {
+        private string _read = "Недоступно";
+        private string _write = "Недоступно";
+
+        internal string DeviceName { get; } = deviceName;
+        public string Name { get; } = $"Диск {deviceName}";
+        public string Read { get => _read; private set => SetField(ref _read, value); }
+        public string Write { get => _write; private set => SetField(ref _write, value); }
+        public TransferHistory ReadHistory { get; } = new();
+        public TransferHistory WriteHistory { get; } = new();
+
+        internal void Update(DiskActivity activity)
+        {
+            Read = FormatRate(activity.ReadBytesPerSecond);
+            Write = FormatRate(activity.WriteBytesPerSecond);
+            ReadHistory.Add(activity.ReadBytesPerSecond);
+            WriteHistory.Add(activity.WriteBytesPerSecond);
+        }
+    }
     private IReadOnlyList<DiskActivityDisplay> _physicalDisks = Array.Empty<DiskActivityDisplay>();
     public IReadOnlyList<DiskActivityDisplay> PhysicalDisks
     {
@@ -286,11 +305,26 @@ public class DashboardViewModel : ViewModelBase
     private static string FormatRate(double? bytesPerSecond) =>
         bytesPerSecond.HasValue ? $"{bytesPerSecond.Value / 1048576.0:F2} МБ/с" : "Недоступно";
 
+    private void UpdateDiskActivities(IReadOnlyList<DiskActivity> activities)
+    {
+        if (PhysicalDisks.Count != activities.Count ||
+            PhysicalDisks.Where((row, index) => row.DeviceName != activities[index].Name).Any())
+        {
+            var rows = activities.Select(activity => PhysicalDisks.FirstOrDefault(row => row.DeviceName == activity.Name)
+                ?? new DiskActivityDisplay(activity.Name)).ToArray();
+            for (int i = 0; i < rows.Length; i++)
+                rows[i].Update(activities[i]);
+            PhysicalDisks = rows;
+            return;
+        }
+
+        for (int i = 0; i < activities.Count; i++)
+            PhysicalDisks[i].Update(activities[i]);
+    }
+
     public void Update(HardwareMetrics metrics, TrackerUpdateResult tracker)
     {
-        PhysicalDisks = metrics.PhysicalDisks.Select(disk =>
-            new DiskActivityDisplay("Диск " + disk.Name, FormatRate(disk.ReadBytesPerSecond), FormatRate(disk.WriteBytesPerSecond)))
-            .ToArray();
+        UpdateDiskActivities(metrics.PhysicalDisks);
         DiskRead = FormatRate(metrics.DiskReadBytesPerSecond);
         DiskWrite = FormatRate(metrics.DiskWriteBytesPerSecond);
         NetworkReceive = !metrics.NetworkAvailable ? "Недоступно" : metrics.NetworkOnline ? FormatRate(metrics.NetworkReceiveBytesPerSecond) : "Нет подключения";
@@ -329,8 +363,7 @@ public class DashboardViewModel : ViewModelBase
         RamCompactDisplay = metrics.RamCompactDisplay;
         RamPercentValue = metrics.RamUsagePercent ?? 0.0;
 
-        if (metrics.RamUsedGb.HasValue)
-            RamUsedDisplay = $"{metrics.RamUsedGb.Value:F1} ГБ";
+        RamUsedDisplay = metrics.RamUsedGb is double ramUsed ? $"{ramUsed:F1} ГБ" : "—";
         if (metrics.RamAvailableGb.HasValue)
             RamAvailableDisplay = $"{metrics.RamAvailableGb.Value:F1} ГБ";
         if (metrics.RamTotalGb.HasValue)
@@ -346,8 +379,7 @@ public class DashboardViewModel : ViewModelBase
         VramCapacityDisplay = FormatMemoryCapacity(metrics.VramUsedGb, metrics.VramTotalGb);
         VramPercentValue = metrics.VramUsagePercent ?? 0.0;
 
-        if (metrics.VramUsedGb.HasValue)
-            VramUsedDisplay = $"{metrics.VramUsedGb.Value:F1} ГБ";
+        VramUsedDisplay = metrics.VramUsedGb is double vramUsed ? $"{vramUsed:F1} ГБ" : "—";
         if (metrics.VramAvailableGb.HasValue)
             VramAvailableDisplay = $"{metrics.VramAvailableGb.Value:F1} ГБ";
         if (metrics.VramTotalGb.HasValue)

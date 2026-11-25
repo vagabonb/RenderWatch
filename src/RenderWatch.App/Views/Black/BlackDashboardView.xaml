@@ -10,11 +10,72 @@
             </ResourceDictionary.MergedDictionaries>
 
 
+        <Style x:Key="ColorDial" TargetType="Grid">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="BlackReadout" TargetType="FrameworkElement">
+            <Setter Property="Visibility" Value="Visible"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="HardwareUsage" TargetType="TextBlock" BasedOn="{StaticResource BlackReadout}">
+            <Setter Property="FontSize" Value="36"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <Style x:Key="TemperatureValue" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="FontSize" Value="21"/>
+                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                    <Setter Property="Margin" Value="18,0,0,0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="ColorTemperatureIcon" TargetType="Path">
+            <Setter Property="Data" Value="{StaticResource IconTemperature}"/>
+            <Setter Property="Stroke" Value="{x:Static ctrl:TelemetryPalette.Orange}"/>
+            <Setter Property="StrokeThickness" Value="1.2"/>
+            <Setter Property="Width" Value="11"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DialReading" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#F2F5F7"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="FontSize" Value="27"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="DialLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#A8AFB8"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+
         <!-- White Miniature Hardware Icons -->
-        <Geometry x:Key="IconCpu">M 4,4 h 16 v 16 h -16 z M 8,8 h 8 v 8 h -8 z M 7,1 v 3 M 12,1 v 3 M 17,1 v 3 M 7,20 v 3 M 12,20 v 3 M 17,20 v 3 M 1,7 h 3 M 1,12 h 3 M 1,17 h 3 M 20,7 h 3 M 20,12 h 3 M 20,17 h 3</Geometry>
-        <Geometry x:Key="IconGpu">M 2,5 h 20 v 14 h -20 z M 2,2 v 18 M 8,9 a 3,3 0 1 0 0.1,0 M 16,9 a 3,3 0 1 0 0.1,0 M 8,12 h 0.01 M 16,12 h 0.01 M 5,19 v 3 h 7 v -3</Geometry>
-        <Geometry x:Key="IconRam">M 2,6 h 20 v 11 h -8 v 2 h -2 v -2 h -10 z M 4,8 h 3 v 5 h -3 z M 9,8 h 3 v 5 h -3 z M 14,8 h 3 v 5 h -3 z M 19,8 h 1 v 5 h -1 z M 3,18 h 6 M 13,18 h 7</Geometry>
-        <Geometry x:Key="IconVram">M 2,4 h 20 v 16 h -20 z M 7,8 L 12,16 L 17,8 M 5,1 h 3 v 3 h -3 z M 11,1 h 3 v 3 h -3 z M 17,1 h 3 v 3 h -3 z M 5,20 h 3 v 3 h -3 z M 11,20 h 3 v 3 h -3 z M 17,20 h 3 v 3 h -3 z</Geometry>
         <Geometry x:Key="IconFan">M 12,12 m -10,0 a 10,10 0 1 0 20,0 a 10,10 0 1 0 -20,0 M 12,9.5 C 12,6 14,4 17,4 C 15.5,6.5 14.5,8 14.5,9.5 M 14.5,12 C 18,12 20,14 20,17 C 17.5,15.5 16,14.5 14.5,14.5 M 12,14.5 C 12,18 10,20 7,20 C 8.5,17.5 9.5,16 9.5,14.5 M 9.5,12 C 6,12 4,10 4,7 C 6.5,8.5 8,9.5 9.5,9.5 M 12,12 m -2.5,0 a 2.5,2.5 0 1 0 5,0 a 2.5,2.5 0 1 0 -5,0</Geometry>
 
         </ResourceDictionary>
@@ -28,7 +89,7 @@
                     <TextBlock Text="Время работы" Foreground="#999999" FontSize="11" HorizontalAlignment="Right"/>
                     <TextBlock Text="{Binding Uptime}" Foreground="#F2F2F2" FontSize="16" Margin="0,4,0,0" HorizontalAlignment="Right"/>
                 </StackPanel>
-                <TextBlock Text="Обзор системы" Foreground="#F2F2F2" FontSize="26" FontWeight="Normal" VerticalAlignment="Center"/>
+                <TextBlock Text="Обзор системы" Style="{DynamicResource PageTitle}" VerticalAlignment="Center"/>
             </DockPanel>
 
             <!-- 3. Equipment Cards Grid (CPU, GPU, RAM, VRAM) with White Miniature Icons & Larger Digits -->
@@ -43,7 +104,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#181818" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="5" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconCpu}" Stroke="#FFFFFF" StrokeThickness="1.5" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Path Data="{StaticResource IconCpu}" Stroke="#FFFFFF" StrokeThickness="1.4" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ПРОЦЕССОР" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
@@ -52,13 +113,21 @@
                         </Grid>
 
                         <!-- Usage -->
-                        <TextBlock Text="{Binding CpuUsageDisplay}" Foreground="#FFFFFF" FontSize="36" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,6"/>
-                        <ctrl:MiniBarGauge Value="{Binding CpuPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
+                        <Grid Style="{StaticResource ColorDial}" Width="112" Height="112" HorizontalAlignment="Center" Margin="0,2,0,10">
+                            <ctrl:UsageRing Value="{Binding CpuPercentValue}" AutomationProperties.Name="Нагрузка CPU"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding CpuUsageMicro}" Style="{StaticResource DialReading}"/>
+                                <TextBlock Text="Загрузка" Style="{StaticResource DialLabel}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding CpuUsageDisplay}" Foreground="#FFFFFF" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Style="{StaticResource HardwareUsage}"/>
+                        <ctrl:MiniBarGauge Style="{StaticResource BlackReadout}" Value="{Binding CpuPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
 
                         <!-- Temperature -->
                         <Grid Margin="0,0,0,10">
-                            <TextBlock Text="Температура" Foreground="#A0A0A0" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding CpuTempDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Style="{StaticResource BlackReadout}" Text="Температура" Foreground="#A0A0A0" FontSize="13" VerticalAlignment="Center"/>
+                            <Path Style="{StaticResource ColorTemperatureIcon}" ToolTip="Температура CPU"/>
+                            <TextBlock Text="{Binding CpuTempDisplay}" Style="{StaticResource TemperatureValue}"/>
                         </Grid>
 
                         <!-- Clock Frequency -->
@@ -85,7 +154,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#181818" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="5" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconGpu}" Stroke="#FFFFFF" StrokeThickness="1.5" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Path Data="{StaticResource IconGpu}" Stroke="#FFFFFF" StrokeThickness="1.4" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding GpuName}" TextTrimming="CharacterEllipsis" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
@@ -94,13 +163,21 @@
                         </Grid>
 
                         <!-- Usage -->
-                        <TextBlock Text="{Binding GpuUsageDisplay}" Foreground="#FFFFFF" FontSize="36" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,6"/>
-                        <ctrl:MiniBarGauge Value="{Binding GpuPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
+                        <Grid Style="{StaticResource ColorDial}" Width="112" Height="112" HorizontalAlignment="Center" Margin="0,2,0,10">
+                            <ctrl:UsageRing Value="{Binding GpuPercentValue}" AutomationProperties.Name="Нагрузка GPU"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GpuUsageMicro}" Style="{StaticResource DialReading}"/>
+                                <TextBlock Text="Загрузка" Style="{StaticResource DialLabel}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding GpuUsageDisplay}" Foreground="#FFFFFF" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Style="{StaticResource HardwareUsage}"/>
+                        <ctrl:MiniBarGauge Style="{StaticResource BlackReadout}" Value="{Binding GpuPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
 
                         <!-- Temperature -->
                         <Grid Margin="0,0,0,10">
-                            <TextBlock Text="Температура" Foreground="#A0A0A0" FontSize="13" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding GpuTempDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Style="{StaticResource BlackReadout}" Text="Температура" Foreground="#A0A0A0" FontSize="13" VerticalAlignment="Center"/>
+                            <Path Style="{StaticResource ColorTemperatureIcon}" ToolTip="Температура GPU"/>
+                            <TextBlock Text="{Binding GpuTempDisplay}" Style="{StaticResource TemperatureValue}"/>
                         </Grid>
 
                         <!-- Clock Frequency -->
@@ -127,7 +204,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#181818" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="5" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconRam}" Stroke="#FFFFFF" StrokeThickness="1.5" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Path Data="{StaticResource IconRam}" Stroke="#FFFFFF" StrokeThickness="1.4" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ПАМЯТЬ" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
@@ -136,12 +213,30 @@
                         </Grid>
 
                         <!-- Usage Percent -->
-                        <TextBlock Text="{Binding RamPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="36" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,6"/>
-                        <ctrl:MiniBarGauge Value="{Binding RamPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
+                        <Grid Style="{StaticResource ColorDial}" Width="112" Height="112" HorizontalAlignment="Center" Margin="0,2,0,10">
+                            <ctrl:UsageRing Value="{Binding RamPercentValue}" AutomationProperties.Name="Использование RAM"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding RamPercentValue, StringFormat={}{0:F0}%}" Style="{StaticResource DialReading}"/>
+                                <TextBlock Text="Занято" Style="{StaticResource DialLabel}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding RamPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Style="{StaticResource HardwareUsage}"/>
+                        <ctrl:MiniBarGauge Style="{StaticResource BlackReadout}" Value="{Binding RamPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
 
                         <!-- Volume -->
                         <TextBlock Text="Занято / Всего:" Foreground="#A0A0A0" FontSize="13" Margin="0,0,0,6"/>
-                        <TextBlock Text="{Binding RamDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" TextWrapping="Wrap"/>
+                        <TextBlock Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding RamDisplay}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Text" Value="{Binding RamCapacityDisplay}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -155,7 +250,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border Grid.Column="0" Width="36" Height="36" Background="#181818" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="5" Margin="0,0,10,0">
-                                <Path Data="{StaticResource IconVram}" Stroke="#FFFFFF" StrokeThickness="1.5" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Path Data="{StaticResource IconVram}" Stroke="#FFFFFF" StrokeThickness="1.4" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="ВИДЕОПАМЯТЬ" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
@@ -164,43 +259,63 @@
                         </Grid>
 
                         <!-- Usage Percent -->
-                        <TextBlock Text="{Binding VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontSize="36" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Margin="0,0,0,6"/>
-                        <ctrl:MiniBarGauge Value="{Binding VramPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
+                        <Grid Style="{StaticResource ColorDial}" Width="112" Height="112" HorizontalAlignment="Center" Margin="0,2,0,10">
+                            <ctrl:UsageRing Value="{Binding VramPercentValue}" AutomationProperties.Name="Использование VRAM"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding VramPercentValue, StringFormat={}{0:F0}%}" Style="{StaticResource DialReading}"/>
+                                <TextBlock Text="Занято" Style="{StaticResource DialLabel}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding VramPercentValue, StringFormat={}{0:F0}%}" Foreground="#FFFFFF" FontWeight="Normal" FontFamily="{StaticResource FontDisplay}" Style="{StaticResource HardwareUsage}"/>
+                        <ctrl:MiniBarGauge Style="{StaticResource BlackReadout}" Value="{Binding VramPercentValue}" MaxValue="100" Height="3" HorizontalAlignment="Stretch" Margin="0,0,0,16"/>
 
                         <!-- Volume -->
                         <TextBlock Text="Занято / Всего:" Foreground="#A0A0A0" FontSize="13" Margin="0,0,0,6"/>
-                        <TextBlock Text="{Binding VramDisplay}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" TextWrapping="Wrap"/>
+                        <TextBlock Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="14" FontFamily="{StaticResource FontDisplay}" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding VramDisplay}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                            <Setter Property="Text" Value="{Binding VramCapacityDisplay}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
-            <Grid Margin="0,0,0,16">
+            <Grid Margin="0,0,0,16" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Style="{StaticResource BlackCard}" Padding="16,12" Margin="0,0,6,0">
                     <StackPanel>
-                        <TextBlock Text="ДИСКИ" Foreground="#909090" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
-                        <TextBlock Text="Физические диски · МБ/с" Foreground="#777777" FontSize="10" Margin="0,2,0,8"/>
+                        <Grid Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="103"/>
+                                <ColumnDefinition Width="103"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="ДИСКИ" Foreground="#909090" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Чтение" Style="{StaticResource ActivityColumnHeader}" Margin="6,0,0,0"/>
+                            <TextBlock Grid.Column="2" Text="Запись" Style="{StaticResource ActivityColumnHeader}" Margin="6,0,0,0"/>
+                        </Grid>
                         <ItemsControl ItemsSource="{Binding PhysicalDisks}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="0,3,0,3">
+                                    <Grid Margin="0,3">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="103"/>
+                                            <ColumnDefinition Width="103"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding Name}" Foreground="#F0F0F0" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="14,0,0,0">
-                                            <TextBlock Text="Чтение " Foreground="#909090" FontSize="11"/>
-                                            <TextBlock Text="{Binding Read}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="14,0,0,0">
-                                            <TextBlock Text="Запись " Foreground="#909090" FontSize="11"/>
-                                            <TextBlock Text="{Binding Write}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Read}" Style="{StaticResource ActivityRate}" FontWeight="SemiBold" Margin="6,0,0,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Write}" Style="{StaticResource ActivityRate}" FontWeight="SemiBold" Margin="6,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -222,34 +337,31 @@
                 <Border Grid.Column="1" Style="{StaticResource BlackCard}" Padding="16,12" Margin="6,0,0,0">
                     <StackPanel>
                         <TextBlock Text="СЕТЬ" Foreground="#909090" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
-                        <TextBlock Text="Активные сетевые адаптеры" Foreground="#777777" FontSize="10" Margin="0,2,0,10"/>
                         <Grid Margin="0,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="88"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Получение" Foreground="#A0A0A0" FontSize="12" VerticalAlignment="Center"/>
                             <ctrl:MetricSparkline Grid.Column="1" Height="30" MaxValue="{Binding DataContext.SessionMetrics.NetworkReceiveScale, RelativeSource={RelativeSource AncestorType=Window}}" Capacity="40" Margin="4,0,9,0"
                                 ToolTip="{Binding DataContext.SessionMetrics.NetworkReceiveScaleDisplay, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Points="{Binding DataContext.SessionMetrics.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"
                                 AutomationProperties.Name="Сеть · Получение"/>
-                            <TextBlock Grid.Column="2" Text="{Binding NetworkReceive}" Foreground="White" FontSize="14"
-                                       FontWeight="SemiBold" MinWidth="78" TextAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding NetworkReceive}" Style="{StaticResource ActivityRate}" FontSize="14" FontWeight="SemiBold"/>
                         </Grid>
                         <Grid Margin="0,4">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="88"/>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Отправка" Foreground="#A0A0A0" FontSize="12" VerticalAlignment="Center"/>
                             <ctrl:MetricSparkline Grid.Column="1" Height="30" MaxValue="{Binding DataContext.SessionMetrics.NetworkSendScale, RelativeSource={RelativeSource AncestorType=Window}}" Capacity="40" Margin="4,0,9,0"
                                 ToolTip="{Binding DataContext.SessionMetrics.NetworkSendScaleDisplay, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Points="{Binding DataContext.SessionMetrics.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"
                                 AutomationProperties.Name="Сеть · Отправка"/>
-                            <TextBlock Grid.Column="2" Text="{Binding NetworkSend}" Foreground="White" FontSize="14"
-                                       FontWeight="SemiBold" MinWidth="78" TextAlignment="Right" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="{Binding NetworkSend}" Style="{StaticResource ActivityRate}" FontSize="14" FontWeight="SemiBold"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -272,17 +384,9 @@
 
                         <!-- Title -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="СИСТЕМА ОХЛАЖДЕНИЯ" Foreground="#707070" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
-                            <TextBlock Text="Вентиляторы и активные контуры" Foreground="#FFFFFF" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock Text="Охлаждение" Foreground="#FFFFFF" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}"/>
                         </StackPanel>
 
-                        <!-- Fans Count Badge -->
-                        <Border Grid.Column="2" Background="#181818" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="5" Padding="12,5" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Вентиляторы: " Foreground="{StaticResource BrushTextMuted}" FontSize="11" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding FansSummaryText}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold"/>
-                            </StackPanel>
-                        </Border>
                     </Grid>
 
                     <!-- Fans Grid Categorized by Hardware (AIO Pump/Rad, GPU, Chassis, PSU, etc.) -->
@@ -300,7 +404,6 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0" Text="{Binding GroupName}" Foreground="#8A8A8A" FontSize="10" FontWeight="Bold" FontFamily="{StaticResource FontDisplay}" Margin="0,0,10,0" VerticalAlignment="Center"/>
                                             <Rectangle Grid.Column="1" Height="1" Fill="#202020" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding CountText}" Foreground="#555555" FontSize="10" FontWeight="SemiBold" Margin="10,0,12,0" VerticalAlignment="Center"/>
                                         </Grid>
                                     </Border>
 
@@ -328,9 +431,6 @@
                                                             </Grid.ColumnDefinitions>
 
                                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                <Border Background="#1E1E1E" BorderBrush="#2C2C2C" BorderThickness="0" CornerRadius="4" Padding="5,2" Margin="0,0,8,0">
-                                                                    <TextBlock Text="{Binding Role}" Foreground="#AAAAAA" FontSize="10" FontWeight="Bold"/>
-                                                                </Border>
                                                                 <TextBlock Text="{Binding DisplayName}" Foreground="#FFFFFF" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
 
@@ -339,7 +439,7 @@
                                                         </Grid>
 
                                                         <!-- Bottom Row: Speed MiniBarGauge (Subtle and Clean) -->
-                                                        <ctrl:MiniBarGauge Grid.Row="1" Value="{Binding PercentValue}" MaxValue="100" ToolTip="{Binding ScaleDescription}" Height="3" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                                                        <ctrl:MiniBarGauge Grid.Row="1" Value="{Binding PercentValue}" MaxValue="100" Height="3" VerticalAlignment="Center" Margin="0,8,0,0"/>
                                                     </Grid>
                                                 </Border>
                                             </DataTemplate>
@@ -357,8 +457,7 @@
                                 <Path Data="{StaticResource IconFan}" Stroke="#707070" StrokeThickness="1.5" Width="13" Height="13" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="Инициализация контуров охлаждения..." Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold"/>
-                                <TextBlock Text="Опрос аппаратных датчиков и профилей охлаждения системы" Foreground="#707070" FontSize="11"/>
+                                <TextBlock Text="Нет данных о вентиляторах" Foreground="#FFFFFF" FontSize="12" FontWeight="SemiBold"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>

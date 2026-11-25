@@ -1,0 +1,409 @@
+<UserControl x:Class="RenderWatch.App.Views.ChartTabs"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
+             xmlns:vm="clr-namespace:RenderWatch.App.ViewModels">
+    <UserControl.Resources>
+        <DrawingImage x:Key="CpuIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconCpu}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Blue}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="GpuIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconGpu}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Green}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="RamIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconRam}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Violet}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="VramIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconVram}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Cyan}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="NetworkIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconNetwork}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Cyan}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+        <DrawingImage x:Key="DiskIcon">
+            <DrawingImage.Drawing>
+                <GeometryDrawing Geometry="{StaticResource IconDisk}">
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="{x:Static ctrl:TelemetryPalette.Orange}" Thickness="1.5"/>
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+
+        <Style x:Key="GraphTile" TargetType="ctrl:MetricGraphControl">
+            <Setter Property="IsFlat" Value="False"/>
+            <Setter Property="MinHeight" Value="185"/>
+            <Setter Property="Margin" Value="5,0,5,12"/>
+            <Setter Property="Capacity" Value="{Binding GraphCapacity}"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title, RelativeSource={RelativeSource Self}}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="IsFlat" Value="True"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DataContext.UsesBlackLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="ShowMetricDetails" Value="True"/>
+                    <Setter Property="HeaderIcon" Value="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+                    <Setter Property="MinHeight" Value="202"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="TemperatureTile" TargetType="ctrl:MetricGraphControl" BasedOn="{StaticResource GraphTile}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="RateTile" TargetType="ctrl:MetricGraphControl" BasedOn="{StaticResource GraphTile}">
+            <Setter Property="IsTransferRate" Value="True"/>
+            <Setter Property="Capacity" Value="{x:Static vm:TransferHistory.Capacity}"/>
+        </Style>
+
+        <Style x:Key="DetailChart" TargetType="ctrl:MetricGraphControl" BasedOn="{StaticResource GraphTile}">
+            <Setter Property="ShowMetricDetails" Value="True"/>
+            <Setter Property="Height" Value="294"/>
+        </Style>
+
+        <Style x:Key="DetailRateChart" TargetType="ctrl:MetricGraphControl" BasedOn="{StaticResource DetailChart}">
+            <Setter Property="IsTransferRate" Value="True"/>
+            <Setter Property="Capacity" Value="{x:Static vm:TransferHistory.Capacity}"/>
+        </Style>
+
+        <Style x:Key="DetailScroll" TargetType="ScrollViewer">
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+        <Style x:Key="MemoryCompositionBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="38"/>
+            <Setter Property="Background" Value="#181818"/>
+            <Setter Property="Foreground" Value="#2EFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#55FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                            <Grid ClipToBounds="True">
+                                <Border x:Name="PART_Track"/>
+                                <Border x:Name="PART_Indicator" HorizontalAlignment="Left"
+                                        Background="{TemplateBinding Foreground}" BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="0,0,1,0"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.Dashboard.VramCapacityDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Value="Недоступно">
+                    <Setter Property="Opacity" Value="0.45"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="InfoRow" TargetType="UniformGrid">
+            <Setter Property="Margin" Value="5,0,5,14"/>
+        </Style>
+        <Style x:Key="MetricInfo" TargetType="HeaderedContentControl">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+            <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="HeaderedContentControl">
+                        <Border Background="#0BFFFFFF" CornerRadius="4" Padding="10,7" Margin="0,0,4,0">
+                            <StackPanel>
+                                <TextBlock Text="{TemplateBinding Header}" Foreground="{DynamicResource BrushTextSecondary}"
+                                           FontSize="11" Margin="0,0,0,3"/>
+                                <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                                           FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MetricTab" TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
+            <Setter Property="Padding" Value="13,7"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabSurface" Background="Transparent" Padding="{TemplateBinding Padding}"
+                                BorderBrush="Transparent" BorderThickness="0,0,0,2">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabSurface" Property="Background" Value="#10FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="TabSurface" Property="Background" Value="#10FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource BrushTextPrimary}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter TargetName="TabSurface" Property="Background" Value="#12FFFFFF"/>
+                                <Setter TargetName="TabSurface" Property="BorderBrush" Value="{DynamicResource BrushTextPrimary}"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="TabSurface" Property="BorderBrush" Value="{x:Static ctrl:TelemetryPalette.Cyan}"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <TabControl TabStripPlacement="Bottom" ItemContainerStyle="{StaticResource MetricTab}"
+                SelectedIndex="{Binding SelectedMetricTab, Mode=TwoWay}" AutomationProperties.Name="Разделы графиков">
+        <TabControl.Template>
+            <ControlTemplate TargetType="TabControl">
+                <Grid KeyboardNavigation.TabNavigation="Local">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                    <Border Grid.Row="1" Margin="5,6,5,0" Padding="0,5,0,0"
+                            BorderBrush="{DynamicResource Hairline}" BorderThickness="0,1,0,0">
+                        <TabPanel IsItemsHost="True"/>
+                    </Border>
+                </Grid>
+            </ControlTemplate>
+        </TabControl.Template>
+        <TabItem Header="Все">
+            <ScrollViewer Style="{StaticResource DetailScroll}">
+                <UniformGrid Columns="2">
+                    <ctrl:MetricGraphControl Style="{StaticResource GraphTile}" Title="CPU"
+                            Tag="{StaticResource CpuIcon}"
+                            PointsSource="{Binding CpuHistory}"
+                            TemperatureText="{Binding DataContext.Dashboard.CpuTempDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource GraphTile}" Title="GPU"
+                            Tag="{StaticResource GpuIcon}"
+                            PointsSource="{Binding GpuHistory}"
+                            TemperatureText="{Binding DataContext.Dashboard.GpuTempDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource GraphTile}" Title="RAM"
+                            Tag="{StaticResource RamIcon}"
+                            PointsSource="{Binding RamHistory}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource GraphTile}" Title="VRAM"
+                            Tag="{StaticResource VramIcon}"
+                            PointsSource="{Binding VramHistory}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Сеть · Приём"
+                            Tag="{StaticResource NetworkIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.NetworkReceiveScale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Сеть · Отправка"
+                            Tag="{StaticResource NetworkIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.NetworkSendScale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Диски · Чтение"
+                            Tag="{StaticResource DiskIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.DiskRead.Points, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.DiskRead.Scale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.DiskRead, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Диски · Запись"
+                            Tag="{StaticResource DiskIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.DiskWrite.Points, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.DiskWrite.Scale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.DiskWrite, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource TemperatureTile}" Title="Температура CPU"
+                            Unit="°C"
+                            MaxValue="105"
+                            PointsSource="{Binding CpuTempHistory}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource TemperatureTile}" Title="Температура GPU"
+                            Unit="°C"
+                            MaxValue="100"
+                            PointsSource="{Binding GpuTempHistory}"/>
+                </UniformGrid>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="CPU">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <ctrl:MetricGraphControl Height="Auto" Style="{StaticResource DetailChart}" Title="CPU"
+                        Tag="{StaticResource CpuIcon}"
+                        PointsSource="{Binding CpuHistory}"/>
+                <UniformGrid Grid.Row="1" Columns="4" Style="{StaticResource InfoRow}">
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Процессор"
+                            Content="{Binding DataContext.Configuration.Config.CpuName, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Температура"
+                            Content="{Binding DataContext.Dashboard.CpuTempDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Частота"
+                            Content="{Binding DataContext.Dashboard.CpuClockDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Мощность"
+                            Content="{Binding DataContext.Dashboard.CpuPowerDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </UniformGrid>
+            </Grid>
+        </TabItem>
+        <TabItem Header="GPU">
+            <ScrollViewer Style="{StaticResource DetailScroll}">
+                <StackPanel>
+                    <ctrl:MetricGraphControl Style="{StaticResource DetailChart}" Title="GPU"
+                            Tag="{StaticResource GpuIcon}"
+                            PointsSource="{Binding GpuHistory}"/>
+                    <UniformGrid Columns="4" Style="{StaticResource InfoRow}">
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Видеокарта"
+                                Content="{Binding DataContext.Dashboard.GpuName, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Температура"
+                                Content="{Binding DataContext.Dashboard.GpuTempDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Частота"
+                                Content="{Binding DataContext.Dashboard.GpuClockDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Мощность"
+                                Content="{Binding DataContext.Dashboard.GpuPowerDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </UniformGrid>
+                    <StackPanel Margin="5,0,9,8">
+                        <TextBlock Text="Видеопамять" Foreground="{DynamicResource BrushTextPrimary}"
+                                   FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <ProgressBar Style="{StaticResource MemoryCompositionBar}"
+                                     Minimum="0" Maximum="100"
+                                     Value="{Binding DataContext.Dashboard.VramPercentValue, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}"
+                                     AutomationProperties.Name="Занято видеопамяти, проценты"/>
+                    </StackPanel>
+                    <UniformGrid Columns="2" Style="{StaticResource InfoRow}">
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Занято / всего"
+                                Content="{Binding DataContext.Dashboard.VramCapacityDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Доступно"
+                                Content="{Binding DataContext.Dashboard.VramAvailableDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </UniformGrid>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="RAM">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <ctrl:MetricGraphControl Height="Auto" Style="{StaticResource DetailChart}" Title="RAM"
+                        Tag="{StaticResource RamIcon}"
+                        PointsSource="{Binding RamHistory}"/>
+                <UniformGrid Grid.Row="1" Columns="3" Style="{StaticResource InfoRow}">
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Занято / всего"
+                            Content="{Binding DataContext.Dashboard.RamCapacityDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Доступно"
+                            Content="{Binding DataContext.Dashboard.RamAvailableDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Частота памяти"
+                            Content="{Binding DataContext.Configuration.Config.RamSpeed, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </UniformGrid>
+            </Grid>
+        </TabItem>
+        <TabItem Header="VRAM">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <ctrl:MetricGraphControl Height="Auto" Style="{StaticResource DetailChart}" Title="VRAM"
+                        Tag="{StaticResource VramIcon}"
+                        PointsSource="{Binding VramHistory}"/>
+                <UniformGrid Grid.Row="1" Columns="2" Style="{StaticResource InfoRow}">
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Занято / всего"
+                            Content="{Binding DataContext.Dashboard.VramCapacityDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <HeaderedContentControl Style="{StaticResource MetricInfo}" Header="Доступно"
+                            Content="{Binding DataContext.Dashboard.VramAvailableDisplay, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </UniformGrid>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Сеть">
+            <ScrollViewer Style="{StaticResource DetailScroll}">
+                <StackPanel>
+                    <ctrl:MetricGraphControl Style="{StaticResource DetailRateChart}" Title="Приём"
+                            Tag="{StaticResource NetworkIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.NetworkReceiveScale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.NetworkReceive, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource DetailRateChart}" Title="Отправка"
+                            Tag="{StaticResource NetworkIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.NetworkSendScale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.NetworkSend, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Диски">
+            <ScrollViewer Style="{StaticResource DetailScroll}">
+                <StackPanel>
+                    <ctrl:MetricGraphControl Style="{StaticResource DetailRateChart}" Title="Чтение · Все диски"
+                            Tag="{StaticResource DiskIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.DiskRead.Points, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.DiskRead.Scale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.DiskRead, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ctrl:MetricGraphControl Style="{StaticResource DetailRateChart}" Title="Запись · Все диски"
+                            Tag="{StaticResource DiskIcon}"
+                            PointsSource="{Binding DataContext.SessionMetrics.DiskWrite.Points, RelativeSource={RelativeSource AncestorType=Window}}"
+                            MaxValue="{Binding DataContext.SessionMetrics.DiskWrite.Scale, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CurrentValueText="{Binding DataContext.Dashboard.DiskWrite, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    <ItemsControl ItemsSource="{Binding DataContext.Dashboard.PhysicalDisks, RelativeSource={RelativeSource AncestorType=Window}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource BrushTextPrimary}"
+                                               FontSize="16" FontWeight="SemiBold" Margin="5,4,0,9"/>
+                                    <UniformGrid Columns="2">
+                                        <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Чтение"
+                                                Tag="{StaticResource DiskIcon}"
+                                                PointsSource="{Binding ReadHistory.Points}"
+                                                MaxValue="{Binding ReadHistory.Scale}"
+                                                CurrentValueText="{Binding Read}"/>
+                                        <ctrl:MetricGraphControl Style="{StaticResource RateTile}" Title="Запись"
+                                                Tag="{StaticResource DiskIcon}"
+                                                PointsSource="{Binding WriteHistory.Points}"
+                                                MaxValue="{Binding WriteHistory.Scale}"
+                                                CurrentValueText="{Binding Write}"/>
+                                    </UniformGrid>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</UserControl>

@@ -70,7 +70,7 @@ public partial class App : Application
         {
             // Explicit Application ID ensures Windows Taskbar associates the window strictly with this exact version
             // and purges any stale/cached icons from earlier builds on laptops or other systems
-            SetCurrentProcessExplicitAppUserModelID("RenderWatch.App.v2.FinalIcon");
+            SetCurrentProcessExplicitAppUserModelID("RenderWatch");
         }
         catch { }
 
@@ -209,9 +209,6 @@ public partial class App : Application
         }
         catch { }
 
-        AutoUpdateService.ApplyUpdateAndRestart(shutdownApp: false);
-
         base.OnExit(e);
-        Environment.Exit(0);
     }
 }

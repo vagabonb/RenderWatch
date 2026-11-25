@@ -9,7 +9,7 @@ namespace RenderWatch.App.Services;
 /// Manages Windows startup registration for RENDER WATCH.
 /// Utilizes Windows Task Scheduler with Highest Privileges (/RL HIGHEST)
 /// so that the application starts elevated upon user logon without triggering a UAC prompt.
-/// Also mirrors to the CurrentVersion\Run registry key as a fallback.
+/// Allows startup while the computer is running on battery power.
 /// </summary>
 public static class StartupManager
 {
@@ -42,8 +42,8 @@ public static class StartupManager
             return true;
         }
 
-        // 2. Check Registry Run key
-        return IsRegistryRunSet();
+        // A Run key cannot launch an application that requires elevation at logon.
+        return false;
     }
 
     /// <summary>
@@ -51,31 +51,17 @@ public static class StartupManager
     /// </summary>
     public static bool SetAutostart(bool enable)
     {
-        string exePath = GetExecutablePath();
-        bool success = true;
-
-        if (enable)
+        if (!enable)
         {
-            // 1. Register with Windows Task Scheduler (Elevated, on logon, zero UAC prompt)
-            bool taskResult = CreateScheduledTask(exePath);
-            if (!taskResult)
-            {
-                success = false;
-            }
-
-            // 2. Mirror into HKCU Registry Run
-            SetRegistryRun(true, exePath);
-        }
-        else
-        {
-            // 1. Remove from Task Scheduler
-            DeleteScheduledTask();
-
-            // 2. Remove from Registry Run
-            SetRegistryRun(false, exePath);
+            bool scheduled = IsTaskScheduled();
+            bool removed = !scheduled || DeleteScheduledTask();
+            SetRegistryRun(false, GetExecutablePath());
+            return removed;
         }
 
-        return success;
+        bool created = CreateScheduledTask(GetExecutablePath());
+        if (created) SetRegistryRun(false, GetExecutablePath());
+        return created;
     }
 
     private static bool IsTaskScheduled()
@@ -106,23 +92,59 @@ public static class StartupManager
     {
         try
         {
-            // Arguments format: /create /tn "RenderWatch" /tr "\"C:\Path\RenderWatch.exe\" --taskbar" /sc onlogon /rl highest /f
-            string taskAction = $"\\\"{exePath}\\\" --taskbar";
-            string args = $"/create /tn \"{TaskName}\" /tr \"{taskAction}\" /sc onlogon /rl highest /f";
-
-            var psi = new ProcessStartInfo
+            // Interactive-token tasks can start elevated at logon without a UAC prompt.
+            string sid = System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value
+                ?? throw new InvalidOperationException("Cannot identify the current user.");
+            var task = new System.Xml.Linq.XDocument(
+                new System.Xml.Linq.XDeclaration("1.0", "UTF-16", null),
+                new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Task", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                    new System.Xml.Linq.XAttribute("version", "1.2"),
+                    new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Triggers", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("LogonTrigger", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Enabled", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "true"),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("UserId", "http://schemas.microsoft.com/windows/2004/02/mit/task"), sid))),
+                    new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Principals", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Principal", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                            new System.Xml.Linq.XAttribute("id", "Author"),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("UserId", "http://schemas.microsoft.com/windows/2004/02/mit/task"), sid),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("LogonType", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "InteractiveToken"),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("RunLevel", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "HighestAvailable"))),
+                    new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Settings", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("MultipleInstancesPolicy", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "IgnoreNew"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("DisallowStartIfOnBatteries", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "false"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("StopIfGoingOnBatteries", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "false"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("ExecutionTimeLimit", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "PT0S")),
+                    new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Actions", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                        new System.Xml.Linq.XAttribute("Context", "Author"),
+                        new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Exec", "http://schemas.microsoft.com/windows/2004/02/mit/task"),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Command", "http://schemas.microsoft.com/windows/2004/02/mit/task"), exePath),
+                            new System.Xml.Linq.XElement(System.Xml.Linq.XName.Get("Arguments", "http://schemas.microsoft.com/windows/2004/02/mit/task"), "--taskbar")))));
+            string xmlPath = Path.Combine(Path.GetTempPath(), $"RenderWatch-startup-{Guid.NewGuid():N}.xml");
+            try
             {
-                FileName = "schtasks.exe",
-                Arguments = args,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            using var proc = Process.Start(psi);
-            if (proc == null) return false;
-            proc.WaitForExit(3000);
-            return proc.ExitCode == 0;
+                task.Save(xmlPath);
+                var psi = new ProcessStartInfo
+                {
+                    FileName = Path.Combine(Environment.SystemDirectory, "schtasks.exe"),
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                psi.ArgumentList.Add("/create");
+                psi.ArgumentList.Add("/tn");
+                psi.ArgumentList.Add(TaskName);
+                psi.ArgumentList.Add("/xml");
+                psi.ArgumentList.Add(xmlPath);
+                psi.ArgumentList.Add("/f");
+                using var process = Process.Start(psi);
+                if (process == null || !process.WaitForExit(10000)) return false;
+                return process.ExitCode == 0;
+            }
+            finally
+            {
+                try { File.Delete(xmlPath); } catch { }
+            }
         }
         catch
         {

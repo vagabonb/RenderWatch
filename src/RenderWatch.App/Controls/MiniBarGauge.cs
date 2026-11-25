@@ -17,6 +17,16 @@ public class MiniBarGauge : FrameworkElement
         DependencyProperty.Register(nameof(AccentColor), typeof(Brush), typeof(MiniBarGauge),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty UseLoadColorsProperty =
+        DependencyProperty.Register(nameof(UseLoadColors), typeof(bool), typeof(MiniBarGauge),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public bool UseLoadColors
+    {
+        get => (bool)GetValue(UseLoadColorsProperty);
+        set => SetValue(UseLoadColorsProperty, value);
+    }
+
     public double Value
     {
         get => (double)GetValue(ValueProperty);
@@ -37,15 +47,11 @@ public class MiniBarGauge : FrameworkElement
 
     private static readonly Brush TrackBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#505152"));
     private static readonly Brush WhiteBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E9E7DF"));
-    private static readonly Brush AmberBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
-    private static readonly Brush RedBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"));
 
     static MiniBarGauge()
     {
         TrackBrush.Freeze();
         WhiteBrush.Freeze();
-        AmberBrush.Freeze();
-        RedBrush.Freeze();
     }
 
     protected override void OnRender(DrawingContext dc)
@@ -67,7 +73,7 @@ public class MiniBarGauge : FrameworkElement
 
         if (fillWidth > 0)
         {
-            Brush barBrush = AccentColor ?? WhiteBrush;
+            Brush barBrush = UseLoadColors ? TelemetryPalette.ForLoad(Math.Round(pct * 100)) : AccentColor ?? WhiteBrush;
             dc.DrawRoundedRectangle(barBrush, null, new Rect(0, 0, fillWidth, h), radius, radius);
         }
     }

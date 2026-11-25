@@ -12,7 +12,7 @@
         ResizeMode="NoResize">
 
     <Grid>
-        <Grid Visibility="{Binding IsBlackStyle, Converter={StaticResource BoolToVis}}">
+        <Grid Visibility="{Binding UsesBlackLayout, Converter={StaticResource BoolToVis}}">
             <Grid.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

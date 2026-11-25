@@ -1,224 +1,146 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Windows;
 
 namespace RenderWatch.App.Services;
 
-public class AutoUpdateService
+internal static class AutoUpdateService
 {
-    public const string GitHubOwner = "vagabonb";
-    public const string GitHubRepo = "RenderWatch";
-
-    private static readonly HttpClient _httpClient = new()
+    private const string Repository = "vagabonb/RenderWatch";
+    private const string AssetName = "RenderWatch.exe";
+    private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(30) };
+    public static async Task<StableRelease?> CheckForUpdateAsync(CancellationToken cancellationToken)
     {
-        Timeout = TimeSpan.FromSeconds(30)
-    };
-
-    public static string UpdateDir => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "RenderWatch",
-        "updates"
-    );
-
-    public static string PendingExePath => Path.Combine(UpdateDir, "RenderWatch.new");
-    public static string ScriptPath => Path.Combine(UpdateDir, "apply_update.cmd");
-
-    public static string? AvailableVersionTag { get; private set; }
-    public static bool IsUpdateReady { get; private set; }
-
-    public static event Action<string>? UpdateReady;
-
-    /// <summary>
-    /// Silent background check for updates from GitHub Releases.
-    /// Runs asynchronously with zero impact on UI or application performance.
-    /// </summary>
-    public static void StartBackgroundUpdateCheck()
-    {
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                // Small delay after startup so app launch is completely instantaneous
-                await Task.Delay(4000);
-                await CheckAndDownloadUpdateAsync();
-            }
-            catch
-            {
-                // Silent catch: network unavailable, offline mode, rate limits
-            }
-        });
-    }
-
-    public static async Task CheckAndDownloadUpdateAsync()
-    {
+        if (Environment.ProcessPath is not { } target) return null;
+        string cache = CachePath(target);
         try
         {
-            Directory.CreateDirectory(UpdateDir);
-
-            // If an old pending update exists and user just started it, clean up
-            if (File.Exists(PendingExePath) && !IsUpdateReady)
-            {
-                try { File.Delete(PendingExePath); } catch { }
-            }
-
-            string apiUrl = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
-            using var req = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            req.Headers.UserAgent.Add(new ProductInfoHeaderValue("RenderWatch-AutoUpdater", "1.0"));
-            req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
-
-            using var resp = await _httpClient.SendAsync(req);
-            if (!resp.IsSuccessStatusCode) return;
-
-            string json = await resp.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            if (!root.TryGetProperty("tag_name", out var tagProp)) return;
-            string remoteTag = tagProp.GetString() ?? "";
-            if (string.IsNullOrWhiteSpace(remoteTag)) return;
-
-            // Parse remote version
-            string cleanTag = remoteTag.TrimStart('v', 'V').Trim();
-            if (!Version.TryParse(cleanTag, out var remoteVer))
-            {
-                // Try loose 3-part version (e.g. 1.2 -> 1.2.0)
-                if (Version.TryParse(cleanTag + ".0", out var looseVer))
-                {
-                    remoteVer = looseVer;
-                }
-                else return;
-            }
-
-            var currentVer = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0, 0, 0);
-
-            // Only update if remote version is strictly newer
-            if (remoteVer <= currentVer) return;
-
-            AvailableVersionTag = remoteTag;
-
-            // Find the RenderWatch.exe download asset
-            string? downloadUrl = null;
-            if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonArrayKind())
-            {
-                foreach (var asset in assets.EnumerateArray())
-                {
-                    if (asset.TryGetProperty("name", out var nameProp) &&
-                        asset.TryGetProperty("browser_download_url", out var urlProp))
-                    {
-                        string name = nameProp.GetString() ?? "";
-                        if (name.Equals("RenderWatch.exe", StringComparison.OrdinalIgnoreCase))
-                        {
-                            downloadUrl = urlProp.GetString();
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Fallback direct download link
-            downloadUrl ??= $"https://github.com/{GitHubOwner}/{GitHubRepo}/releases/download/{remoteTag}/RenderWatch.exe";
-
-            // Download new executable in background
-            string tempFile = PendingExePath + ".tmp";
-            using (var downloadReq = new HttpRequestMessage(HttpMethod.Get, downloadUrl))
-            {
-                downloadReq.Headers.UserAgent.Add(new ProductInfoHeaderValue("RenderWatch-AutoUpdater", "1.0"));
-                using var downloadResp = await _httpClient.SendAsync(downloadReq, HttpCompletionOption.ResponseHeadersRead);
-                if (!downloadResp.IsSuccessStatusCode) return;
-
-                using var inStream = await downloadResp.Content.ReadAsStreamAsync();
-                using var outStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                await inStream.CopyToAsync(outStream);
-            }
-
-            // Validate that download succeeded and is a real PE executable (> 30 MB)
-            var fi = new FileInfo(tempFile);
-            if (fi.Exists && fi.Length > 30_000_000)
-            {
-                if (File.Exists(PendingExePath)) File.Delete(PendingExePath);
-                File.Move(tempFile, PendingExePath);
-                IsUpdateReady = true;
-
-                // Notify UI on main dispatcher
-                Application.Current?.Dispatcher?.Invoke(() =>
-                {
-                    UpdateReady?.Invoke(AvailableVersionTag ?? remoteTag);
-                });
-            }
-            else
-            {
-                try { File.Delete(tempFile); } catch { }
-            }
+            PortableUpdateWorker.CleanOldWorkers(cache);
+            return await FindOfferAsync(Client, UpdatePackage.ReadVersion(target), cancellationToken);
         }
-        catch
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // Fail silently on any network or parsing error
+            return null;
+        }
+        catch (Exception ex)
+        {
+            PortableUpdateWorker.Log(cache, ex);
+            return null;
         }
     }
 
-    private static JsonValueKind JsonArrayKind() => JsonValueKind.Array;
-
-    /// <summary>
-    /// Launches the detached swap script that waits for the current process to close,
-    /// replaces the existing RenderWatch.exe with the downloaded one, and restarts.
-    /// </summary>
-    public static void ApplyUpdateAndRestart(bool shutdownApp = true)
+    internal static async Task<StableRelease?> FindOfferAsync(HttpClient client, Version current, CancellationToken cancellationToken = default)
     {
-        if (!IsUpdateReady || !File.Exists(PendingExePath)) return;
+        using var request = Request(new Uri($"https://api.github.com/repos/{Repository}/releases?per_page=20"));
+        request.Headers.Accept.ParseAdd("application/vnd.github+json");
+        using var response = await client.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var releases = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        return releases.RootElement.EnumerateArray()
+            .Select(ReadStableRelease)
+            .OfType<StableRelease>()
+            .Where(candidate => candidate.Package.Version > current)
+            .MaxBy(candidate => candidate.Package.Version);
+    }
 
+    public static async Task DownloadAndStartAsync(StableRelease release, CancellationToken cancellationToken)
+    {
+        string target = Environment.ProcessPath ?? throw new IOException("Could not locate the running executable.");
+        string cache = CachePath(target);
         try
         {
-            int currentPid = Process.GetCurrentProcess().Id;
-            string currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? "";
-            if (string.IsNullOrEmpty(currentExe) || !File.Exists(currentExe)) return;
-
-            // Generate clean batch updater script
-            string scriptContent = $@"@echo off
-chcp 65001 >NUL
-set OLD_PID={currentPid}
-set TARGET_EXE=""{currentExe}""
-set NEW_EXE=""{PendingExePath}""
-
-:WAIT_LOOP
-tasklist /fi ""PID eq %OLD_PID%"" 2>NUL | find ""%OLD_PID%"" >NUL
-if %ERRORLEVEL%==0 (
-    timeout /t 1 /nobreak >NUL
-    goto WAIT_LOOP
-)
-
-copy /y %NEW_EXE% %TARGET_EXE% >NUL
-if %ERRORLEVEL%==0 (
-    del %NEW_EXE% >NUL
-)
-
-start """" %TARGET_EXE%
-del ""%~f0"" >NUL
-";
-
-            File.WriteAllText(ScriptPath, scriptContent, new System.Text.UTF8Encoding(false));
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c \"{ScriptPath}\"",
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                WindowStyle = ProcessWindowStyle.Hidden
-            };
-
-            Process.Start(psi);
-            if (shutdownApp) Application.Current?.Dispatcher?.Invoke(() =>
-            {
-                Application.Current.Shutdown();
-            });
+            await DownloadAsync(Client, release, cache, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            var args = Environment.GetCommandLineArgs();
+            string mode = args.Contains("--tray") ? "--tray" :
+                args.Any(arg => arg is "--taskbar" or "--panel" or "--minimized") ? "--taskbar" : "";
+            PortableUpdateWorker.Start(target, cache, release.Package, mode);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            // Ignored
+            PortableUpdateWorker.Log(cache, ex);
+            throw;
         }
     }
+
+    internal static async Task DownloadAsync(HttpClient client, StableRelease release, string cache, CancellationToken cancellationToken = default)
+    {
+        Directory.CreateDirectory(cache);
+        string pending = PortableUpdateWorker.PendingPath(cache);
+        if (release.Package.Matches(pending)) return;
+
+        string temporary = pending + ".download";
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromMinutes(3));
+            using var download = Request(release.Download);
+            using var asset = await client.SendAsync(download, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+            asset.EnsureSuccessStatusCode();
+            if (asset.Content.Headers.ContentLength is long length && length != release.Package.Size)
+                throw new InvalidDataException("GitHub returned an unexpected update size.");
+
+            await using (var source = await asset.Content.ReadAsStreamAsync(timeout.Token))
+            await using (var destination = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+                await source.CopyToAsync(destination, timeout.Token);
+
+            if (!release.Package.Matches(temporary))
+                throw new InvalidDataException("The download does not match the release version or SHA-256.");
+
+            cancellationToken.ThrowIfCancellationRequested();
+            File.Move(temporary, pending, overwrite: true);
+        }
+        finally
+        {
+            PortableUpdateWorker.TryDelete(temporary);
+        }
+    }
+
+    private static StableRelease? ReadStableRelease(JsonElement release)
+    {
+        if (release.GetProperty("draft").GetBoolean() || release.GetProperty("prerelease").GetBoolean())
+            return null;
+
+        var tag = release.GetProperty("tag_name").GetString();
+        if (tag == null || !tag.StartsWith('v')) return null;
+        if (!Version.TryParse(tag[1..], out var number) || number.Build < 0 || number.Revision >= 0 ||
+            tag != $"v{number.ToString(3)}")
+            return null;
+        var version = new Version(number.Major, number.Minor, number.Build, 0);
+
+        foreach (var asset in release.GetProperty("assets").EnumerateArray())
+        {
+            if (asset.GetProperty("name").GetString() != AssetName) continue;
+            if (!asset.TryGetProperty("digest", out var digestProperty)) continue;
+            var digest = digestProperty.GetString();
+            if (digest == null || !digest.StartsWith("sha256:", StringComparison.Ordinal) ||
+                digest.Length != 71 || !digest[7..].All(Uri.IsHexDigit)) continue;
+            if (!asset.GetProperty("size").TryGetInt64(out long size) || size <= 0) continue;
+
+            var download = new Uri($"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{AssetName}");
+            return new StableRelease(tag, download, new UpdatePackage(version, size, digest[7..]));
+        }
+
+        return null;
+    }
+
+    private static string CachePath(string target)
+    {
+        string path = Path.GetFullPath(target).ToUpperInvariant();
+        string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(path)));
+        return Path.Combine(App.DataDirectory, "updates", hash);
+    }
+
+    private static HttpRequestMessage Request(Uri uri)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.UserAgent.ParseAdd("RenderWatch/1.0");
+        return request;
+    }
+
+    internal sealed record StableRelease(string Tag, Uri Download, UpdatePackage Package);
 }
