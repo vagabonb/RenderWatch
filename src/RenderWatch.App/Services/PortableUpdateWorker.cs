@@ -69,7 +69,7 @@ internal static class PortableUpdateWorker
             args.Length != 8 || !Path.IsPathFullyQualified(args[1]) ||
             !int.TryParse(args[2], out int parentId) || !long.TryParse(args[3], out long parentStart) ||
             !Version.TryParse(args[4], out var version) || !long.TryParse(args[5], out long size) || size <= 0 ||
-            args[6].Length != 64 || !args[6].All(Uri.IsHexDigit) || args[7] is not ("" or "--taskbar" or "--tray"))
+            args[6].Length != 64 || !args[6].All(Uri.IsHexDigit) || args[7] is not ("" or "--taskbar" or "--tray" or "--notch"))
             return 1;
 
         string cache = Path.GetDirectoryName(helper)!;

@@ -57,6 +57,7 @@ internal static class AutoUpdateService
             cancellationToken.ThrowIfCancellationRequested();
             var args = Environment.GetCommandLineArgs();
             string mode = args.Contains("--tray") ? "--tray" :
+                args.Contains("--notch") ? "--notch" :
                 args.Any(arg => arg is "--taskbar" or "--panel" or "--minimized") ? "--taskbar" : "";
             PortableUpdateWorker.Start(target, cache, release.Package, mode);
         }

@@ -9,6 +9,11 @@ namespace RenderWatch.App.Views;
 
 public partial class DisplayConstructorView : UserControl
 {
+    private void OnShowNotchClicked(object sender, RoutedEventArgs e)
+    {
+        if (Window.GetWindow(this) is MainWindow window) window.MinimizeToNotch();
+    }
+
     private readonly int[] _customColors = Enumerable.Repeat(0xFFFFFF, 16).ToArray();
 
     public DisplayConstructorView()

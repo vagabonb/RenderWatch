@@ -1,5 +1,22 @@
 namespace RenderWatch.Core.Models;
 
+public enum NotchRingMetric
+{
+    None = -1,
+    Ram = 0,
+    Vram = 1,
+    GpuTemperature = 2,
+    Battery = 3,
+    CpuTemperature,
+    CpuLoad,
+    GpuLoad,
+    DiskRead,
+    DiskWrite,
+    NetworkReceive,
+    NetworkSend
+}
+public enum NotchLayout { Ring, Island, MemoryBar }
+
 public class AppSettings
 {
     public double PollingIntervalIdleSec { get; set; } = 0.5;
@@ -30,10 +47,17 @@ public class AppSettings
     public bool CloseToTray { get; set; } = false;
     public bool StartWithWindows { get; set; } = false;
     public string Appearance { get; set; } = "Black";
+    public NotchRingMetric NotchRingMetric { get; set; }
+    public NotchRingMetric NotchBarMetric { get; set; } = NotchRingMetric.Ram;
+    public NotchRingMetric NotchIslandFirstMetric { get; set; } = NotchRingMetric.CpuTemperature;
+    public NotchRingMetric NotchIslandSecondMetric { get; set; } = NotchRingMetric.Ram;
+    public NotchLayout NotchLayout { get; set; }
+    public AppearanceLayout? SharedWindowLayout { get; set; }
     public AppearanceLayout BlackLayout { get; set; } = new();
     public AppearanceLayout GraphiteLayout { get; set; } = new();
     public AppearanceLayout ColorLayout { get; set; } = new();
 
+    public bool? IsNavigationCollapsed { get; set; }
     public bool IsSidebarCollapsed { get; set; }
     public bool IsBlackSidebarCollapsed { get; set; }
     public bool IsColorSidebarCollapsed { get; set; }
@@ -62,6 +86,7 @@ public class AppSettings
     public bool ShowTaskbarDisk { get; set; }
     public bool ShowTaskbarNetwork { get; set; }
     public bool ShowTaskbarUptime { get; set; }
+    public bool ShowTaskbarBatteryRuntime { get; set; }
     public bool ShowMicroDisk { get; set; }
     public bool ShowMicroNetwork { get; set; }
     public bool ShowMicroUptime { get; set; }

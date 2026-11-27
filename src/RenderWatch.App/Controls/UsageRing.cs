@@ -15,22 +15,42 @@ public sealed class UsageRing : FrameworkElement
         set => SetValue(ValueProperty, value);
     }
 
-    private const double Thickness = 5;
+    public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
+        nameof(StrokeThickness), typeof(double), typeof(UsageRing),
+        new FrameworkPropertyMetadata(5.0, FrameworkPropertyMetadataOptions.AffectsRender),
+        value => value is double thickness && double.IsFinite(thickness) && thickness > 0);
+
+    public double StrokeThickness
+    {
+        get => (double)GetValue(StrokeThicknessProperty);
+        set => SetValue(StrokeThicknessProperty, value);
+    }
+
+    public static readonly DependencyProperty AccentBrushProperty = DependencyProperty.Register(
+        nameof(AccentBrush), typeof(SolidColorBrush), typeof(UsageRing),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public SolidColorBrush? AccentBrush
+    {
+        get => (SolidColorBrush?)GetValue(AccentBrushProperty);
+        set => SetValue(AccentBrushProperty, value);
+    }
 
     protected override void OnRender(DrawingContext drawing)
     {
         base.OnRender(drawing);
-        var radius = (Math.Min(ActualWidth, ActualHeight) - Thickness) / 2 - 1;
+        var thickness = StrokeThickness;
+        var radius = (Math.Min(ActualWidth, ActualHeight) - thickness) / 2 - 1;
         if (radius <= 0) return;
 
         var center = new Point(ActualWidth / 2, ActualHeight / 2);
         var percent = double.IsFinite(Value) ? Math.Clamp(Value, 0, 100) : 0;
-        var color = TelemetryPalette.ForLoad(Math.Round(percent));
+        var color = AccentBrush ?? TelemetryPalette.ForLoad(Math.Round(percent));
         drawing.DrawEllipse(null, new Pen(new SolidColorBrush(Color.FromArgb(
-            55, color.Color.R, color.Color.G, color.Color.B)), Thickness), center, radius, radius);
+            55, color.Color.R, color.Color.G, color.Color.B)), thickness), center, radius, radius);
         if (percent == 0) return;
 
-        var pen = new Pen(color, Thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var pen = new Pen(color, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
         if (percent == 100)
         {
             drawing.DrawEllipse(null, pen, center, radius, radius);

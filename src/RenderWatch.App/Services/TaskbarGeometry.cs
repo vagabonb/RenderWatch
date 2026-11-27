@@ -49,7 +49,7 @@ internal static class TaskbarGeometry
 
     internal static Placement EstimatePlacement(Frame? frame)
     {
-        double trayWidth = GetSystemPowerStatus(out var power) && (power.BatteryFlag & 128) == 0 && power.BatteryFlag != 255
+        double trayWidth = BatteryMonitor.GetSystemPowerStatus(out var power) && (power.BatteryFlag & 128) == 0 && power.BatteryFlag != 255
             ? 220 : 150;
         if (frame is { } taskbar)
             return taskbar.PlaceBeforeTray(taskbar.Bounds.Right - trayWidth * taskbar.DpiScale);
@@ -128,13 +128,6 @@ internal static class TaskbarGeometry
     [StructLayout(LayoutKind.Sequential)]
     private struct NativeRect { public int Left, Top, Right, Bottom; }
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct PowerStatus
-    {
-        public byte ACLineStatus, BatteryFlag, BatteryLifePercent, SystemStatusFlag;
-        public int BatteryLifeTime, BatteryFullLifeTime;
-    }
-
     private delegate bool EnumWindow(nint window, nint data);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -155,6 +148,4 @@ internal static class TaskbarGeometry
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(nint window);
 
-    [DllImport("kernel32.dll")]
-    private static extern bool GetSystemPowerStatus(out PowerStatus status);
 }

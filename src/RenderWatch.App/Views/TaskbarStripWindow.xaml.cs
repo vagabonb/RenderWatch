@@ -22,6 +22,7 @@ public partial class TaskbarStripWindow : Window
     private readonly Action? _hideToTrayAction;
     private readonly Action? _exitAction;
     private readonly Func<(TaskbarGeometry.Frame? Frame, TaskbarGeometry.Placement? Placement)> _readNativeGeometry;
+    private readonly Func<nint, bool> _isFullscreenOnMonitor;
     private readonly DispatcherTimer _taskbarTimer;
     private TaskbarGeometry.Frame? _frame;
     private TaskbarGeometry.Placement? _placement;
@@ -35,13 +36,15 @@ public partial class TaskbarStripWindow : Window
 
     internal TaskbarStripWindow(MainViewModel viewModel, Action restoreAction,
         Func<(TaskbarGeometry.Frame? Frame, TaskbarGeometry.Placement? Placement)> readNativeGeometry,
-        Action? hideToTrayAction = null, Action? exitAction = null)
+        Action? hideToTrayAction = null, Action? exitAction = null, Func<nint, bool>? isFullscreenOnMonitor = null)
     {
         InitializeComponent();
         _restoreAction = restoreAction;
         _hideToTrayAction = hideToTrayAction;
         _exitAction = exitAction;
         _readNativeGeometry = readNativeGeometry;
+        _isFullscreenOnMonitor = isFullscreenOnMonitor ?? (anchor =>
+            DesktopWindows.ReadDisplay(anchor) is { } display && DesktopWindows.IsForegroundFullscreen(display));
         DataContext = viewModel;
 
         // Keep the right edge anchored when a readout changes width (for example, from 99% to 100%).
@@ -51,23 +54,41 @@ public partial class TaskbarStripWindow : Window
         {
             Interval = TimeSpan.FromMilliseconds(500)
         };
-        _taskbarTimer.Tick += (_, _) =>
+        _taskbarTimer.Tick += (_, _) => UpdateTaskbar();
+    }
+
+    public void Start()
+    {
+        _taskbarTimer.Start();
+        UpdateTaskbar();
+    }
+
+    public void Stop()
+    {
+        _taskbarTimer.Stop();
+        HideWidget();
+    }
+
+    private void UpdateTaskbar()
+    {
+        var (frame, native) = _readNativeGeometry();
+        nint anchor = frame?.Handle ?? _frame?.Handle ?? new WindowInteropHelper(this).Handle;
+        if (_isFullscreenOnMonitor(anchor))
         {
-            PositionOnTaskbar();
-            EnsureTopmost();
-        };
-        IsVisibleChanged += (_, _) =>
-        {
-            if (IsVisible)
-            {
-                PositionOnTaskbar();
-                _taskbarTimer.Start();
-            }
-            else
-            {
-                _taskbarTimer.Stop();
-            }
-        };
+            HideWidget();
+            return;
+        }
+
+        PositionOnTaskbar(frame, native);
+        if (!IsVisible) Show();
+        EnsureTopmost();
+    }
+
+    private void HideWidget()
+    {
+        if (!IsVisible) return;
+        if (MicroPill.ContextMenu is { IsOpen: true } menu) menu.IsOpen = false;
+        Hide();
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -87,18 +108,16 @@ public partial class TaskbarStripWindow : Window
 
         int exStyle = GetWindowLong(hwnd, GwlExStyle);
         SetWindowLong(hwnd, GwlExStyle, exStyle | WsExToolWindow | WsExNoActivate);
-        EnsureTopmost();
     }
 
-    public void EnsureTopmost()
+    private void EnsureTopmost()
     {
         nint hwnd = new WindowInteropHelper(this).Handle;
         if (hwnd != 0) SetWindowPos(hwnd, HwndTopmost, 0, 0, 0, 0, KeepSizeAndPosition | NoActivate);
     }
 
-    public void PositionOnTaskbar()
+    private void PositionOnTaskbar(TaskbarGeometry.Frame? frame, TaskbarGeometry.Placement? native)
     {
-        var (frame, native) = _readNativeGeometry();
         bool frameChanged = _frame != frame;
         _frame = frame;
         if (native is { } placement)
@@ -163,7 +182,7 @@ public partial class TaskbarStripWindow : Window
 
     private void OnContextMenuTrayClicked(object sender, RoutedEventArgs e)
     {
-        Hide();
+        Stop();
         _hideToTrayAction?.Invoke();
     }
 
@@ -171,12 +190,12 @@ public partial class TaskbarStripWindow : Window
     {
         _placement = null;
         _nextAccessibleReadUtc = DateTime.MinValue;
-        PositionOnTaskbar();
+        UpdateTaskbar();
     }
 
     private void OnContextMenuExitClicked(object sender, RoutedEventArgs e)
     {
-        Hide();
+        Stop();
         if (_exitAction != null)
             _exitAction();
         else

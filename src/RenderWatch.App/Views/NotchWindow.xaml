@@ -1,0 +1,392 @@
+<Window x:Class="RenderWatch.App.Views.NotchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
+        xmlns:models="clr-namespace:RenderWatch.Core.Models;assembly=RenderWatch.Core"
+        xmlns:views="clr-namespace:RenderWatch.App.Views"
+        Title="Render Watch · Чёлка" WindowStyle="None" ResizeMode="NoResize"
+        AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False"
+        ShowActivated="False" SizeToContent="Height" Width="34" WindowStartupLocation="Manual"
+        FontFamily="Segoe UI" FontSize="12" Foreground="#F5F5F5" UseLayoutRounding="True">
+    <Window.Resources>
+        <Style x:Key="OverviewMuted" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#B0B0B0"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource SoftInk}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewValue" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="OverviewTitle" TargetType="TextBlock" BasedOn="{StaticResource OverviewValue}">
+            <Setter Property="FontSize" Value="16"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                    <Setter Property="FontSize" Value="21"/>
+                    <Setter Property="FontWeight" Value="Light"/>
+                    <Setter Property="Foreground" Value="{StaticResource WhiteInk}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewIcon" TargetType="Path">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="StrokeThickness" Value="1.15"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="Stroke" Value="{Binding Tag, RelativeSource={RelativeSource Self}}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                    <Setter Property="Stroke" Value="#C9C9C9"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewTemperature" TargetType="Path" BasedOn="{StaticResource OverviewIcon}">
+            <Setter Property="Data" Value="{StaticResource IconTemperature}"/>
+            <Setter Property="Tag" Value="{x:Static ctrl:TelemetryPalette.Orange}"/>
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Margin" Value="0,0,4,0"/>
+        </Style>
+        <Style x:Key="OverviewTemperatureValue" TargetType="TextBlock" BasedOn="{StaticResource OverviewValue}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="Foreground" Value="{x:Static ctrl:TelemetryPalette.Orange}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                    <Setter Property="Foreground" Value="#F2F2F2"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewTile" TargetType="Border">
+            <Setter Property="Background" Value="#232323"/>
+            <Setter Property="CornerRadius" Value="9"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                    <Setter Property="Background" Value="#171717"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewRing" TargetType="ctrl:UsageRing">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                    <Setter Property="AccentBrush" Value="#E7E7E7"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="OverviewDial" TargetType="Grid">
+            <Setter Property="Width" Value="62"/>
+            <Setter Property="Height" Value="62"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,9,0,7"/>
+        </Style>
+        <Style x:Key="DialValue" TargetType="TextBlock" BasedOn="{StaticResource OverviewValue}">
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="OverviewAction" TargetType="ButtonBase">
+            <Setter Property="Foreground" Value="#D5D5D5"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ButtonBase">
+                        <Border x:Name="Surface" CornerRadius="5" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#28FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#40FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="JournalAction" TargetType="ToggleButton" BasedOn="{StaticResource OverviewAction}">
+            <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="#1CFFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <DataTemplate x:Key="GraphiteOverview">
+            <views:GraphiteNotchContent/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Button x:Name="HeaderButton" Click="OnTogglePanel" HorizontalAlignment="Center" Padding="0" Cursor="Hand"
+                ToolTip="{Binding NotchHint}" AutomationProperties.Name="{Binding NotchHint}">
+            <Button.ContextMenu>
+                <ContextMenu Foreground="{StaticResource WhiteInk}" BorderBrush="{StaticResource Hairline}" Opened="OnHeaderMenuOpened">
+                    <ContextMenu.Style>
+                        <Style TargetType="ContextMenu">
+                            <Setter Property="Background" Value="{StaticResource BlackMetricMenuSurface}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsGraphiteStyle, RelativeSource={RelativeSource Self}}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource GraphiteBackdrop}"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding PlacementTarget.DataContext.IsColorStyle, RelativeSource={RelativeSource Self}}" Value="True">
+                                    <Setter Property="Background" Value="{StaticResource ColorMetricMenuSurface}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ContextMenu.Style>
+                    <Separator/>
+                    <MenuItem Header="Открыть Render Watch" Click="OnOpenMain"/>
+                    <MenuItem Header="Свернуть в трей" Click="OnHideToTray"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            <Button.Template>
+                <ControlTemplate TargetType="Button">
+                    <Grid Background="Transparent">
+                        <ContentPresenter x:Name="Shape"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Shape" Property="Opacity" Value="0.8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Button.Template>
+            <views:NotchHeader x:Name="NotchShapeHeader"/>
+        </Button>
+
+        <Border x:Name="Details" Grid.Row="1" Visibility="Collapsed" CornerRadius="14" Margin="0,7,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="#191919"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsBlackStyle}" Value="True">
+                            <Setter Property="Background" Value="#0C0C0C"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                            <Setter Property="Background" Value="{StaticResource GraphiteBackdrop}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Border x:Name="GraphiteGrain" CornerRadius="14" Background="{x:Static ctrl:GraphiteTexture.Grain}" IsHitTestVisible="False"
+                        Visibility="{Binding IsGraphiteStyle, Converter={StaticResource BoolToVis}}"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                    <StackPanel Margin="13,12,13,9">
+                        <DockPanel Margin="5,1,5,9">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Dashboard.Uptime}"
+                                       Style="{StaticResource OverviewMuted}" ToolTip="Время работы компьютера" Margin="6,0,0,0"/>
+                            <TextBlock Text="Обзор системы" Style="{StaticResource OverviewTitle}"/>
+                        </DockPanel>
+
+                        <ContentControl Focusable="False">
+                            <ContentControl.Style>
+                                <Style TargetType="ContentControl">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Content" Value="{Binding}"/>
+                                            <Setter Property="ContentTemplate" Value="{StaticResource GraphiteOverview}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentControl.Style>
+                        </ContentControl>
+
+                        <StackPanel x:Name="TiledOverview" Visibility="{Binding IsGraphiteStyle, Converter={StaticResource InverseBoolToVis}}">
+                            <UniformGrid x:Name="OverviewCards" Columns="4" SizeChanged="OnOverviewCardsSizeChanged">
+                                <Border Style="{StaticResource OverviewTile}" AutomationProperties.Name="Процессор">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconCpu}" Tag="{x:Static ctrl:TelemetryPalette.Blue}"/>
+                                            <TextBlock Text="CPU" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <Grid Style="{StaticResource OverviewDial}">
+                                            <ctrl:UsageRing Value="{Binding Dashboard.CpuPercentValue}" StrokeThickness="3" Style="{StaticResource OverviewRing}"/>
+                                            <TextBlock Text="{Binding Dashboard.CpuUsageMicro}" Style="{StaticResource DialValue}"/>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" ToolTip="Температура процессора">
+                                            <Path Style="{StaticResource OverviewTemperature}"/>
+                                            <TextBlock Text="{Binding Dashboard.CpuTempMicro}" Style="{StaticResource OverviewTemperatureValue}" Tag="{Binding Notch.CpuHot}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Dashboard.CpuClockDisplay}" Style="{StaticResource OverviewMuted}" HorizontalAlignment="Center"
+                                                   ToolTip="{Binding Dashboard.CpuPowerDisplay, StringFormat='Мощность · {0}'}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource OverviewTile}" AutomationProperties.Name="Видеокарта">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" ToolTip="{Binding Dashboard.GpuName}">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconGpu}" Tag="{x:Static ctrl:TelemetryPalette.Violet}"/>
+                                            <TextBlock Text="GPU" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <Grid Style="{StaticResource OverviewDial}">
+                                            <ctrl:UsageRing Value="{Binding Dashboard.GpuPercentValue}" StrokeThickness="3" Style="{StaticResource OverviewRing}"/>
+                                            <TextBlock Text="{Binding Dashboard.GpuUsageMicro}" Style="{StaticResource DialValue}"/>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" ToolTip="Температура видеокарты">
+                                            <Path Style="{StaticResource OverviewTemperature}"/>
+                                            <TextBlock Text="{Binding Dashboard.GpuTempMicro}" Style="{StaticResource OverviewTemperatureValue}" Tag="{Binding Notch.GpuHot}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Dashboard.GpuClockDisplay}" Style="{StaticResource OverviewMuted}" HorizontalAlignment="Center"
+                                                   ToolTip="{Binding Dashboard.GpuPowerDisplay, StringFormat='Мощность · {0}'}" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource OverviewTile}" AutomationProperties.Name="Оперативная память">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconRam}" Tag="{x:Static ctrl:TelemetryPalette.Green}"/>
+                                            <TextBlock Text="RAM" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <Grid Style="{StaticResource OverviewDial}">
+                                            <ctrl:UsageRing Value="{Binding Dashboard.RamPercentValue}" StrokeThickness="3" Style="{StaticResource OverviewRing}"/>
+                                            <TextBlock Text="{Binding Dashboard.RamPercentDisplay}" Style="{StaticResource DialValue}"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Dashboard.RamCapacityDisplay}" HorizontalAlignment="Center"
+                                                   ToolTip="{Binding Dashboard.RamCapacityDisplay}" Style="{StaticResource OverviewMuted}"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource OverviewTile}" AutomationProperties.Name="Видеопамять">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconVram}" Tag="{x:Static ctrl:TelemetryPalette.Cyan}"/>
+                                            <TextBlock Text="VRAM" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <Grid Style="{StaticResource OverviewDial}">
+                                            <ctrl:UsageRing Value="{Binding Dashboard.VramPercentValue}" StrokeThickness="3" Style="{StaticResource OverviewRing}"/>
+                                            <TextBlock Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Style="{StaticResource DialValue}"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding Dashboard.VramCapacityDisplay}" HorizontalAlignment="Center"
+                                                   ToolTip="{Binding Dashboard.VramCapacityDisplay}" Style="{StaticResource OverviewMuted}"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <Border Style="{StaticResource OverviewTile}" Padding="3,4"
+                                    Visibility="{Binding Dashboard.Battery.IsPresent, Converter={StaticResource BoolToVis}}">
+                                <views:BatteryCard DataContext="{Binding Dashboard.Battery}" Background="Transparent"
+                                                   IsMonochrome="{Binding DataContext.IsBlackStyle, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            </Border>
+
+                            <UniformGrid x:Name="TransferCards" Columns="2" SizeChanged="OnTransferCardsSizeChanged">
+                                <Border Style="{StaticResource OverviewTile}">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconDisk}" Tag="{x:Static ctrl:TelemetryPalette.Orange}"/>
+                                            <TextBlock Text="Диски" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,6,0">
+                                                <TextBlock Text="Чтение" Style="{StaticResource OverviewMuted}"/>
+                                                <TextBlock Text="{Binding Dashboard.DiskRead}" Style="{StaticResource OverviewValue}" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="4,0,0,0">
+                                                <TextBlock Text="Запись" Style="{StaticResource OverviewMuted}"/>
+                                                <TextBlock Text="{Binding Dashboard.DiskWrite}" Style="{StaticResource OverviewValue}" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource OverviewTile}">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                            <Path Style="{StaticResource OverviewIcon}" Data="{StaticResource IconNetwork}" Tag="{x:Static ctrl:TelemetryPalette.Cyan}"/>
+                                            <TextBlock Text="Сеть" Style="{StaticResource OverviewValue}"/>
+                                        </StackPanel>
+                                        <UniformGrid Columns="2">
+                                            <StackPanel Margin="0,0,6,0">
+                                                <TextBlock Text="Приём" Style="{StaticResource OverviewMuted}"/>
+                                                <TextBlock Text="{Binding Dashboard.NetworkReceive}" Style="{StaticResource OverviewValue}" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="4,0,0,0">
+                                                <TextBlock Text="Отправка" Style="{StaticResource OverviewMuted}"/>
+                                                <TextBlock Text="{Binding Dashboard.NetworkSend}" Style="{StaticResource OverviewValue}" Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                        </StackPanel>
+
+                        <Border BorderThickness="0,1,0,0" BorderBrush="#17FFFFFF" Margin="5,7,5,0" Padding="0,5,0,0">
+                            <DockPanel LastChildFill="False">
+                                <ToggleButton x:Name="JournalToggle" DockPanel.Dock="Left" Style="{StaticResource JournalAction}"
+                                              Content="Журнал пиков" AutomationProperties.Name="Показать журнал пиков"/>
+                                <Button DockPanel.Dock="Right" Click="OnOpenMain" Style="{StaticResource OverviewAction}"
+                                        Content="Открыть ↗" AutomationProperties.Name="Открыть Render Watch"/>
+                            </DockPanel>
+                        </Border>
+                        <Grid Margin="5,6,5,0" Visibility="{Binding IsChecked, ElementName=JournalToggle, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Пиков за этот сеанс пока нет" Margin="3,4">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource OverviewMuted}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Notch.Peaks.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ScrollViewer MaxHeight="132" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Notch.Peaks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="8,7" BorderBrush="#16FFFFFF" BorderThickness="0,1,0,0">
+                                                <StackPanel>
+                                                    <DockPanel>
+                                                        <TextBlock Text="{Binding Time}" Style="{StaticResource OverviewMuted}" DockPanel.Dock="Right"/>
+                                                        <TextBlock Text="{Binding Title}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock" BasedOn="{StaticResource OverviewValue}">
+                                                                    <Setter Property="Foreground" Value="{x:Static ctrl:TelemetryPalette.Orange}"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding DataContext.IsBlackStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#F2F2F2"/>
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                                            <Setter Property="Foreground" Value="{StaticResource WhiteInk}"/>
+                                                                            <Setter Property="FontWeight" Value="Normal"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </DockPanel>
+                                                    <TextBlock Text="{Binding Load}" Style="{StaticResource OverviewMuted}" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding Disk}" Style="{StaticResource OverviewMuted}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

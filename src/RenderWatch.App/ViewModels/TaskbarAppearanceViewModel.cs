@@ -18,7 +18,8 @@ public sealed class TaskbarAppearanceViewModel : ViewModelBase
         [
             new("CPU", "CPU", save), new("GPU", "GPU", save),
             new("RAM", "RAM", save), new("VRAM", "VRAM", save),
-            new("DISK", "Диски", save), new("NET", "Сеть", save), new("UPTIME", "Время работы", save)
+            new("DISK", "Диски", save), new("NET", "Сеть", save), new("UPTIME", "Время работы", save),
+            new("BAT", "Осталось от батареи", save)
         ]);
         ByKey = Options.ToDictionary(option => option.Key, StringComparer.Ordinal);
         SelectedMetric = Options[0];

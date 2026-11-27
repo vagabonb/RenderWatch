@@ -65,6 +65,8 @@ public class FanGroupViewModel : ViewModelBase
 
 public class DashboardViewModel : ViewModelBase
 {
+    public BatteryViewModel Battery { get; } = new();
+
     private readonly ObservableCollection<FanMetricViewModel> _fans = new();
     public ReadOnlyObservableCollection<FanMetricViewModel> Fans { get; }
 

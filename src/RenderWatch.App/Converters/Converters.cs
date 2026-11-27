@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -57,7 +57,7 @@ public class AllHiddenToVisibilityConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        return values.Length > 0 && values.All(value => value is bool enabled && !enabled)
+        return values.Length > 0 && values.All(value => value is false or Visibility.Collapsed or Visibility.Hidden)
             ? Visibility.Visible
             : Visibility.Collapsed;
     }

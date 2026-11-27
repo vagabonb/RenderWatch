@@ -1,6 +1,7 @@
 <UserControl x:Class="RenderWatch.App.Views.Black.BlackDashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:RenderWatch.App.Views"
              xmlns:ctrl="clr-namespace:RenderWatch.App.Controls">
 
     <UserControl.Resources>
@@ -286,6 +287,7 @@
                     </StackPanel>
                 </Border>
             </UniformGrid>
+            <views:BatteryCard DataContext="{Binding Battery}" Background="{StaticResource BrushSurfaceCard}" Margin="0,0,0,12"/>
 
             <Grid Margin="0,0,0,16" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
                 <Grid.ColumnDefinitions>

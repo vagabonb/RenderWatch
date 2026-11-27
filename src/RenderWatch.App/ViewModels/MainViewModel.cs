@@ -21,6 +21,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     private readonly ISettingsManager _settingsManager;
     private readonly INotificationService _notificationService;
     private readonly IAppLauncher _launcher;
+    private readonly BatteryMonitor _batteryMonitor = new();
 
     private ViewModelBase _currentView;
     private int _activeTabIndex;
@@ -28,6 +29,8 @@ public class MainViewModel : ViewModelBase, IDisposable
     private string _activeProfileName = "Автоопределение";
     private bool _isMonitoring = true;
     private bool _isMinimized;
+    private bool _isNotchExpanded;
+    private readonly SemaphoreSlim _monitoringWake = new(0, 1);
     private string _toastTitle = string.Empty;
     private string _toastMessage = string.Empty;
     private bool _isToastVisible;
@@ -44,6 +47,56 @@ public class MainViewModel : ViewModelBase, IDisposable
     public SessionMetricsViewModel SessionMetrics { get; } = new();
     public DashboardViewModel Dashboard { get; }
     public ChartsViewModel Charts { get; }
+    public NotchTelemetry Notch { get; } = new();
+    private HardwareMetrics _notchMetrics = new();
+    private NotchReading _primaryNotchReading = NotchReading.Empty;
+    private NotchReading _secondaryNotchReading = NotchReading.Empty;
+    public NotchReading PrimaryNotchReading => _primaryNotchReading;
+    public NotchReading SecondaryNotchReading => _secondaryNotchReading;
+    public string NotchHint => SecondaryNotchReading.IsSet
+        ? $"{PrimaryNotchReading.Hint}\n{SecondaryNotchReading.Hint}"
+        : PrimaryNotchReading.Hint;
+
+    private void RefreshNotchReadings()
+    {
+        var shape = Constructor.NotchShape;
+        var battery = Dashboard.Battery;
+        var primary = shape switch
+        {
+            NotchLayout.Island => Constructor.IslandFirstMetric,
+            NotchLayout.MemoryBar => Constructor.BarMetric,
+            _ when Constructor.RingMetric == NotchRingMetric.Battery && !battery.IsPresent => NotchRingMetric.Ram,
+            _ => Constructor.RingMetric
+        };
+        var secondary = shape == NotchLayout.Island ? Constructor.IslandSecondMetric : NotchRingMetric.None;
+        bool primaryChanged = SetField(ref _primaryNotchReading,
+            NotchReading.Create(primary, _notchMetrics, battery, SessionMetrics), nameof(PrimaryNotchReading));
+        bool secondaryChanged = SetField(ref _secondaryNotchReading,
+            NotchReading.Create(secondary, _notchMetrics, battery, SessionMetrics), nameof(SecondaryNotchReading));
+        if (primaryChanged || secondaryChanged) OnPropertyChanged(nameof(NotchHint));
+    }
+
+    internal void UpdateDashboard(HardwareMetrics metrics, TrackerUpdateResult tracker)
+    {
+        Dashboard.Update(metrics, tracker);
+        _notchMetrics = metrics;
+        RefreshNotchReadings();
+    }
+
+    internal void UpdateBatteryReading(BatteryReading? battery)
+    {
+        Dashboard.Battery.Update(battery);
+        if (PrimaryNotchReading.Metric == NotchRingMetric.Battery || SecondaryNotchReading.Metric == NotchRingMetric.Battery ||
+            (Constructor.NotchShape == NotchLayout.Ring && Constructor.RingMetric == NotchRingMetric.Battery))
+            RefreshNotchReadings();
+    }
+
+    internal void SetNotchExpanded(bool expanded)
+    {
+        if (_isNotchExpanded == expanded) return;
+        Volatile.Write(ref _isNotchExpanded, expanded);
+        if (_monitoringWake.CurrentCount == 0) _monitoringWake.Release();
+    }
     public ConfigurationViewModel Configuration { get; }
     public DisplayConstructorViewModel Constructor { get; }
     public HistoryViewModel History { get; }
@@ -244,9 +297,11 @@ public class MainViewModel : ViewModelBase, IDisposable
         private set
         {
             if (Appearance == value) return;
+            GetWindowLayout();
+            _settings.IsNavigationCollapsed ??= IsSidebarCollapsed;
             _settings.Appearance = value;
             NotifyAppearanceChanged();
-            _ = SaveAppearanceLayoutsAsync();
+            _ = _settingsManager.SaveSettingsAsync(_settings);
         }
     }
 
@@ -257,15 +312,28 @@ public class MainViewModel : ViewModelBase, IDisposable
     public bool AreSettingsLoaded { get; private set; }
     public ICommand SetAppearanceCommand { get; }
 
-    public AppearanceLayout GetAppearanceLayout(string appearance) =>
-        appearance switch
-        {
-            "Graphite" => _settings.GraphiteLayout ??= new AppearanceLayout(),
-            "Color" => _settings.ColorLayout ??= new AppearanceLayout(),
-            _ => _settings.BlackLayout ??= new AppearanceLayout()
-        };
+    internal AppearanceLayout GetWindowLayout() => _settings.SharedWindowLayout ??= MigrateWindowLayout();
 
-    public Task SaveAppearanceLayoutsAsync() => _settingsManager.SaveSettingsAsync(_settings);
+    private AppearanceLayout MigrateWindowLayout()
+    {
+        var current = Appearance switch
+        {
+            "Graphite" => _settings.GraphiteLayout,
+            "Color" => _settings.ColorLayout,
+            _ => _settings.BlackLayout
+        };
+        AppearanceLayout?[] layouts = [current, _settings.BlackLayout, _settings.GraphiteLayout, _settings.ColorLayout];
+        var mainLayout = layouts.FirstOrDefault(layout => layout?.Main != null);
+        return new AppearanceLayout
+        {
+            Main = mainLayout?.Main,
+            IsMainMaximized = (mainLayout ?? current)?.IsMainMaximized == true,
+            Compact = layouts.FirstOrDefault(layout => layout?.Compact != null)?.Compact,
+            Micro = layouts.FirstOrDefault(layout => layout?.Micro != null)?.Micro
+        };
+    }
+
+    internal Task SaveWindowLayoutAsync() => _settingsManager.SaveSettingsAsync(_settings);
 
     private void NotifyAppearanceChanged()
     {
@@ -279,14 +347,12 @@ public class MainViewModel : ViewModelBase, IDisposable
 
     public bool IsSidebarCollapsed
     {
-        get => IsColorStyle ? _settings.IsColorSidebarCollapsed :
-            IsGraphiteStyle ? _settings.IsSidebarCollapsed : _settings.IsBlackSidebarCollapsed;
+        get => _settings.IsNavigationCollapsed ?? (IsColorStyle ? _settings.IsColorSidebarCollapsed :
+            IsGraphiteStyle ? _settings.IsSidebarCollapsed : _settings.IsBlackSidebarCollapsed);
         set
         {
             if (IsSidebarCollapsed == value) return;
-            if (IsColorStyle) _settings.IsColorSidebarCollapsed = value;
-            else if (IsGraphiteStyle) _settings.IsSidebarCollapsed = value;
-            else _settings.IsBlackSidebarCollapsed = value;
+            _settings.IsNavigationCollapsed = value;
             NotifySidebarChanged();
             _ = _settingsManager.SaveSettingsAsync(_settings);
         }
@@ -309,7 +375,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     public ICommand ApplyUpdateCommand { get; }
     public ICommand PostponeUpdateCommand { get; }
 
-    private readonly CancellationTokenSource _updateLifetime = new();
+    private readonly CancellationTokenSource _lifetime = new();
     private AutoUpdateService.StableRelease? _updateOffer;
     private bool _isUpdating;
     private bool _isUpdatePromptVisible;
@@ -378,6 +444,13 @@ public class MainViewModel : ViewModelBase, IDisposable
         Charts = new ChartsViewModel();
         Configuration = new ConfigurationViewModel();
         Constructor = new DisplayConstructorViewModel(SessionMetrics);
+        Constructor.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is "" or nameof(Constructor.NotchShape) or nameof(Constructor.RingMetric) or
+                nameof(Constructor.BarMetric) or nameof(Constructor.IslandFirstMetric) or nameof(Constructor.IslandSecondMetric))
+                RefreshNotchReadings();
+        };
+        RefreshNotchReadings();
         History = new HistoryViewModel(historyRepository);
         Launcher = new LauncherViewModel(launcher, settingsManager);
         Settings = new SettingsViewModel(settingsManager);
@@ -453,6 +526,8 @@ public class MainViewModel : ViewModelBase, IDisposable
         _settings = await _settingsManager.LoadSettingsAsync();
         _settings.Appearance = Appearance;
         AreSettingsLoaded = true;
+        var token = _lifetime.Token;
+        _ = Task.Run(() => MonitorBatteryAsync(_batteryMonitor.Read, token), token);
         OnPropertyChanged(nameof(AreSettingsLoaded));
         NotifyAppearanceChanged();
         NotifySidebarChanged();
@@ -498,8 +573,9 @@ public class MainViewModel : ViewModelBase, IDisposable
         {
             var initialMetrics = await _hardwareMonitor.GetMetricsAsync();
             var initialTracker = _tracker.Update(initialMetrics, _settings.HangTimeoutSec);
-            Dashboard.Update(initialMetrics, initialTracker);
+            UpdateDashboard(initialMetrics, initialTracker);
             SessionMetrics.Update(initialMetrics);
+            Notch.Observe(initialMetrics, _settings);
             Charts.AddPoints(
                 initialMetrics.CpuUsagePercent,
                 initialMetrics.GpuUsagePercent,
@@ -513,7 +589,7 @@ public class MainViewModel : ViewModelBase, IDisposable
 
         StartMonitoringLoop();
 
-        _ = CheckForUpdateAsync(_updateLifetime.Token);
+        _ = CheckForUpdateAsync(token);
     }
 
     private async Task CheckForUpdateAsync(CancellationToken cancellationToken)
@@ -538,7 +614,7 @@ public class MainViewModel : ViewModelBase, IDisposable
     private async Task AcceptUpdateAsync()
     {
         if (IsUpdating || _updateOffer is not { } offer || Application.Current?.MainWindow is not { } window) return;
-        var token = _updateLifetime.Token;
+        var token = _lifetime.Token;
         IsUpdating = true;
         UpdatePromptText = "Скачивание…";
         try
@@ -570,6 +646,22 @@ public class MainViewModel : ViewModelBase, IDisposable
         _monitoringTask = Task.Run(() => MonitoringLoopAsync(_monitoringCts.Token));
     }
 
+    internal async Task MonitorBatteryAsync(Func<BatteryReading?> read, CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+        try
+        {
+            do
+            {
+                var reading = read();
+                if (Application.Current?.Dispatcher is not { } dispatcher) return;
+                await dispatcher.InvokeAsync(() => UpdateBatteryReading(reading),
+                    System.Windows.Threading.DispatcherPriority.Background, token);
+            } while (await timer.WaitForNextTickAsync(token));
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+    }
+
     private async Task MonitoringLoopAsync(CancellationToken token)
     {
         while (!token.IsCancellationRequested)
@@ -584,8 +676,9 @@ public class MainViewModel : ViewModelBase, IDisposable
                     Application.Current?.Dispatcher?.Invoke(() =>
                     {
                         CurrentTimeDisplay = DateTime.Now.ToString("HH:mm:ss");
-                        Dashboard.Update(metrics, trackerResult);
+                        UpdateDashboard(metrics, trackerResult);
                         SessionMetrics.Update(metrics);
+                        Notch.Observe(metrics, _settings);
 
                         Charts.AddPoints(
                             metrics.CpuUsagePercent,
@@ -644,7 +737,7 @@ public class MainViewModel : ViewModelBase, IDisposable
                     }
                 }
 
-                double intervalSec = _isMinimized
+                double intervalSec = _isMinimized && !Volatile.Read(ref _isNotchExpanded)
                     ? _settings.PollingIntervalBackgroundSec
                     : _currentPollingIntervalSec;
 
@@ -656,7 +749,7 @@ public class MainViewModel : ViewModelBase, IDisposable
                 }
 
                 int delayMs = (int)(intervalSec * 1000);
-                await Task.Delay(Math.Clamp(delayMs, 100, 30000), token);
+                await _monitoringWake.WaitAsync(Math.Clamp(delayMs, 100, 30000), token);
             }
             catch (OperationCanceledException)
             {
@@ -690,8 +783,8 @@ public class MainViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _monitoringCts?.Cancel();
-        _updateLifetime.Cancel();
-        _updateLifetime.Dispose();
+        _lifetime.Cancel();
+        _lifetime.Dispose();
         _monitoringCts?.Dispose();
         _hardwareMonitor.Dispose();
     }

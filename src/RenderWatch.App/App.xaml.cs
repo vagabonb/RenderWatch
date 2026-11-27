@@ -153,6 +153,10 @@ public partial class App : Application
             {
                 _mainWindow.HideToTray();
             }
+            else if (e.Args.Contains("--notch"))
+            {
+                _mainWindow.MinimizeToNotch();
+            }
             else if (startOnTaskbar)
             {
                 _mainWindow.MinimizeToTaskbarStrip();

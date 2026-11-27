@@ -18,6 +18,7 @@
     <Geometry x:Key="IconDisk">M4,3 H20 V21 H4 Z M4,14 H20 M7,17 H9 M13,17 H17</Geometry>
     <Geometry x:Key="IconNetwork">M7,21 V3 M3,7 L7,3 L11,7 M17,3 V21 M13,17 L17,21 L21,17</Geometry>
     <Geometry x:Key="IconUptime">M12,2 A10,10 0 0 1 12,22 A10,10 0 0 1 12,2 Z M12,6 V12 L16,15</Geometry>
+    <Geometry x:Key="IconBatteryRuntime">M2,6 H20 V18 H2 Z M22,10 V14 M7,10 V14 M11,10 V14 M15,10 V14</Geometry>
 
     <Style x:Key="HardwareSmallIcon" TargetType="Path">
         <Setter Property="Stroke" Value="#F5F2EA"/>
@@ -185,6 +186,8 @@
     <SolidColorBrush x:Key="Hairline" Color="#26FFFFFF"/>
     <SolidColorBrush x:Key="WhiteInk" Color="#F5F2EA"/>
     <SolidColorBrush x:Key="SoftInk" Color="#C4C1BB"/>
+    <SolidColorBrush x:Key="BlackMetricMenuSurface" Color="#191919"/>
+    <SolidColorBrush x:Key="ColorMetricMenuSurface" Color="#242424"/>
 
     <Style x:Key="SectionLabel" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource SoftInk}"/>

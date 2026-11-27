@@ -1,8 +1,8 @@
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using RenderWatch.App.Services;
 using RenderWatch.Core.Hardware;
 using RenderWatch.Core.Models;
 
@@ -10,20 +10,6 @@ namespace RenderWatch.App.ViewModels;
 
 public class ConfigurationViewModel : ViewModelBase, IDisposable
 {
-    [StructLayout(LayoutKind.Sequential)]
-    private struct SYSTEM_POWER_STATUS
-    {
-        public byte ACLineStatus; // 0 = Offline (Battery), 1 = Online (AC), 255 = Unknown
-        public byte BatteryFlag;  // 1 = High, 2 = Low, 4 = Critical, 8 = Charging, 128 = No battery
-        public byte BatteryLifePercent;
-        public byte SystemStatusFlag;
-        public int BatteryLifeTime;
-        public int BatteryFullLifeTime;
-    }
-
-    [DllImport("kernel32.dll")]
-    private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
-
     private SystemConfigurationInfo _config = new();
     private bool _isLoading = true;
     private string _copyFeedbackMessage = string.Empty;
@@ -96,7 +82,7 @@ public class ConfigurationViewModel : ViewModelBase, IDisposable
     {
         try
         {
-            if (GetSystemPowerStatus(out SYSTEM_POWER_STATUS status))
+            if (BatteryMonitor.GetSystemPowerStatus(out var status))
             {
                 string source;
                 if (status.ACLineStatus == 0)

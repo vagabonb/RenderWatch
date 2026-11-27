@@ -3,93 +3,361 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
              xmlns:conv="clr-namespace:RenderWatch.App.Converters"
+             xmlns:models="clr-namespace:RenderWatch.Core.Models;assembly=RenderWatch.Core"
              xmlns:views="clr-namespace:RenderWatch.App.Views">
     <UserControl.Resources>
         <conv:TaskbarInkConverter x:Key="TaskbarInk"/>
-        <Style x:Key="EditorButton" TargetType="Button" BasedOn="{StaticResource MinimalButton}">
-            <Setter Property="Padding" Value="9,5"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
+
+        <SolidColorBrush x:Key="EditorSurface" Color="#0DFFFFFF"/>
+        <SolidColorBrush x:Key="EditorRim" Color="#12FFFFFF"/>
+        <SolidColorBrush x:Key="EditorHover" Color="#12FFFFFF"/>
+        <SolidColorBrush x:Key="EditorSelection" Color="#22FFFFFF"/>
+        <SolidColorBrush x:Key="EditorColorSelection" Color="#294A6B"/>
+        <SolidColorBrush x:Key="EditorText" Color="#F1F2F4"/>
+        <SolidColorBrush x:Key="EditorMute" Color="#B4B5BD"/>
+
+        <Style x:Key="EditorHeading" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="MetricCheck" TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-            <Setter Property="Margin" Value="0,0,14,9"/>
-            <Setter Property="BorderBrush" Value="#8AFFFFFF"/>
+        <Style x:Key="EditorCaption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource EditorMute}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="EditorCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource EditorSurface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource EditorRim}"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="14,12"/>
+        </Style>
+        <Style x:Key="EditorPreview" TargetType="Border">
+            <Setter Property="Padding" Value="14,12"/>
         </Style>
         <Style x:Key="EditorScroll" TargetType="ScrollViewer">
             <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
-            <Setter Property="Padding" Value="0,2,8,6"/>
+            <Setter Property="Padding" Value="0,0,7,10"/>
+            <Setter Property="CanContentScroll" Value="False"/>
+        </Style>
+
+        <Style x:Key="EditorButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Background" Value="#18FFFFFF"/>
+            <Setter Property="Padding" Value="11,5"/>
+            <Setter Property="MinHeight" Value="28"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#32FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#44FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderThickness" Value="1"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#8CBFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.38"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="EditorArrow" TargetType="Button" BasedOn="{StaticResource EditorButton}">
+            <Setter Property="Width" Value="31"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style x:Key="EditorAccentButton" TargetType="Button" BasedOn="{StaticResource EditorButton}">
+            <Setter Property="Background" Value="#34436B"/>
+        </Style>
+        <Style x:Key="NotchMetricOption" TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Option" Padding="{TemplateBinding Padding}" CornerRadius="4" Background="Transparent">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Option" Property="Background" Value="{StaticResource EditorSelection}"/>
+                            </Trigger>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Option" Property="Background" Value="#36FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="NotchMetricPicker" TargetType="ComboBox">
+            <Setter Property="Width" Value="206"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="MaxDropDownHeight" Value="300"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Tag" Value="{Binding DataContext.Appearance, RelativeSource={RelativeSource AncestorType=Window}}"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource NotchMetricOption}"/>
+            <Setter Property="DisplayMemberPath" Value="Title"/>
+            <Setter Property="SelectedValuePath" Value="Metric"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="PickerToggle" Focusable="False" ClickMode="Press" Background="#18FFFFFF"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="#20FFFFFF"
+                                                BorderThickness="1" CornerRadius="7"/>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Surface" Property="Background" Value="#28FFFFFF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Surface" Property="Background" Value="#36FFFFFF"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Border x:Name="FocusRing" BorderBrush="#A0A0A0" CornerRadius="7" IsHitTestVisible="False"/>
+                            <ContentPresenter Margin="11,0,27,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
+                            <Path Data="M0,0 L4,4 L8,0" Margin="0,0,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                  IsHitTestVisible="False" Stroke="{StaticResource EditorMute}" StrokeThickness="1.2"/>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border x:Name="MetricMenuSurface" Background="{StaticResource BlackMetricMenuSurface}" BorderBrush="{StaticResource Hairline}"
+                                        TextElement.Foreground="{TemplateBinding Foreground}" BorderThickness="1" CornerRadius="7" Padding="4"
+                                        MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="Graphite">
+                                <Setter TargetName="MetricMenuSurface" Property="Background" Value="{StaticResource GraphiteBackdrop}"/>
+                                <Setter TargetName="MetricMenuSurface" Property="TextElement.Foreground" Value="{StaticResource WhiteInk}"/>
+                                <Setter TargetName="PickerToggle" Property="Background" Value="#12FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="Tag" Value="Color">
+                                <Setter TargetName="MetricMenuSurface" Property="Background" Value="{StaticResource ColorMetricMenuSurface}"/>
+                                <Setter TargetName="PickerToggle" Property="Background" Value="#20FFFFFF"/>
+                                <Setter TargetName="FocusRing" Property="BorderBrush" Value="#8CBFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="FocusRing" Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="EditorTab" TargetType="TabItem">
-            <Setter Property="Foreground" Value="{DynamicResource BrushTextSecondary}"/>
-            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="Foreground" Value="{StaticResource EditorMute}"/>
+            <Setter Property="Margin" Value="0,0,3,0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="Surface" Padding="12,7" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,2">
-                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="Surface" Background="Transparent" CornerRadius="7" Padding="11,7">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Width="14" Height="14"
+                                      Stroke="{TemplateBinding Foreground}" StrokeThickness="1.25" Stretch="Uniform"
+                                      VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                            </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="#10FFFFFF"/>
+                                <Setter TargetName="Surface" Property="Background" Value="{StaticResource EditorHover}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="#16FFFFFF"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#92B4E7"/>
+                                <Setter TargetName="Surface" Property="BorderThickness" Value="1"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
-                                <Setter TargetName="Surface" Property="Background" Value="#16FFFFFF"/>
-                                <Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource WhiteInk}"/>
+                                <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+                                <Setter TargetName="Surface" Property="Background" Value="{StaticResource EditorSelection}"/>
                             </Trigger>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
                                     <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
                                     <Condition Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
                                 </MultiDataTrigger.Conditions>
-                                <Setter TargetName="Surface" Property="BorderBrush" Value="{x:Static ctrl:TelemetryPalette.Cyan}"/>
+                                <Setter TargetName="Surface" Property="Background" Value="{StaticResource EditorColorSelection}"/>
                             </MultiDataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="EditorList" TargetType="ListBox">
-            <Setter Property="Background" Value="#14000000"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-        </Style>
-        <Style x:Key="EditorListItem" TargetType="ListBoxItem">
-            <Setter Property="Foreground" Value="{DynamicResource WhiteInk}"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+
+        <Style x:Key="EditorSwitch" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Row" Padding="{TemplateBinding Padding}" Background="Transparent">
-                            <ContentPresenter/>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border x:Name="Row" Padding="9,6" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6">
+                            <DockPanel MinHeight="17">
+                                <Grid DockPanel.Dock="Right" Width="30" Height="17" VerticalAlignment="Center">
+                                    <Border x:Name="Track" CornerRadius="9" Background="#3C3C43" BorderBrush="#595962" BorderThickness="0.8"/>
+                                    <Ellipse x:Name="Thumb" Width="11" Height="11" Fill="#D5D5DA" HorizontalAlignment="Left" Margin="3,0" VerticalAlignment="Center"/>
+                                </Grid>
+                                <ContentPresenter Margin="0,0,9,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                            </DockPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Row" Property="Background" Value="#10FFFFFF"/>
+                                <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorHover}"/>
                             </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Row" Property="Background" Value="#20FFFFFF"/>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#85858E"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="Transparent"/>
+                                <Setter TargetName="Thumb" Property="Fill" Value="White"/>
+                                <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsChecked, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                    <Condition Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Track" Property="Background" Value="#4281D4"/>
+                            </MultiDataTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Row" Property="Opacity" Value="0.45"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="EditorSwitchCompact" TargetType="CheckBox" BasedOn="{StaticResource EditorSwitch}">
+            <Setter Property="Width" Value="50"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+
+        <Style x:Key="EditorList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+        <Style x:Key="EditorListItem" TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Padding" Value="9,6"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Padding="{TemplateBinding Padding}" Background="Transparent" CornerRadius="6"
+                                BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorSelection}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="EditorDisclosureButton" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Row" Background="Transparent" CornerRadius="7" Padding="8,6" BorderThickness="1" BorderBrush="Transparent">
+                            <DockPanel>
+                                <Path x:Name="Caret" DockPanel.Dock="Right" Data="M0,0 L4,4 L8,0" Width="8" Height="4" Stretch="Uniform"
+                                      Margin="8,0,1,0" VerticalAlignment="Center" Stroke="{StaticResource EditorMute}" StrokeThickness="1.3"
+                                      RenderTransformOrigin=".5,.5"/>
+                                <ContentPresenter VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Caret" Property="RenderTransform">
+                                    <Setter.Value><RotateTransform Angle="180"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="EditorDisclosure" TargetType="Expander">
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border Style="{StaticResource EditorCard}" Padding="6">
+                            <StackPanel>
+                                <ToggleButton Content="{TemplateBinding Header}" Style="{StaticResource EditorDisclosureButton}"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
+                                <ContentPresenter x:Name="Body" ContentSource="Content" Visibility="Collapsed" Margin="8,6,8,7"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </UserControl.Resources>
 
-    <Grid Margin="24,18,24,20">
+    <Grid Margin="28,20,24,16" MaxWidth="1020" UseLayoutRounding="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <TextBlock Text="Конструктор" Style="{DynamicResource PageTitle}" Margin="0,0,0,12"/>
+        <TextBlock Text="Конструктор" FontFamily="{StaticResource FontDisplay}" FontSize="30" FontWeight="SemiBold"
+                   Foreground="{StaticResource EditorText}" Margin="0,0,0,13"/>
         <TabControl Grid.Row="1" ItemContainerStyle="{StaticResource EditorTab}" SelectedIndex="{Binding SelectedPage, Mode=TwoWay}">
             <TabControl.Template>
                 <ControlTemplate TargetType="TabControl">
@@ -98,7 +366,8 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <Border Margin="0,0,0,16" BorderBrush="{DynamicResource Hairline}" BorderThickness="0,0,0,1">
+                        <Border HorizontalAlignment="Left" Background="{StaticResource EditorSurface}"
+                                CornerRadius="10" Padding="3" Margin="0,0,0,13">
                             <TabPanel IsItemsHost="True"/>
                         </Border>
                         <ContentPresenter Grid.Row="1" x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
@@ -107,314 +376,495 @@
             </TabControl.Template>
 
             <TabItem Header="На панель">
+                <TabItem.Tag><Geometry>M2,4 H22 V19 H2 Z M2,15 H22 M14,17 H20</Geometry></TabItem.Tag>
                 <ScrollViewer Style="{StaticResource EditorScroll}">
                     <StackPanel>
-                        <DockPanel Margin="0,0,0,8">
-                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                <Button Content="Тёмная панель" Style="{StaticResource EditorButton}" Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="dark"/>
-                                <Button Content="Светлая панель" Style="{StaticResource EditorButton}" Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="light"/>
+                        <Border x:Name="TaskbarPreview" Style="{StaticResource EditorPreview}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,9">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="Тёмная" ToolTip="Тёмная панель" AutomationProperties.Name="Тёмная панель" Margin="0,0,4,0"
+                                                Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="dark">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource EditorButton}">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataContext.IsTaskbarStripLightMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                                            <Setter Property="Background" Value="{StaticResource EditorSelection}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <Button Content="Светлая" ToolTip="Светлая панель" AutomationProperties.Name="Светлая панель" Margin="0,0,4,0"
+                                                Command="{Binding DataContext.SetTaskbarStripThemeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="light">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource EditorButton}">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataContext.IsTaskbarStripLightMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource EditorSelection}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBlock Text="Предпросмотр" Style="{StaticResource EditorHeading}"/>
+                                </DockPanel>
+                                <Border Padding="8,3">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                        <views:TaskbarStripContent DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                  UseDarkInk="False" Height="30"/>
+                                    </ScrollViewer>
+                                </Border>
                             </StackPanel>
-                            <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center"/>
-                        </DockPanel>
-                        <Border CornerRadius="5" Padding="8" Margin="0,0,0,18">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="Background" Value="#111111"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DataContext.IsTaskbarStripLightMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                            <Setter Property="Background" Value="#E5E5E5"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                                            <Setter Property="Background" Value="Transparent"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                <views:TaskbarStripContent DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" Height="30"/>
-                            </ScrollViewer>
                         </Border>
-                        <TextBlock Text="Отступы" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                        <UniformGrid Columns="2" Margin="0,0,0,8">
-                            <StackPanel Margin="0,0,13,10">
-                                <DockPanel Margin="0,0,0,4">
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.BlockGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
-                                    <TextBlock Text="Между блоками" Foreground="{DynamicResource SoftInk}"/>
-                                </DockPanel>
-                                <Slider Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        Value="{Binding Taskbar.BlockGap, Mode=TwoWay}" AutomationProperties.Name="Между блоками"/>
+                        <Border Style="{StaticResource EditorCard}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Показатели" Style="{StaticResource EditorHeading}" Margin="0,0,0,6"/>
+                                <UniformGrid Columns="2" Margin="-5,0">
+                                    <CheckBox Content="Загрузка CPU" IsChecked="{Binding ShowTaskbarCpu}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Температура CPU" IsChecked="{Binding ShowTaskbarCpuTemp}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Загрузка GPU" IsChecked="{Binding ShowTaskbarGpu}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Температура GPU" IsChecked="{Binding ShowTaskbarGpuTemp}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Оперативная память" IsChecked="{Binding ShowTaskbarRam}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Видеопамять" IsChecked="{Binding ShowTaskbarVram}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Диски" IsChecked="{Binding ShowTaskbarDisk}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Сеть" IsChecked="{Binding ShowTaskbarNetwork}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Время работы ПК" IsChecked="{Binding ShowTaskbarUptime}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Осталось от батареи" IsChecked="{Binding ShowTaskbarBatteryRuntime}" Style="{StaticResource EditorSwitch}"/>
+                                </UniformGrid>
                             </StackPanel>
-                            <StackPanel Margin="0,0,13,10">
-                                <DockPanel Margin="0,0,0,4">
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.LabelGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
-                                    <TextBlock Text="Между значком и значением" Foreground="{DynamicResource SoftInk}"/>
+                        </Border>
+                        <Expander x:Name="TaskbarAppearanceEditor" Header="Порядок и оформление" Style="{StaticResource EditorDisclosure}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="0.65*"/>
+                                    <ColumnDefinition Width="18"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <DockPanel Margin="0,0,0,6">
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="7,0,0,0">
+                                            <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding Taskbar.MoveLeftCommand}"
+                                                    Margin="0,0,4,0" ToolTip="Сдвинуть влево"/>
+                                            <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding Taskbar.MoveRightCommand}"
+                                                    ToolTip="Сдвинуть вправо"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Блоки слева направо" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
+                                    <ListBox ItemsSource="{Binding Taskbar.Options}" SelectedItem="{Binding Taskbar.SelectedMetric, Mode=TwoWay}"
+                                             DisplayMemberPath="Name" Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
+                                             AutomationProperties.Name="Блок панели"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" DataContext="{Binding Taskbar.SelectedMetric}">
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource EditorHeading}" Margin="0,0,0,7"/>
+                                    <CheckBox Content="Английская подпись вместо значка" IsChecked="{Binding UseText}" Style="{StaticResource EditorSwitch}" Margin="-5,0,0,7"/>
+                                    <DockPanel Margin="0,0,0,7">
+                                        <Button DockPanel.Dock="Right" Tag="LabelColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                                ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значок или подпись">
+                                            <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{StaticResource TaskbarInk}" ConverterParameter="Label">
+                                                        <Binding Path="LabelBrush"/>
+                                                        <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                    </MultiBinding>
+                                                </Border.Background>
+                                            </Border>
+                                        </Button>
+                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                                 Text="{Binding LabelColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значок или подпись · HEX"/>
+                                        <TextBlock Text="Значок или подпись" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Margin="0,0,0,7">
+                                        <Button DockPanel.Dock="Right" Tag="ValueColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                                ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значение">
+                                            <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{StaticResource TaskbarInk}">
+                                                        <Binding Path="ValueBrush"/>
+                                                        <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                    </MultiBinding>
+                                                </Border.Background>
+                                            </Border>
+                                        </Button>
+                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                                 Text="{Binding ValueColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значение · HEX"/>
+                                        <TextBlock Text="Значение" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Margin="0,0,0,7" Visibility="{Binding HasTemperature, Converter={StaticResource BoolToVis}}">
+                                        <Button DockPanel.Dock="Right" Tag="TemperatureColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
+                                                ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Температура">
+                                            <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{StaticResource TaskbarInk}">
+                                                        <Binding Path="TemperatureBrush"/>
+                                                        <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                    </MultiBinding>
+                                                </Border.Background>
+                                            </Border>
+                                        </Button>
+                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                                 Text="{Binding TemperatureColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Температура · HEX"/>
+                                        <TextBlock Text="Температура" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                    <DockPanel Margin="0,2,0,0">
+                                        <Button DockPanel.Dock="Right" Content="Сбросить цвета" Style="{StaticResource EditorButton}" Command="{Binding ResetColorsCommand}"/>
+                                        <TextBlock Text="HEX · пустое поле использует цвет по умолчанию" Foreground="{StaticResource EditorMute}"
+                                                   FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Expander>
+                        <Expander x:Name="TaskbarSpacingEditor" Header="Отступы" Style="{StaticResource EditorDisclosure}">
+                            <StackPanel>
+                                <DockPanel MinHeight="32" Margin="0,0,0,5">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.BlockGap, StringFormat={}{0} px}" Width="42" TextAlignment="Right" Style="{StaticResource EditorCaption}"/>
+                                    <Slider DockPanel.Dock="Right" Width="132" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding Taskbar.BlockGap, Mode=TwoWay}" Margin="10,0,4,0" VerticalAlignment="Center" AutomationProperties.Name="Между блоками"/>
+                                    <TextBlock Text="Между блоками" Style="{StaticResource EditorCaption}" TextWrapping="Wrap"/>
                                 </DockPanel>
-                                <Slider Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        Value="{Binding Taskbar.LabelGap, Mode=TwoWay}" AutomationProperties.Name="Между значком и значением"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,13,10">
-                                <DockPanel Margin="0,0,0,4">
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.ValueGap, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
-                                    <TextBlock Text="Между температурой и нагрузкой" Foreground="{DynamicResource SoftInk}"/>
+                                <DockPanel MinHeight="32" Margin="0,0,0,5">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.LabelGap, StringFormat={}{0} px}" Width="42" TextAlignment="Right" Style="{StaticResource EditorCaption}"/>
+                                    <Slider DockPanel.Dock="Right" Width="132" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding Taskbar.LabelGap, Mode=TwoWay}" Margin="10,0,4,0" VerticalAlignment="Center" AutomationProperties.Name="Между значком и значением"/>
+                                    <TextBlock Text="Между значком и значением" Style="{StaticResource EditorCaption}" TextWrapping="Wrap"/>
                                 </DockPanel>
-                                <Slider Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        Value="{Binding Taskbar.ValueGap, Mode=TwoWay}" AutomationProperties.Name="Между температурой и нагрузкой"/>
-                            </StackPanel>
-                            <StackPanel Margin="0,0,13,10">
-                                <DockPanel Margin="0,0,0,4">
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.SidePadding, StringFormat={}{0} px}" Foreground="{DynamicResource WhiteInk}"/>
-                                    <TextBlock Text="По краям" Foreground="{DynamicResource SoftInk}"/>
+                                <DockPanel MinHeight="32" Margin="0,0,0,5">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.ValueGap, StringFormat={}{0} px}" Width="42" TextAlignment="Right" Style="{StaticResource EditorCaption}"/>
+                                    <Slider DockPanel.Dock="Right" Width="132" Maximum="16" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding Taskbar.ValueGap, Mode=TwoWay}" Margin="10,0,4,0" VerticalAlignment="Center" AutomationProperties.Name="Между температурой и нагрузкой"/>
+                                    <TextBlock Text="Между температурой и нагрузкой" Style="{StaticResource EditorCaption}" TextWrapping="Wrap"/>
                                 </DockPanel>
-                                <Slider Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
-                                        Value="{Binding Taskbar.SidePadding, Mode=TwoWay}" AutomationProperties.Name="По краям"/>
-                            </StackPanel>
-                        </UniformGrid>
-                        <TextBlock Text="Показатели" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                        <WrapPanel Margin="0,0,0,14">
-                        <CheckBox Content="CPU" IsChecked="{Binding ShowTaskbarCpu}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="CPU °C" IsChecked="{Binding ShowTaskbarCpuTemp}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="GPU" IsChecked="{Binding ShowTaskbarGpu}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="GPU °C" IsChecked="{Binding ShowTaskbarGpuTemp}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="RAM" IsChecked="{Binding ShowTaskbarRam}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="VRAM" IsChecked="{Binding ShowTaskbarVram}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Диски" IsChecked="{Binding ShowTaskbarDisk}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Сеть" IsChecked="{Binding ShowTaskbarNetwork}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Время работы" IsChecked="{Binding ShowTaskbarUptime}" Style="{StaticResource MetricCheck}"/>
-                        </WrapPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="160"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,16,0">
-                                <TextBlock Text="Порядок блоков" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                                <ListBox ItemsSource="{Binding Taskbar.Options}" SelectedItem="{Binding Taskbar.SelectedMetric, Mode=TwoWay}"
-                                         DisplayMemberPath="Name" Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
-                                         AutomationProperties.Name="Блок панели"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding Taskbar.MoveLeftCommand}" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding Taskbar.MoveRightCommand}" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" DataContext="{Binding Taskbar.SelectedMetric}" Margin="0,0,0,8"
-                                        Width="440" HorizontalAlignment="Left">
-                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource WhiteInk}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,9"/>
-                                <CheckBox Content="Английская подпись вместо значка" IsChecked="{Binding UseText}" Style="{StaticResource MetricCheck}"/>
-                                <DockPanel Margin="0,0,0,7">
-                                    <Button DockPanel.Dock="Right" Tag="LabelColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
-                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значок или подпись">
-                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{StaticResource TaskbarInk}" ConverterParameter="Label">
-                                                    <Binding Path="LabelBrush"/>
-                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
-                                                </MultiBinding>
-                                            </Border.Background>
-                                        </Border>
-                                    </Button>
-                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
-                                             Text="{Binding LabelColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значок или подпись · HEX"/>
-                                    <TextBlock Text="Значок или подпись" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                                </DockPanel>
-                                <DockPanel Margin="0,0,0,7">
-                                    <Button DockPanel.Dock="Right" Tag="ValueColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
-                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Значение">
-                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{StaticResource TaskbarInk}">
-                                                    <Binding Path="ValueBrush"/>
-                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
-                                                </MultiBinding>
-                                            </Border.Background>
-                                        </Border>
-                                    </Button>
-                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
-                                             Text="{Binding ValueColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значение · HEX"/>
-                                    <TextBlock Text="Значение" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                                </DockPanel>
-                                <DockPanel Margin="0,0,0,7" Visibility="{Binding HasTemperature, Converter={StaticResource BoolToVis}}">
-                                    <Button DockPanel.Dock="Right" Tag="TemperatureColor" Click="OnPickColor" Style="{StaticResource EditorButton}"
-                                            ToolTip="Выбрать цвет" AutomationProperties.Name="Цвет · Температура">
-                                        <Border Width="18" Height="14" CornerRadius="2" BorderBrush="#66FFFFFF" BorderThickness="1">
-                                            <Border.Background>
-                                                <MultiBinding Converter="{StaticResource TaskbarInk}">
-                                                    <Binding Path="TemperatureBrush"/>
-                                                    <Binding Path="DataContext.IsTaskbarStripLightMode" RelativeSource="{RelativeSource AncestorType=Window}"/>
-                                                </MultiBinding>
-                                            </Border.Background>
-                                        </Border>
-                                    </Button>
-                                    <TextBox DockPanel.Dock="Right" Width="85" MaxLength="7" Margin="5,0,7,0"
-                                             Text="{Binding TemperatureColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Температура · HEX"/>
-                                    <TextBlock Text="Температура" Foreground="{DynamicResource SoftInk}" VerticalAlignment="Center"/>
-                                </DockPanel>
-                                <DockPanel Margin="0,2,0,0">
-                                    <Button DockPanel.Dock="Right" Content="Сбросить цвета" Style="{StaticResource EditorButton}" Command="{Binding ResetColorsCommand}"/>
-                                    <TextBlock Text="HEX · пустое поле использует цвет по умолчанию" Foreground="{DynamicResource SoftInk}"
-                                               FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                <DockPanel MinHeight="32" Margin="0,0,0,5">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Taskbar.SidePadding, StringFormat={}{0} px}" Width="42" TextAlignment="Right" Style="{StaticResource EditorCaption}"/>
+                                    <Slider DockPanel.Dock="Right" Width="132" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding Taskbar.SidePadding, Mode=TwoWay}" Margin="10,0,4,0" VerticalAlignment="Center" AutomationProperties.Name="По краям"/>
+                                    <TextBlock Text="По краям" Style="{StaticResource EditorCaption}" TextWrapping="Wrap"/>
                                 </DockPanel>
                             </StackPanel>
-                        </Grid>
+                        </Expander>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Микро">
+                <TabItem.Tag><Geometry>M3,5 H21 V18 H3 Z M3,9 H21 M6,7 H8</Geometry></TabItem.Tag>
                 <ScrollViewer Style="{StaticResource EditorScroll}">
                     <StackPanel>
-                        <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                        <Border Padding="10,8" Background="#28000000" CornerRadius="4" Margin="0,0,0,18">
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                <StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                                <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,9,0">
-                                    <StackPanel.Visibility>
-                                        <MultiBinding Converter="{StaticResource AnyVisible}">
-                                            <Binding Path="ShowMicroCpu"/><Binding Path="ShowMicroCpuTemp"/>
-                                        </MultiBinding>
-                                    </StackPanel.Visibility>
-                                    <TextBlock Text="CPU" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Margin="0,0,4,0"
-                                               Visibility="{Binding ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Visibility="{Binding ShowMicroCpu, Converter={StaticResource BoolToVis}}"/>
-                                </StackPanel>
-                                <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,9,0">
-                                    <StackPanel.Visibility>
-                                        <MultiBinding Converter="{StaticResource AnyVisible}">
-                                            <Binding Path="ShowMicroGpu"/><Binding Path="ShowMicroGpuTemp"/>
-                                        </MultiBinding>
-                                    </StackPanel.Visibility>
-                                    <TextBlock Text="GPU" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Margin="0,0,4,0"
-                                               Visibility="{Binding ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}" Visibility="{Binding ShowMicroGpu, Converter={StaticResource BoolToVis}}"/>
-                                </StackPanel>
-                                <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroRam, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="RAM" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
-                                </StackPanel>
-                                <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroVram, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="VRAM" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
-                                </StackPanel>
-                                <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroDisk, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="Диски" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
-                                </StackPanel>
-                                <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroNetwork, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="Сеть" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
-                                </StackPanel>
-                                <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroUptime, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="Время работы" Foreground="{DynamicResource SoftInk}" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{DynamicResource WhiteInk}"/>
-                                </StackPanel>
-                                </StackPanel>
-                            </ScrollViewer>
+                        <Border x:Name="MicroPreview" Style="{StaticResource EditorPreview}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Предпросмотр" Style="{StaticResource EditorHeading}" Margin="0,0,0,9"/>
+                                <Border Padding="8,7">
+                                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                        <StackPanel Orientation="Horizontal" ctrl:MetricOrder.Value="{Binding MetricOrder}">
+                                        <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,9,0">
+                                            <StackPanel.Visibility>
+                                                <MultiBinding Converter="{StaticResource AnyVisible}">
+                                                    <Binding Path="ShowMicroCpu"/><Binding Path="ShowMicroCpuTemp"/>
+                                                </MultiBinding>
+                                            </StackPanel.Visibility>
+                                            <TextBlock Text="CPU" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.CpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}" Margin="0,0,4,0"
+                                                       Visibility="{Binding ShowMicroCpuTemp, Converter={StaticResource BoolToVis}}"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.CpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}" Visibility="{Binding ShowMicroCpu, Converter={StaticResource BoolToVis}}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,9,0">
+                                            <StackPanel.Visibility>
+                                                <MultiBinding Converter="{StaticResource AnyVisible}">
+                                                    <Binding Path="ShowMicroGpu"/><Binding Path="ShowMicroGpuTemp"/>
+                                                </MultiBinding>
+                                            </StackPanel.Visibility>
+                                            <TextBlock Text="GPU" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.GpuTempMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}" Margin="0,0,4,0"
+                                                       Visibility="{Binding ShowMicroGpuTemp, Converter={StaticResource BoolToVis}}"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.GpuUsageMicro, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}" Visibility="{Binding ShowMicroGpu, Converter={StaticResource BoolToVis}}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroRam, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="RAM" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.RamPercentDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroVram, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="VRAM" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.VramPercentValue, StringFormat={}{0:F0}%, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroDisk, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Диски" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.DiskCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroNetwork, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Сеть" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.NetworkCompact, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                        <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,9,0" Visibility="{Binding ShowMicroUptime, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Время работы" Foreground="{StaticResource EditorMute}" Margin="0,0,4,0"/>
+                                            <TextBlock Text="{Binding DataContext.Dashboard.Uptime, RelativeSource={RelativeSource AncestorType=Window}}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Border>
+                            </StackPanel>
                         </Border>
-                        <TextBlock Text="Показатели" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                        <WrapPanel Margin="0,0,0,16">
-                        <CheckBox Content="CPU" IsChecked="{Binding ShowMicroCpu}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="CPU °C" IsChecked="{Binding ShowMicroCpuTemp}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="GPU" IsChecked="{Binding ShowMicroGpu}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="GPU °C" IsChecked="{Binding ShowMicroGpuTemp}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="RAM" IsChecked="{Binding ShowMicroRam}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="VRAM" IsChecked="{Binding ShowMicroVram}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Диски" IsChecked="{Binding ShowMicroDisk}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Сеть" IsChecked="{Binding ShowMicroNetwork}" Style="{StaticResource MetricCheck}"/>
-                        <CheckBox Content="Время работы" IsChecked="{Binding ShowMicroUptime}" Style="{StaticResource MetricCheck}"/>
-                        </WrapPanel>
-                        <TextBlock Text="Порядок блоков" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                        <WrapPanel ctrl:MetricOrder.Value="{Binding MetricOrder}">
-                            <StackPanel Tag="CPU" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="CPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="CPU" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="CPU" ToolTip="Сдвинуть вправо"/>
+                        <Border Style="{StaticResource EditorCard}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Показатели" Style="{StaticResource EditorHeading}" Margin="0,0,0,6"/>
+                                <UniformGrid Columns="2" Margin="-5,0">
+                                    <CheckBox Content="Загрузка CPU" IsChecked="{Binding ShowMicroCpu}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Температура CPU" IsChecked="{Binding ShowMicroCpuTemp}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Загрузка GPU" IsChecked="{Binding ShowMicroGpu}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Температура GPU" IsChecked="{Binding ShowMicroGpuTemp}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Оперативная память" IsChecked="{Binding ShowMicroRam}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Видеопамять" IsChecked="{Binding ShowMicroVram}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Диски" IsChecked="{Binding ShowMicroDisk}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Сеть" IsChecked="{Binding ShowMicroNetwork}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Время работы ПК" IsChecked="{Binding ShowMicroUptime}" Style="{StaticResource EditorSwitch}"/>
+                                </UniformGrid>
                             </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="GPU" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="GPU" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="GPU" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="GPU" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="RAM" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="RAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="RAM" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="RAM" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="VRAM" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="VRAM" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="VRAM" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="VRAM" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="DISK" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="Диски" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="DISK" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="DISK" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="NET" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="Сеть" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="NET" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="NET" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                            <StackPanel Tag="UPTIME" Orientation="Horizontal" Margin="0,0,12,6">
-                                <TextBlock Text="Время работы" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center" Margin="0,5,6,0"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                <Button Content="←" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricLeftCommand}" CommandParameter="UPTIME" ToolTip="Сдвинуть влево"/>
-                                <Button Content="→" Style="{StaticResource EditorButton}" Command="{Binding MoveMetricRightCommand}" CommandParameter="UPTIME" ToolTip="Сдвинуть вправо"/>
-                            </StackPanel>
-                            </StackPanel>
-                        </WrapPanel>
+                        </Border>
+                        <Expander x:Name="MicroOrderEditor" Header="Порядок блоков" Style="{StaticResource EditorDisclosure}">
+                            <UniformGrid Columns="2" ctrl:MetricOrder.Value="{Binding MetricOrder}">
+                                <DockPanel Tag="CPU" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="CPU" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="CPU" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="CPU" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="GPU" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="GPU" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="GPU" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="GPU" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="RAM" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="RAM" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="RAM" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="RAM" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="VRAM" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="VRAM" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="VRAM" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="VRAM" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="DISK" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="DISK" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="DISK" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Диски" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="NET" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="NET" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="NET" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Сеть" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                                <DockPanel Tag="UPTIME" Margin="0,0,12,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="6,0,0,0">
+                                        <Button Content="←" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricLeftCommand}"
+                                                CommandParameter="UPTIME" Margin="0,0,3,0" ToolTip="Сдвинуть влево"/>
+                                        <Button Content="→" Style="{StaticResource EditorArrow}" Command="{Binding MoveMetricRightCommand}"
+                                                CommandParameter="UPTIME" ToolTip="Сдвинуть вправо"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Время работы ПК" Style="{StaticResource EditorCaption}" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </UniformGrid>
+                        </Expander>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Компактный">
+                <TabItem.Tag><Geometry>M3,4 H21 V20 H3 Z M6,9 L9,7 12,10 17,7 M6,14 H18 M6,17 H15</Geometry></TabItem.Tag>
                 <ScrollViewer Style="{StaticResource EditorScroll}">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="340"/>
+                            <ColumnDefinition Width="1.2*"/>
+                            <ColumnDefinition Width="12"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Margin="0,0,14,0">
-                            <TextBlock Text="Предпросмотр" Style="{DynamicResource SectionLabel}" Margin="0,0,0,8"/>
-                            <Border Padding="6" Background="#28000000" CornerRadius="5">
-                                <views:CompactChartStrip Height="422" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                            </Border>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <DockPanel Margin="0,0,0,8">
-                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                                    <Button Content="↑" Style="{StaticResource EditorButton}" Command="{Binding MoveCompactUpCommand}" ToolTip="Поднять выбранный график"/>
-                                    <Button Content="↓" Style="{StaticResource EditorButton}" Command="{Binding MoveCompactDownCommand}" ToolTip="Опустить выбранный график"/>
-                                </StackPanel>
-                                <TextBlock Text="Состав и порядок графиков" Style="{DynamicResource SectionLabel}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                            </DockPanel>
-                            <ListBox ItemsSource="{Binding CompactOptions}" SelectedItem="{Binding SelectedCompactGraph, Mode=TwoWay}"
-                                     Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
-                                     AutomationProperties.Name="Графики компактного режима">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <DockPanel>
-                                            <CheckBox DockPanel.Dock="Right" IsChecked="{Binding IsEnabled}" Style="{StaticResource MetricCheck}"
-                                                      Margin="0" AutomationProperties.Name="{Binding Title}" ToolTip="Показать график"/>
-                                            <TextBlock Text="{Binding Title}" Foreground="{DynamicResource WhiteInk}" VerticalAlignment="Center"/>
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </StackPanel>
+                        <Border Style="{StaticResource EditorCard}" VerticalAlignment="Top">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,7">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Content="↑" Style="{StaticResource EditorArrow}" Margin="0,0,4,0"
+                                                Command="{Binding MoveCompactUpCommand}" ToolTip="Поднять выбранный график"/>
+                                        <Button Content="↓" Style="{StaticResource EditorArrow}"
+                                                Command="{Binding MoveCompactDownCommand}" ToolTip="Опустить выбранный график"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Графики" Style="{StaticResource EditorHeading}"/>
+                                </DockPanel>
+                                <ListBox ItemsSource="{Binding CompactOptions}" SelectedItem="{Binding SelectedCompactGraph, Mode=TwoWay}"
+                                         Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
+                                         AutomationProperties.Name="Графики компактного режима">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <DockPanel>
+                                                <CheckBox DockPanel.Dock="Right" Style="{StaticResource EditorSwitchCompact}"
+                                                          IsChecked="{Binding IsEnabled, Mode=TwoWay}" AutomationProperties.Name="{Binding Title}"/>
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource EditorCaption}" Foreground="{StaticResource EditorText}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </DockPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="CompactPreview" Grid.Column="2" Style="{StaticResource EditorPreview}" VerticalAlignment="Top">
+                            <StackPanel>
+                                <TextBlock Text="Предпросмотр" Style="{StaticResource EditorHeading}" Margin="0,0,0,9"/>
+                                <Border Padding="6">
+                                    <views:CompactChartStrip Height="400" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
                     </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Чёлка">
+                <TabItem.Tag><Geometry>M2,5 H22 M6,5 V9 Q6,13 10,13 H14 Q18,13 18,9 V5</Geometry></TabItem.Tag>
+                <ScrollViewer Style="{StaticResource EditorScroll}">
+                    <StackPanel>
+                        <Border x:Name="NotchPreview" Style="{StaticResource EditorPreview}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <DockPanel Margin="0,0,0,10">
+                                    <Button DockPanel.Dock="Right" Content="Включить чёлку" Style="{StaticResource EditorAccentButton}" Click="OnShowNotchClicked"/>
+                                    <TextBlock Text="Предпросмотр" Style="{StaticResource EditorHeading}"/>
+                                </DockPanel>
+                                <Border Height="54" ClipToBounds="True">
+                                    <views:NotchHeader DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Top">
+                                        <views:NotchHeader.Style>
+                                            <Style TargetType="views:NotchHeader">
+                                                <Setter Property="Margin" Value="0,6,0,0"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Constructor.NotchShape}" Value="{x:Static models:NotchLayout.Island}">
+                                                        <Setter Property="Margin" Value="0"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Constructor.NotchShape}" Value="{x:Static models:NotchLayout.MemoryBar}">
+                                                        <Setter Property="Margin" Value="0,2,0,0"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </views:NotchHeader.Style>
+                                    </views:NotchHeader>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource EditorCard}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Форма" Style="{StaticResource EditorHeading}" Margin="0,0,0,8"/>
+                                <ListBox x:Name="NotchShapePicker" Style="{StaticResource EditorList}" ItemContainerStyle="{StaticResource EditorListItem}"
+                                         SelectedValuePath="Tag" SelectedValue="{Binding NotchShape, Mode=TwoWay}" AutomationProperties.Name="Форма чёлки">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBoxItem Tag="{x:Static models:NotchLayout.Ring}" Margin="0,0,5,0" Padding="12,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M11,2 A8,8 0 1 0 11,18 A8,8 0 1 0 11,2" Width="18" Height="13" Stroke="{StaticResource EditorText}" StrokeThickness="1"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center" Stretch="Uniform"/>
+                                            <TextBlock Text="Кольцо" Style="{StaticResource EditorCaption}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                    <ListBoxItem Tag="{x:Static models:NotchLayout.Island}" Margin="0,0,5,0" Padding="12,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M2,5 H22 M6,5 V9 Q6,13 10,13 H14 Q18,13 18,9 V5" Width="18" Height="13" Stroke="{StaticResource EditorText}" StrokeThickness="1"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center" Stretch="Uniform"/>
+                                            <TextBlock Text="Островок" Style="{StaticResource EditorCaption}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                    <ListBoxItem Tag="{x:Static models:NotchLayout.MemoryBar}" Margin="0,0,5,0" Padding="12,8">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M2,7 H22 V12 H2 Z M4,9.5 H13" Width="18" Height="13" Stroke="{StaticResource EditorText}" StrokeThickness="1"
+                                                  Margin="0,0,7,0" VerticalAlignment="Center" Stretch="Uniform"/>
+                                            <TextBlock Text="Шкала" Style="{StaticResource EditorCaption}" Foreground="{StaticResource EditorText}"/>
+                                        </StackPanel>
+                                    </ListBoxItem>
+                                </ListBox>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource EditorCard}">
+                            <StackPanel>
+                                <TextBlock Text="Показатели" Style="{StaticResource EditorHeading}" Margin="0,0,0,8"/>
+                                <Grid>
+                                    <ComboBox x:Name="NotchRingPicker" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding NotchMetrics}" SelectedValue="{Binding RingMetric, Mode=TwoWay}"
+                                              AutomationProperties.Name="Показатель кольца">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource NotchMetricPicker}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NotchShape}" Value="{x:Static models:NotchLayout.Ring}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+                                    </ComboBox>
+                                    <ComboBox x:Name="NotchBarPicker" HorizontalAlignment="Left"
+                                              ItemsSource="{Binding NotchMetrics}" SelectedValue="{Binding BarMetric, Mode=TwoWay}"
+                                              AutomationProperties.Name="Показатель шкалы">
+                                        <ComboBox.Style>
+                                            <Style TargetType="ComboBox" BasedOn="{StaticResource NotchMetricPicker}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NotchShape}" Value="{x:Static models:NotchLayout.MemoryBar}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ComboBox.Style>
+                                    </ComboBox>
+                                    <StackPanel x:Name="NotchIslandPickers">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NotchShape}" Value="{x:Static models:NotchLayout.Island}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        <DockPanel LastChildFill="False" Margin="0,0,0,7">
+                                            <TextBlock Text="Первый" Width="72" Style="{StaticResource EditorCaption}"/>
+                                            <ComboBox x:Name="NotchIslandFirstPicker" Style="{StaticResource NotchMetricPicker}"
+                                                      ItemsSource="{Binding NotchMetrics}" SelectedValue="{Binding IslandFirstMetric, Mode=TwoWay}"
+                                                      AutomationProperties.Name="Первый показатель островка"/>
+                                        </DockPanel>
+                                        <DockPanel LastChildFill="False">
+                                            <TextBlock Text="Второй" Width="72" Style="{StaticResource EditorCaption}"/>
+                                            <ComboBox x:Name="NotchIslandSecondPicker" Style="{StaticResource NotchMetricPicker}"
+                                                      ItemsSource="{Binding OptionalNotchMetrics}" SelectedValue="{Binding IslandSecondMetric, Mode=TwoWay}"
+                                                      AutomationProperties.Name="Второй показатель островка"/>
+                                        </DockPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </ScrollViewer>
             </TabItem>
         </TabControl>

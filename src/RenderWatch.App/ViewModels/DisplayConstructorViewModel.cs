@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Threading;
 using RenderWatch.Core.Models;
@@ -8,6 +9,23 @@ namespace RenderWatch.App.ViewModels;
 
 public class DisplayConstructorViewModel : ViewModelBase
 {
+    private static readonly IReadOnlyList<NotchMetricChoice> Metrics =
+    [
+        new(NotchRingMetric.CpuLoad, "Загрузка CPU"),
+        new(NotchRingMetric.CpuTemperature, "Температура CPU"),
+        new(NotchRingMetric.GpuLoad, "Загрузка GPU"),
+        new(NotchRingMetric.GpuTemperature, "Температура GPU"),
+        new(NotchRingMetric.Ram, "Оперативная память"),
+        new(NotchRingMetric.Vram, "Видеопамять"),
+        new(NotchRingMetric.Battery, "Заряд батареи"),
+        new(NotchRingMetric.DiskRead, "Чтение дисков"),
+        new(NotchRingMetric.DiskWrite, "Запись на диски"),
+        new(NotchRingMetric.NetworkReceive, "Приём по сети"),
+        new(NotchRingMetric.NetworkSend, "Отправка по сети")
+    ];
+    private static readonly IReadOnlyList<NotchMetricChoice> OptionalMetrics =
+        [new(NotchRingMetric.None, "Без второго показателя"), .. Metrics];
+
     private AppSettings? _settings;
     private ISettingsManager? _settingsManager;
     private readonly DispatcherTimer _saveTimer;
@@ -16,7 +34,58 @@ public class DisplayConstructorViewModel : ViewModelBase
     private int _selectedPage;
 
     public TaskbarAppearanceViewModel Taskbar { get; }
+    public IReadOnlyList<NotchMetricChoice> NotchMetrics => Metrics;
+    public IReadOnlyList<NotchMetricChoice> OptionalNotchMetrics => OptionalMetrics;
+    internal static string GetNotchMetricTitle(NotchRingMetric metric) => Metrics.First(choice => choice.Metric == metric).Title;
     public int SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
+    public NotchLayout NotchShape
+    {
+        get => _settings?.NotchLayout is { } layout && Enum.IsDefined(layout) ? layout : NotchLayout.Ring;
+        set
+        {
+            if (_settings == null || !Enum.IsDefined(value) || _settings.NotchLayout == value) return;
+            _settings.NotchLayout = value;
+            OnPropertyChanged();
+            QueueSave();
+        }
+    }
+    public NotchRingMetric RingMetric
+    {
+        get => GetNotchMetric(_settings?.NotchRingMetric, NotchRingMetric.Ram);
+        set => SetNotchMetric(value, RingMetric, static (settings, metric) => settings.NotchRingMetric = metric);
+    }
+
+    public NotchRingMetric BarMetric
+    {
+        get => GetNotchMetric(_settings?.NotchBarMetric, NotchRingMetric.Ram);
+        set => SetNotchMetric(value, BarMetric, static (settings, metric) => settings.NotchBarMetric = metric);
+    }
+
+    public NotchRingMetric IslandFirstMetric
+    {
+        get => GetNotchMetric(_settings?.NotchIslandFirstMetric, NotchRingMetric.CpuTemperature);
+        set => SetNotchMetric(value, IslandFirstMetric, static (settings, metric) => settings.NotchIslandFirstMetric = metric);
+    }
+
+    public NotchRingMetric IslandSecondMetric
+    {
+        get => GetNotchMetric(_settings?.NotchIslandSecondMetric, NotchRingMetric.Ram, allowNone: true);
+        set => SetNotchMetric(value, IslandSecondMetric, static (settings, metric) => settings.NotchIslandSecondMetric = metric, allowNone: true);
+    }
+
+    private static NotchRingMetric GetNotchMetric(NotchRingMetric? value, NotchRingMetric fallback, bool allowNone = false) =>
+        value is { } metric && Enum.IsDefined(metric) && (allowNone || metric != NotchRingMetric.None) ? metric : fallback;
+
+    private void SetNotchMetric(NotchRingMetric value, NotchRingMetric current, Action<AppSettings, NotchRingMetric> set,
+        bool allowNone = false, [CallerMemberName] string? propertyName = null)
+    {
+        if (_settings == null || value == current || !Enum.IsDefined(value) || (!allowNone && value == NotchRingMetric.None)) return;
+        set(_settings, value);
+        OnPropertyChanged(propertyName);
+        _ = _settingsManager!.SaveSettingsAsync(_settings);
+    }
+
+    public sealed record NotchMetricChoice(NotchRingMetric Metric, string Title);
     public ObservableCollection<CompactGraphOption> CompactOptions { get; } = new();
     public IReadOnlyList<CompactGraphOption> ActiveCompactGraphs
     {
@@ -220,6 +289,18 @@ public class DisplayConstructorViewModel : ViewModelBase
         {
             if (_settings == null || _settings.ShowTaskbarUptime == value) return;
             _settings.ShowTaskbarUptime = value;
+            OnPropertyChanged();
+            _ = _settingsManager!.SaveSettingsAsync(_settings);
+        }
+    }
+
+    public bool ShowTaskbarBatteryRuntime
+    {
+        get => _settings?.ShowTaskbarBatteryRuntime ?? false;
+        set
+        {
+            if (_settings == null || _settings.ShowTaskbarBatteryRuntime == value) return;
+            _settings.ShowTaskbarBatteryRuntime = value;
             OnPropertyChanged();
             _ = _settingsManager!.SaveSettingsAsync(_settings);
         }

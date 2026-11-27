@@ -185,6 +185,14 @@ public class TrayIconManager : IDisposable
         };
         _contextMenu.Items.Add(panelItem);
 
+        var notchItem = new MenuItem { Header = "Чёлка" };
+        notchItem.Click += (_, _) =>
+        {
+            _hoverFlyout?.HideFlyout();
+            if (_ownerWindow is MainWindow mainWindow) mainWindow.MinimizeToNotch();
+        };
+        _contextMenu.Items.Add(notchItem);
+
         _contextMenu.Items.Add(new Separator());
 
         var autostartItem = new MenuItem

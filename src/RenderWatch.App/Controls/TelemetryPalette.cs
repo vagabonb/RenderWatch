@@ -19,6 +19,14 @@ public static class TelemetryPalette
         _ => Green
     };
 
+    internal static SolidColorBrush ForBattery(int percent) => percent switch
+    {
+        <= 10 => Red,
+        <= 25 => Orange,
+        <= 50 => Blue,
+        _ => Green
+    };
+
     private static SolidColorBrush Ink(byte red, byte green, byte blue)
     {
         var brush = new SolidColorBrush(Color.FromRgb(red, green, blue));

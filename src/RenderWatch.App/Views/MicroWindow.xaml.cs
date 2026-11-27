@@ -53,7 +53,7 @@ public partial class MicroWindow : Window
 
     public void PositionNearTray()
     {
-        var placement = _viewModel.GetAppearanceLayout(_viewModel.Appearance).Micro;
+        var placement = _viewModel.GetWindowLayout().Micro;
         if (placement != null && double.IsFinite(placement.Left) && double.IsFinite(placement.Top))
         {
             Left = Math.Clamp(placement.Left, SystemParameters.VirtualScreenLeft,
@@ -93,11 +93,11 @@ public partial class MicroWindow : Window
         try
         {
             DragMove();
-            _viewModel.GetAppearanceLayout(_viewModel.Appearance).Micro = new RenderWatch.Core.Models.WindowPlacement
+            _viewModel.GetWindowLayout().Micro = new RenderWatch.Core.Models.WindowPlacement
             {
                 Left = Left, Top = Top, Width = ActualWidth, Height = ActualHeight
             };
-            _ = _viewModel.SaveAppearanceLayoutsAsync();
+            _ = _viewModel.SaveWindowLayoutAsync();
         }
         catch (InvalidOperationException) { }
     }

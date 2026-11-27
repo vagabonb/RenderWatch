@@ -41,7 +41,6 @@ public partial class MainWindow : Window
     private System.Drawing.Icon? _hIconBig;
     private System.Drawing.Icon? _hIconSmall;
 
-    private string _activeAppearance;
     private bool _closingAfterSave;
     private bool _savingBeforeClose;
     private const double CompactWindowWidth = 350;
@@ -52,8 +51,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = _viewModel;
-        _activeAppearance = _viewModel.Appearance;
-        Loaded += (_, _) => RestoreAppearanceLayout();
+        Loaded += (_, _) => RestoreWindowLayout();
         _viewModel.Constructor.PropertyChanged += (_, e) =>
         {
             if (_viewModel.IsCompactMode &&
@@ -68,14 +66,7 @@ public partial class MainWindow : Window
         {
             if (e.PropertyName == nameof(MainViewModel.AreSettingsLoaded))
             {
-                _activeAppearance = _viewModel.Appearance;
-                RestoreAppearanceLayout();
-            }
-            else if (e.PropertyName == nameof(MainViewModel.Appearance) && _activeAppearance != _viewModel.Appearance)
-            {
-                StoreAppearanceLayout(_activeAppearance, _viewModel.IsCompactMode);
-                _activeAppearance = _viewModel.Appearance;
-                RestoreAppearanceLayout();
+                RestoreWindowLayout();
             }
             else if (e.PropertyName == nameof(MainViewModel.IsCompactMode))
             {
@@ -235,9 +226,9 @@ public partial class MainWindow : Window
         };
     }
 
-    private void StoreAppearanceLayout(string appearance, bool compact)
+    private void StoreWindowLayout(bool compact)
     {
-        var layout = _viewModel.GetAppearanceLayout(appearance);
+        var layout = _viewModel.GetWindowLayout();
         if (compact)
         {
             layout.Compact = CapturePlacement();
@@ -249,9 +240,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RestoreAppearanceLayout()
+    private void RestoreWindowLayout()
     {
-        var layout = _viewModel.GetAppearanceLayout(_viewModel.Appearance);
+        var layout = _viewModel.GetWindowLayout();
         var compact = _viewModel.IsCompactMode;
         var placement = compact ? layout.Compact : layout.Main;
         var chrome = System.Windows.Shell.WindowChrome.GetWindowChrome(this);
@@ -293,9 +284,9 @@ public partial class MainWindow : Window
 
     private void ApplyCompactMode(bool compact)
     {
-        StoreAppearanceLayout(_activeAppearance, !compact);
-        RestoreAppearanceLayout();
-        _ = _viewModel.SaveAppearanceLayoutsAsync();
+        StoreWindowLayout(!compact);
+        RestoreWindowLayout();
+        _ = _viewModel.SaveWindowLayoutAsync();
     }
 
     protected override async void OnClosing(CancelEventArgs e)
@@ -306,10 +297,10 @@ public partial class MainWindow : Window
         if (_savingBeforeClose) return;
         _savingBeforeClose = true;
 
-        StoreAppearanceLayout(_activeAppearance, _viewModel.IsCompactMode);
+        StoreWindowLayout(_viewModel.IsCompactMode);
         try
         {
-            await _viewModel.SaveAppearanceLayoutsAsync();
+            await _viewModel.SaveWindowLayoutAsync();
         }
         catch (Exception exception)
         {
@@ -321,6 +312,7 @@ public partial class MainWindow : Window
 
     private MicroWindow? _microWindow;
     private TaskbarStripWindow? _taskbarStripWindow;
+    private NotchWindow? _notchWindow;
 
     private void OnMinimizeToTrayClicked(object sender, RoutedEventArgs e)
     {
@@ -337,9 +329,22 @@ public partial class MainWindow : Window
         MinimizeToTaskbarStrip();
     }
 
+    private void OnNotchModeClicked(object sender, RoutedEventArgs e) => MinimizeToNotch();
+
+    public void MinimizeToNotch()
+    {
+        _microWindow?.Hide();
+        _taskbarStripWindow?.Stop();
+        _viewModel.IsMinimized = true;
+        Hide();
+        _notchWindow ??= new NotchWindow(_viewModel, RestoreFromTray, HideToTray);
+        _notchWindow.ShowOnMonitorOf(this);
+    }
+
     public void MinimizeToMicroWindow()
     {
-        _taskbarStripWindow?.Hide();
+        _notchWindow?.Stop();
+        _taskbarStripWindow?.Stop();
         Hide();
         if (_microWindow == null)
         {
@@ -375,6 +380,7 @@ public partial class MainWindow : Window
 
     public void MinimizeToTaskbarStrip()
     {
+        _notchWindow?.Stop();
         _microWindow?.Hide();
         Hide();
         if (_taskbarStripWindow == null)
@@ -391,15 +397,13 @@ public partial class MainWindow : Window
             );
         }
 
-        _taskbarStripWindow.PositionOnTaskbar();
-        _taskbarStripWindow.Show();
-        _taskbarStripWindow.EnsureTopmost();
+        _taskbarStripWindow.Start();
         RenderWatch.App.Utils.MemoryOptimizer.Trim();
     }
 
     public void RestoreFromTaskbarStrip()
     {
-        _taskbarStripWindow?.Hide();
+        _taskbarStripWindow?.Stop();
         _viewModel.IsMinimized = false;
         Show();
         WindowState = WindowState.Normal;
@@ -429,8 +433,9 @@ public partial class MainWindow : Window
 
     public void HideToTray()
     {
+        _notchWindow?.Stop();
         _microWindow?.Hide();
-        _taskbarStripWindow?.Hide();
+        _taskbarStripWindow?.Stop();
         _viewModel.IsMinimized = true;
         Hide();
         RenderWatch.App.Utils.MemoryOptimizer.Trim();
@@ -439,8 +444,9 @@ public partial class MainWindow : Window
 
     public void RestoreFromTray()
     {
+        _notchWindow?.Stop();
         _microWindow?.Hide();
-        _taskbarStripWindow?.Hide();
+        _taskbarStripWindow?.Stop();
         _viewModel.IsMinimized = false;
         Show();
         WindowState = WindowState.Normal;
@@ -451,6 +457,7 @@ public partial class MainWindow : Window
     {
         try
         {
+            _notchWindow?.Close();
             _microWindow?.Close();
             _taskbarStripWindow?.Close();
         }

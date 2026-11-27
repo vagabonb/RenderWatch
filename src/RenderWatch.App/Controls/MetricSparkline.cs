@@ -70,36 +70,53 @@ public class MetricSparkline : FrameworkElement
         base.OnRender(dc);
         var points = Points?.ToArray();
         if (points == null || points.Length < 2 || ActualWidth < 2 || ActualHeight < 2) return;
-        var maximum = MaxValue > 0 ? MaxValue : Math.Max(1, points.Max() * 1.12);
+        var maximum = MaxValue > 0 ? MaxValue : Math.Max(1, points.Where(double.IsFinite).DefaultIfEmpty(0).Max() * 1.12);
         var bottom = ActualHeight - 1;
         var plotHeight = ActualHeight - 2;
         var plotWidth = ActualWidth - 2;
         var startIndex = Capacity > 0 ? Math.Max(0, points.Length - Capacity) : 0;
         var intervals = Capacity > 0 ? Capacity - 1 : points.Length - 1;
-        var firstX = 1 + plotWidth - (points.Length - 1 - startIndex) * plotWidth / intervals;
         var line = new StreamGeometry();
         var fill = new StreamGeometry();
         using (var lineContext = line.Open())
         using (var fillContext = fill.Open())
         {
-            var first = new Point(firstX, bottom - Math.Clamp(points[startIndex] / maximum, 0, 1) * plotHeight);
-            lineContext.BeginFigure(first, false, false);
-            fillContext.BeginFigure(new Point(firstX, bottom), true, true);
-            fillContext.LineTo(first, false, false);
-
-            for (int i = startIndex + 1; i < points.Length; i++)
+            int i = startIndex;
+            while (i < points.Length)
             {
-                var point = new Point(1 + plotWidth - (points.Length - 1 - i) * plotWidth / intervals,
-                    bottom - Math.Clamp(points[i] / maximum, 0, 1) * plotHeight);
-                lineContext.LineTo(point, true, false);
-                fillContext.LineTo(point, false, false);
-            }
+                if (!double.IsFinite(points[i]))
+                {
+                    i++;
+                    continue;
+                }
 
-            fillContext.LineTo(new Point(ActualWidth - 1, bottom), false, false);
+                var first = Project(i++);
+                if (i == points.Length || !double.IsFinite(points[i]))
+                {
+                    dc.DrawEllipse(LinePen.Brush, null, first, 1, 1);
+                    continue;
+                }
+
+                lineContext.BeginFigure(first, false, false);
+                fillContext.BeginFigure(new Point(first.X, bottom), true, true);
+                fillContext.LineTo(first, false, false);
+
+                var last = first;
+                while (i < points.Length && double.IsFinite(points[i]))
+                {
+                    last = Project(i++);
+                    lineContext.LineTo(last, true, false);
+                    fillContext.LineTo(last, false, false);
+                }
+                fillContext.LineTo(new Point(last.X, bottom), false, false);
+            }
         }
         line.Freeze();
         fill.Freeze();
         dc.DrawGeometry(FillBrush, null, fill);
         dc.DrawGeometry(null, LinePen, line);
+
+        Point Project(int index) => new(ActualWidth - 1 - (points.Length - 1 - index) * plotWidth / intervals,
+            bottom - Math.Clamp(points[index] / maximum, 0, 1) * plotHeight);
     }
 }
