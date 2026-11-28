@@ -534,7 +534,7 @@ public class MainViewModel : ViewModelBase, IDisposable
         Constructor.Initialize(_settings, _settingsManager);
         IsTaskbarStripLightMode = _settings.IsTaskbarStripLightMode;
 
-        // Synchronize autostart status with actual OS Task Scheduler / Registry state
+        // Preserve autostart registered by an earlier version.
         bool isOsAutostart = StartupManager.IsAutostartEnabled();
         _startWithWindows = _settings.StartWithWindows || isOsAutostart;
         if (_startWithWindows != _settings.StartWithWindows)
@@ -543,6 +543,7 @@ public class MainViewModel : ViewModelBase, IDisposable
             _ = _settingsManager.SaveSettingsAsync(_settings);
         }
         if (_startWithWindows) _ = UpdateAutostartAsync(true);
+        else StartupManager.RemoveLegacyRunEntry();
         Dashboard.StartWithWindows = _startWithWindows;
         Settings.StartWithWindows = _startWithWindows;
 

@@ -15,7 +15,6 @@ public static class StartupManager
 {
     public const string TaskName = "RenderWatch";
     private const string RegistryRunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string AppName = "RenderWatch";
 
     public static string GetExecutablePath()
     {
@@ -32,19 +31,9 @@ public static class StartupManager
     }
 
     /// <summary>
-    /// Checks whether autostart is currently enabled via Task Scheduler or Registry.
+    /// Checks whether autostart is currently registered with Task Scheduler.
     /// </summary>
-    public static bool IsAutostartEnabled()
-    {
-        // 1. Check Task Scheduler
-        if (IsTaskScheduled())
-        {
-            return true;
-        }
-
-        // A Run key cannot launch an application that requires elevation at logon.
-        return false;
-    }
+    public static bool IsAutostartEnabled() => IsTaskScheduled();
 
     /// <summary>
     /// Enables or disables Windows autostart.
@@ -55,12 +44,12 @@ public static class StartupManager
         {
             bool scheduled = IsTaskScheduled();
             bool removed = !scheduled || DeleteScheduledTask();
-            SetRegistryRun(false, GetExecutablePath());
+            RemoveLegacyRunEntry();
             return removed;
         }
 
         bool created = CreateScheduledTask(GetExecutablePath());
-        if (created) SetRegistryRun(false, GetExecutablePath());
+        if (created || IsTaskScheduled()) RemoveLegacyRunEntry();
         return created;
     }
 
@@ -176,34 +165,12 @@ public static class StartupManager
         }
     }
 
-    private static bool IsRegistryRunSet()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(RegistryRunKey, false);
-            return key?.GetValue(AppName) != null;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static void SetRegistryRun(bool enable, string exePath)
+    internal static void RemoveLegacyRunEntry()
     {
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(RegistryRunKey, true);
-            if (key == null) return;
-
-            if (enable)
-            {
-                key.SetValue(AppName, $"\"{exePath}\" --taskbar");
-            }
-            else
-            {
-                key.DeleteValue(AppName, false);
-            }
+            key?.DeleteValue(TaskName, throwOnMissingValue: false);
         }
         catch
         {

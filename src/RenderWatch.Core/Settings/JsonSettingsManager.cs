@@ -1,8 +1,5 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Win32;
 using RenderWatch.Core.Models;
 
 namespace RenderWatch.Core.Settings;
@@ -75,7 +72,6 @@ public class JsonSettingsManager : ISettingsManager
         {
             _cachedSettings = settings;
             await SaveInternalAsync(settings);
-            ApplyStartupRegistry(settings.StartWithWindows);
         }
         finally
         {
@@ -102,39 +98,6 @@ public class JsonSettingsManager : ISettingsManager
             {
                 settings.Profiles.Insert(0, def);
             }
-        }
-    }
-
-    public void ApplyStartupRegistry(bool enable)
-    {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
-
-        try
-        {
-            const string runKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-            using var key = Registry.CurrentUser.OpenSubKey(runKeyPath, writable: true);
-            if (key == null) return;
-
-            const string appName = "RenderWatch";
-            if (enable)
-            {
-                string? exePath = Process.GetCurrentProcess().MainModule?.FileName;
-                if (!string.IsNullOrEmpty(exePath))
-                {
-                    key.SetValue(appName, $"\"{exePath}\" --minimized");
-                }
-            }
-            else
-            {
-                if (key.GetValue(appName) != null)
-                {
-                    key.DeleteValue(appName, throwOnMissingValue: false);
-                }
-            }
-        }
-        catch
-        {
-            // Non-critical registry access warning
         }
     }
 }
