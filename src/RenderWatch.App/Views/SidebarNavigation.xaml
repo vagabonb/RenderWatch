@@ -72,41 +72,37 @@
     </UserControl.Resources>
     <Border>
         <DockPanel LastChildFill="False">
-            <Grid DockPanel.Dock="Top" Height="38">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Image Source="/PCWatch;component/Assets/app.png" Width="24" Height="24"
-                       HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
-                    <Image.Style>
-                        <Style TargetType="Image">
-                            <Setter Property="Margin" Value="22,0,0,0"/>
+            <Grid DockPanel.Dock="Top">
+                <Border Margin="0,38,0,0">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Height" Value="{StaticResource BlackOverviewHeaderHeight}"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
-                                    <Setter Property="Margin" Value="16,0,0,0"/>
+                                <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                                    <Setter Property="Height" Value="{StaticResource GraphiteOverviewHeaderHeight}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Image.Style>
-                </Image>
-                <TextBlock Grid.Column="1" Text="PC Watch" VerticalAlignment="Center" Margin="10,0,0,0"
-                           Foreground="{DynamicResource BrushTextPrimary}" FontSize="13"
-                           Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                    </Border.Style>
+                </Border>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Left">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Margin" Value="22,22,0,0"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                    <Setter Property="Margin" Value="16,16,0,0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Image Source="/PCWatch;component/Assets/app.png" Width="24" Height="24"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="PC Watch" VerticalAlignment="Center" Margin="10,0,0,0"
+                               Foreground="{DynamicResource BrushTextPrimary}" FontSize="13"
+                               Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
+                </StackPanel>
             </Grid>
-
-            <Border DockPanel.Dock="Top">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Height" Value="{StaticResource BlackOverviewHeaderHeight}"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
-                                <Setter Property="Height" Value="{StaticResource GraphiteOverviewHeaderHeight}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-            </Border>
 
             <Button DockPanel.Dock="Bottom" Margin="0,0,0,16" Command="{Binding ToggleSidebarCommand}">
                 <Button.Style>

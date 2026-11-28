@@ -181,7 +181,7 @@
             </Grid>
 
             <Border Height="1" Background="{StaticResource Hairline}" Margin="0,0,0,17"/>
-            <views:BatteryCard DataContext="{Binding Battery}" Background="#15FFFFFF" Margin="0,0,0,20"/>
+            <views:BatteryCard DataContext="{Binding Battery}" Background="Transparent" IsMonochrome="True" Margin="0,0,0,20"/>
             <DockPanel Margin="0,0,0,12">
                 <TextBlock Text="ОХЛАЖДЕНИЕ" Style="{StaticResource SectionLabel}" Margin="0"/>
             </DockPanel>

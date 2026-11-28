@@ -30,9 +30,9 @@
     <AssemblyTitle>PC Watch</AssemblyTitle>
     <Description>Мониторинг ПК и ноутбука в реальном времени.</Description>
     <Copyright>Copyright © 2026 PC Watch</Copyright>
-    <Version>2.1.1</Version>
-    <AssemblyVersion>2.1.1.0</AssemblyVersion>
-    <FileVersion>2.1.1.0</FileVersion>
+    <Version>2.2.0</Version>
+    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <FileVersion>2.2.0.0</FileVersion>
 
     <!-- Optimized Memory: Workstation GC prevents 32 heaps on 32-thread CPUs, releases VM back to OS -->
     <ServerGarbageCollection>false</ServerGarbageCollection>
