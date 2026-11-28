@@ -8,7 +8,7 @@
 
 Нагрузка, температура, память, диски и сеть в одном аккуратном окне.
 
-[Скачать для Windows](https://github.com/vagabonb/RenderWatch/releases/latest) · [Все релизы](https://github.com/vagabonb/RenderWatch/releases)
+[Скачать для Windows](https://github.com/vagabonb/PCWatch/releases/latest) · [Все релизы](https://github.com/vagabonb/PCWatch/releases)
 
 </div>
 
@@ -53,7 +53,7 @@
 
 ## Запуск
 
-1. Скачай **PCWatch.exe** со [страницы последнего релиза](https://github.com/vagabonb/RenderWatch/releases/latest).
+1. Скачай **PCWatch.exe** со [страницы релизов](https://github.com/vagabonb/PCWatch/releases/latest). В выпусках до 2.1.1 файл называется **RenderWatch.exe**.
 2. Запусти файл на Windows 10 или 11 x64. Отдельно устанавливать .NET не нужно.
 3. При желании настрой автозапуск и выбери показатели в конструкторе.
 

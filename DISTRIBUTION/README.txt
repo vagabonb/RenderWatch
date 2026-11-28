@@ -7,4 +7,4 @@ PC Watch — портативный мониторинг ПК и ноутбук�
 остаться RenderWatch.exe. Настройки и история сохраняются.
 
 Документация и релизы
-https://github.com/vagabonb/RenderWatch
+https://github.com/vagabonb/PCWatch
