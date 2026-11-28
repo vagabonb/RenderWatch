@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows;
 using RenderWatch.App.Services;
 using RenderWatch.App.Tray;
@@ -31,6 +30,7 @@ public partial class App : Application
 
     private const int SW_RESTORE = 9;
 
+    // Keep the existing settings, history and Windows taskbar grouping across the rename.
     internal static string DataDirectory { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RenderWatch");
 
@@ -48,7 +48,7 @@ public partial class App : Application
                 File.AppendAllText(Path.Combine(DataDirectory, "error.log"), $"[{DateTime.Now}] Unhandled Exception: {e.Exception}\n");
             }
             catch { }
-            MessageBox.Show($"Произошла ошибка:\n{e.Exception.Message}\n\nПодробности записаны в error.log", "RENDER WATCH Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Произошла ошибка:\n{e.Exception.Message}\n\nПодробности записаны в error.log", "PC Watch Error", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         };
 
@@ -68,47 +68,7 @@ public partial class App : Application
 
         try
         {
-            // Explicit Application ID ensures Windows Taskbar associates the window strictly with this exact version
-            // and purges any stale/cached icons from earlier builds on laptops or other systems
             SetCurrentProcessExplicitAppUserModelID("RenderWatch");
-        }
-        catch { }
-
-        // Ensure Single Instance: if an active instance with a visible window exists, focus it.
-        // If stale ghost processes exist without a window, terminate them cleanly.
-        try
-        {
-            var currentProc = Process.GetCurrentProcess();
-            var existingProcs = Process.GetProcessesByName("RenderWatch")
-                .Where(p => p.Id != currentProc.Id)
-                .ToList();
-
-            if (existingProcs.Count > 0)
-            {
-                IntPtr activeHwnd = IntPtr.Zero;
-                foreach (var p in existingProcs)
-                {
-                    if (p.MainWindowHandle != IntPtr.Zero)
-                    {
-                        activeHwnd = p.MainWindowHandle;
-                        break;
-                    }
-                }
-
-                if (activeHwnd != IntPtr.Zero)
-                {
-                    ShowWindow(activeHwnd, SW_RESTORE);
-                    SetForegroundWindow(activeHwnd);
-                    Shutdown();
-                    return;
-                }
-
-                // If existing instances have no window (stale or hung), terminate them to let the new instance take over
-                foreach (var p in existingProcs)
-                {
-                    try { p.Kill(); } catch { }
-                }
-            }
         }
         catch { }
 
@@ -200,9 +160,52 @@ public partial class App : Application
                 File.AppendAllText(Path.Combine(DataDirectory, "error.log"), $"[{DateTime.Now}] OnStartup Exception: {ex}\n");
             }
             catch { }
-            MessageBox.Show($"Ошибка инициализации RENDER WATCH:\n{ex.Message}\n\nПодробности в error.log", "RENDER WATCH", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Ошибка инициализации PC Watch:\n{ex.Message}\n\nПодробности в error.log", "PC Watch", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown();
         }
+    }
+
+    internal void ActivateFromSecondLaunch()
+    {
+        if (_mainWindow is { IsVisible: true } window)
+        {
+            if (window.WindowState == WindowState.Minimized) window.WindowState = WindowState.Normal;
+            window.Activate();
+        }
+        else
+        {
+            _mainWindow?.RestoreFromTray();
+        }
+    }
+
+    internal static bool TryActivateLegacyInstance()
+    {
+        using var current = Process.GetCurrentProcess();
+        bool found = false;
+        foreach (var candidate in Process.GetProcessesByName("RenderWatch"))
+        {
+            using (candidate)
+            {
+                try
+                {
+                    if (found || candidate.Id == current.Id || candidate.SessionId != current.SessionId)
+                        continue;
+                    if (!string.Equals(candidate.MainModule?.FileVersionInfo.ProductName, "RENDER WATCH", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    found = true;
+                    var handle = candidate.MainWindowHandle;
+                    if (handle != IntPtr.Zero)
+                    {
+                        ShowWindow(handle, SW_RESTORE);
+                        SetForegroundWindow(handle);
+                    }
+                }
+                catch (InvalidOperationException) { }
+                catch (System.ComponentModel.Win32Exception) { }
+            }
+        }
+        return found;
     }
 
     protected override void OnExit(ExitEventArgs e)

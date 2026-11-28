@@ -6,7 +6,7 @@ using Microsoft.Win32;
 namespace RenderWatch.App.Services;
 
 /// <summary>
-/// Manages Windows startup registration for RENDER WATCH.
+/// Manages Windows startup registration for PC Watch.
 /// Utilizes Windows Task Scheduler with Highest Privileges (/RL HIGHEST)
 /// so that the application starts elevated upon user logon without triggering a UAC prompt.
 /// Allows startup while the computer is running on battery power.
@@ -25,7 +25,7 @@ public static class StartupManager
         }
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
         {
-            path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RenderWatch.exe");
+            path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PCWatch.exe");
         }
         return Path.GetFullPath(path);
     }

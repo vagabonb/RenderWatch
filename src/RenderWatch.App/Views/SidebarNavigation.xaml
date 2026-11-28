@@ -77,7 +77,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Image Source="/RenderWatch;component/Assets/app.png" Width="24" Height="24"
+                <Image Source="/PCWatch;component/Assets/app.png" Width="24" Height="24"
                        HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
                     <Image.Style>
                         <Style TargetType="Image">
@@ -90,7 +90,7 @@
                         </Style>
                     </Image.Style>
                 </Image>
-                <TextBlock Grid.Column="1" Text="Render Watch" VerticalAlignment="Center" Margin="10,0,0,0"
+                <TextBlock Grid.Column="1" Text="PC Watch" VerticalAlignment="Center" Margin="10,0,0,0"
                            Foreground="{DynamicResource BrushTextPrimary}" FontSize="13"
                            Visibility="{Binding IsSidebarCollapsed, Converter={StaticResource InverseBoolToVis}}"/>
             </Grid>

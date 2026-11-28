@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="PC Watch">
+  <g fill="#fff">
+    <path d="M 20.161071916 224 A 238 238 0 0 1 491.838928084 224 H 443.285877738 A 190 190 0 0 0 68.714122262 224 Z"/>
+    <path d="M 20.161071916 224 A 238 238 0 0 1 491.838928084 224 H 443.285877738 A 190 190 0 0 0 68.714122262 224 Z" transform="translate(0 512) scale(1 -1)"/>
+    <circle cx="256" cy="256" r="46"/>
+  </g>
+</svg>

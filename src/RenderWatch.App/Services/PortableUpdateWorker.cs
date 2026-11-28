@@ -108,7 +108,7 @@ internal static class PortableUpdateWorker
             if (!string.Equals(parent.MainModule?.FileName, target, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("The target is not the executable that requested the update.");
             if (!parent.WaitForExit(60_000))
-                throw new TimeoutException("Render Watch did not finish closing within one minute.");
+                throw new TimeoutException("PC Watch did not finish closing within one minute.");
         }
     }
 

@@ -90,7 +90,7 @@ public partial class MainWindow : Window
             var hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd != IntPtr.Zero)
             {
-                var uri = new Uri("pack://application:,,,/RenderWatch;component/Assets/app.ico", UriKind.Absolute);
+                var uri = new Uri("pack://application:,,,/PCWatch;component/Assets/app.ico", UriKind.Absolute);
                 var streamInfo = Application.GetResourceStream(uri) ?? Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute));
                 if (streamInfo != null)
                 {
@@ -439,7 +439,7 @@ public partial class MainWindow : Window
         _viewModel.IsMinimized = true;
         Hide();
         RenderWatch.App.Utils.MemoryOptimizer.Trim();
-        _trayManager?.ShowNotification("RENDER WATCH", "Приложение свёрнуто в системный трей и продолжает работу в фоне.");
+        _trayManager?.ShowNotification("PC Watch", "Приложение свёрнуто в системный трей и продолжает работу в фоне.");
     }
 
     public void RestoreFromTray()

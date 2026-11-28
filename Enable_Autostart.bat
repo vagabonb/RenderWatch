@@ -1,16 +1,18 @@
 @echo off
 chcp 65001 >nul
-title RENDER WATCH - Р’РєР»СЋС‡РµРЅРёРµ Р°РІС‚РѕР·Р°РїСѓСЃРєР°
+set "WATCH_EXE=%~dp0PCWatch.exe"
+if not exist "%WATCH_EXE%" set "WATCH_EXE=%~dp0RenderWatch.exe"
+title PC Watch - Включение автозапуска
 echo ================================================================
-echo   RENDER WATCH: Р”РѕР±Р°РІР»РµРЅРёРµ РІ Р°РІС‚РѕР·Р°РїСѓСЃРє Windows
+echo   PC Watch: Добавление в автозапуск Windows
 echo ================================================================
 echo.
-echo Р РµРіРёСЃС‚СЂР°С†РёСЏ Р·Р°РґР°С‡Рё РІ РџР»Р°РЅРёСЂРѕРІС‰РёРєРµ Windows СЃ РЅР°РёРІС‹СЃС€РёРјРё РїСЂР°РІР°РјРё...
-schtasks /create /tn "RenderWatch" /tr "\"%~dp0RenderWatch.exe\" --taskbar" /sc onlogon /rl highest /f
+echo Регистрация задачи в Планировщике Windows с наивысшими правами...
+schtasks /create /tn "RenderWatch" /tr "\"%WATCH_EXE%\" --taskbar" /sc onlogon /rl highest /f
 if errorlevel 1 exit /b 1
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "RenderWatch" /f >nul 2>&1
 echo.
-echo [OK] RENDER WATCH СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅ РІ Р°РІС‚РѕР·Р°РїСѓСЃРє!
-echo      РџСЂРёР»РѕР¶РµРЅРёРµ Р±СѓРґРµС‚ Р·Р°РїСѓСЃРєР°С‚СЊСЃСЏ РЅР° РїР°РЅРµР»СЊ Р·Р°РґР°С‡ РїСЂРё РІС…РѕРґРµ РІ СЃРёСЃС‚РµРјСѓ.
+echo [OK] PC Watch успешно добавлен в автозапуск!
+echo      Приложение будет запускаться на панель задач при входе в систему.
 echo.
 timeout /t 3 >nul

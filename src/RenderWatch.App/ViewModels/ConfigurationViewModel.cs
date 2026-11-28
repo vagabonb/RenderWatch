@@ -155,7 +155,7 @@ public class ConfigurationViewModel : ViewModelBase, IDisposable
         {
             var sb = new StringBuilder();
             sb.AppendLine("==================================================");
-            sb.AppendLine("RENDER WATCH — КОНФИГУРАЦИЯ СИСТЕМЫ");
+            sb.AppendLine("PC Watch — КОНФИГУРАЦИЯ СИСТЕМЫ");
             sb.AppendLine("==================================================");
             sb.AppendLine();
             sb.AppendLine("ПРОЦЕССОР (CPU):");

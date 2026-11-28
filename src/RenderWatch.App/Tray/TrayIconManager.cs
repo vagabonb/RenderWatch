@@ -85,7 +85,7 @@ public class TrayIconManager : IDisposable
     {
         try
         {
-            var uri = new Uri("pack://application:,,,/RenderWatch;component/Assets/app.ico", UriKind.Absolute);
+            var uri = new Uri("pack://application:,,,/PCWatch;component/Assets/app.ico", UriKind.Absolute);
             var streamInfo = Application.GetResourceStream(uri) ?? Application.GetResourceStream(new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute));
             if (streamInfo != null)
             {
@@ -152,7 +152,7 @@ public class TrayIconManager : IDisposable
 
         var titleItem = new MenuItem
         {
-            Header = "RENDER WATCH (Открыть)",
+            Header = "PC Watch (Открыть)",
             FontWeight = FontWeights.Bold,
             Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F5F2EA"))
         };

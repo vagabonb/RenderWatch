@@ -7,7 +7,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/RenderWatch;component/Styles/BlackTheme.xaml"/>
+                <ResourceDictionary Source="/PCWatch;component/Styles/BlackTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
 

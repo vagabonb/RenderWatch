@@ -4,7 +4,7 @@
         xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
         xmlns:models="clr-namespace:RenderWatch.Core.Models;assembly=RenderWatch.Core"
         xmlns:views="clr-namespace:RenderWatch.App.Views"
-        Title="Render Watch · Чёлка" WindowStyle="None" ResizeMode="NoResize"
+        Title="PC Watch · Чёлка" Icon="/PCWatch;component/Assets/app.ico" WindowStyle="None" ResizeMode="NoResize"
         AllowsTransparency="True" Background="Transparent" Topmost="True" ShowInTaskbar="False"
         ShowActivated="False" SizeToContent="Height" Width="34" WindowStartupLocation="Manual"
         FontFamily="Segoe UI" FontSize="12" Foreground="#F5F5F5" UseLayoutRounding="True">
@@ -156,7 +156,7 @@
                         </Style>
                     </ContextMenu.Style>
                     <Separator/>
-                    <MenuItem Header="Открыть Render Watch" Click="OnOpenMain"/>
+                    <MenuItem Header="Открыть PC Watch" Click="OnOpenMain"/>
                     <MenuItem Header="Свернуть в трей" Click="OnHideToTray"/>
                 </ContextMenu>
             </Button.ContextMenu>
@@ -334,7 +334,7 @@
                                 <ToggleButton x:Name="JournalToggle" DockPanel.Dock="Left" Style="{StaticResource JournalAction}"
                                               Content="Журнал пиков" AutomationProperties.Name="Показать журнал пиков"/>
                                 <Button DockPanel.Dock="Right" Click="OnOpenMain" Style="{StaticResource OverviewAction}"
-                                        Content="Открыть ↗" AutomationProperties.Name="Открыть Render Watch"/>
+                                        Content="Открыть ↗" AutomationProperties.Name="Открыть PC Watch"/>
                             </DockPanel>
                         </Border>
                         <Grid Margin="5,6,5,0" Visibility="{Binding IsChecked, ElementName=JournalToggle, Converter={StaticResource BoolToVis}}">

@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
-        Title="RENDER WATCH · Трей"
+        Title="PC Watch · Трей" Icon="/PCWatch;component/Assets/app.ico"
         Width="334" Height="234"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -16,7 +16,7 @@
             <Grid.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/RenderWatch;component/Styles/BlackTheme.xaml"/>
+                <ResourceDictionary Source="/PCWatch;component/Styles/BlackTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
 
@@ -42,8 +42,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="/RenderWatch;component/Assets/app.png" Width="13" Height="13" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Text="RENDER WATCH" Foreground="#A0A0A0" FontWeight="Bold" FontSize="11" FontFamily="{StaticResource FontDisplay}"/>
+                    <Image Source="/PCWatch;component/Assets/app.png" Width="13" Height="13" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="PC Watch" Foreground="#A0A0A0" FontWeight="Bold" FontSize="11" FontFamily="{StaticResource FontDisplay}"/>
                 </StackPanel>
 
                 <!-- Status pill -->
@@ -183,8 +183,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="/RenderWatch;component/Assets/app.png" Width="13" Height="13" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Text="Render Watch" Foreground="#C4C1BB" FontWeight="Bold" FontSize="11" FontFamily="{StaticResource FontDisplay}"/>
+                    <Image Source="/PCWatch;component/Assets/app.png" Width="13" Height="13" Margin="0,0,6,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock Text="PC Watch" Foreground="#C4C1BB" FontWeight="Bold" FontSize="11" FontFamily="{StaticResource FontDisplay}"/>
                 </StackPanel>
 
                 <!-- Status pill -->

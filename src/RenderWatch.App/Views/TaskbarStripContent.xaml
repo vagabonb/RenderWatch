@@ -13,7 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/RenderWatch;component/Styles/BlackSurfaces.xaml"/>
+                <ResourceDictionary Source="/PCWatch;component/Styles/BlackSurfaces.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         <Style x:Key="TaskbarFlyoutSurface" TargetType="Border">
             <Setter Property="Background" Value="{StaticResource GraphiteBackdrop}"/>

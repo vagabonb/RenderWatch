@@ -5,7 +5,7 @@
         xmlns:black="clr-namespace:RenderWatch.App.Views.Black"
         xmlns:vm="clr-namespace:RenderWatch.App.ViewModels"
         xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
-        Title="RENDER WATCH" Icon="/RenderWatch;component/Assets/app.ico"
+        Title="PC Watch" Icon="/PCWatch;component/Assets/app.ico"
         Height="780" Width="1180"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
@@ -124,7 +124,7 @@
             <Grid.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/RenderWatch;component/Styles/BlackTheme.xaml"/>
+                <ResourceDictionary Source="/PCWatch;component/Styles/BlackTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
 
@@ -399,7 +399,7 @@
                     <!-- Left: Logo & Title (Draggable) -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center"
                                 Background="Transparent" MouseLeftButtonDown="OnCompactHeaderMouseDown" MouseMove="OnCompactHeaderMouseMove" Cursor="SizeAll">
-                        <TextBlock Text="RENDER WATCH" Foreground="#A0A0A0" FontWeight="Bold" FontSize="10" FontFamily="{StaticResource FontDisplay}"/>
+                        <TextBlock Text="PC Watch" Foreground="#A0A0A0" FontWeight="Bold" FontSize="10" FontFamily="{StaticResource FontDisplay}"/>
                     </StackPanel>
 
                     <!-- Center: Drag Area -->

@@ -179,7 +179,7 @@ public class HistoryViewModel : ViewModelBase
         var dialog = new SaveFileDialog
         {
             Filter = "CSV файлы (*.csv)|*.csv",
-            FileName = $"render_watch_history_{DateTime.Now:yyyyMMdd_HHmm}.csv"
+            FileName = $"pc_watch_history_{DateTime.Now:yyyyMMdd_HHmm}.csv"
         };
 
         if (dialog.ShowDialog() == true)

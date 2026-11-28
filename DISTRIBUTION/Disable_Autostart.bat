@@ -1,16 +1,16 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
-title RENDER WATCH - РћС‚РєР»СЋС‡РµРЅРёРµ Р°РІС‚РѕР·Р°РїСѓСЃРєР°
+title PC Watch - Отключение автозапуска
 echo ================================================================
-echo   RENDER WATCH: РЈРґР°Р»РµРЅРёРµ РёР· Р°РІС‚РѕР·Р°РїСѓСЃРєР° Windows
+echo   PC Watch: Удаление из автозапуска Windows
 echo ================================================================
 echo.
-echo РЈРґР°Р»РµРЅРёРµ Р·Р°РґР°С‡Рё РёР· РџР»Р°РЅРёСЂРѕРІС‰РёРєР° Windows...
+echo Удаление задачи из Планировщика Windows...
 schtasks /delete /tn "RenderWatch" /f >nul 2>&1
 echo.
-echo РЈРґР°Р»РµРЅРёРµ Р·Р°РїРёСЃРё РёР· СЂРµРµСЃС‚СЂР° Р°РІС‚РѕР·Р°РїСѓСЃРєР°...
+echo Удаление записи из реестра автозапуска...
 reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "RenderWatch" /f >nul 2>&1
 echo.
-echo [OK] RENDER WATCH СѓСЃРїРµС€РЅРѕ СѓРґР°Р»РµРЅ РёР· Р°РІС‚РѕР·Р°РїСѓСЃРєР°.
+echo [OK] PC Watch успешно удален из автозапуска.
 echo.
 timeout /t 3 >nul

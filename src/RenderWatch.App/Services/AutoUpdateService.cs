@@ -10,8 +10,9 @@ namespace RenderWatch.App.Services;
 
 internal static class AutoUpdateService
 {
-    private const string Repository = "vagabonb/RenderWatch";
-    private const string AssetName = "RenderWatch.exe";
+    private const long RepositoryId = 1426008882;
+    private const string AssetName = "PCWatch.exe";
+    private const string LegacyAssetName = "RenderWatch.exe";
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromSeconds(30) };
     public static async Task<StableRelease?> CheckForUpdateAsync(CancellationToken cancellationToken)
     {
@@ -35,7 +36,7 @@ internal static class AutoUpdateService
 
     internal static async Task<StableRelease?> FindOfferAsync(HttpClient client, Version current, CancellationToken cancellationToken = default)
     {
-        using var request = Request(new Uri($"https://api.github.com/repos/{Repository}/releases?per_page=20"));
+        using var request = Request(new Uri($"https://api.github.com/repositories/{RepositoryId}/releases?per_page=20"));
         request.Headers.Accept.ParseAdd("application/vnd.github+json");
         using var response = await client.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -113,20 +114,26 @@ internal static class AutoUpdateService
             return null;
         var version = new Version(number.Major, number.Minor, number.Build, 0);
 
+        StableRelease? legacyOffer = null;
         foreach (var asset in release.GetProperty("assets").EnumerateArray())
         {
-            if (asset.GetProperty("name").GetString() != AssetName) continue;
+            var name = asset.GetProperty("name").GetString();
+            if (name is not (AssetName or LegacyAssetName)) continue;
             if (!asset.TryGetProperty("digest", out var digestProperty)) continue;
             var digest = digestProperty.GetString();
             if (digest == null || !digest.StartsWith("sha256:", StringComparison.Ordinal) ||
                 digest.Length != 71 || !digest[7..].All(Uri.IsHexDigit)) continue;
             if (!asset.GetProperty("size").TryGetInt64(out long size) || size <= 0) continue;
+            if (!asset.TryGetProperty("browser_download_url", out var downloadProperty) ||
+                !Uri.TryCreate(downloadProperty.GetString(), UriKind.Absolute, out var download) ||
+                download.Scheme != Uri.UriSchemeHttps || download.Host != "github.com") continue;
 
-            var download = new Uri($"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{AssetName}");
-            return new StableRelease(tag, download, new UpdatePackage(version, size, digest[7..]));
+            var offer = new StableRelease(tag, download, new UpdatePackage(version, size, digest[7..]));
+            if (name == AssetName) return offer;
+            legacyOffer = offer;
         }
 
-        return null;
+        return legacyOffer;
     }
 
     private static string CachePath(string target)
@@ -139,7 +146,7 @@ internal static class AutoUpdateService
     private static HttpRequestMessage Request(Uri uri)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.UserAgent.ParseAdd("RenderWatch/1.0");
+        request.Headers.UserAgent.ParseAdd("PCWatch/2");
         return request;
     }
 
