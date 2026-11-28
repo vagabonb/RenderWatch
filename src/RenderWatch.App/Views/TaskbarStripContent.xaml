@@ -566,6 +566,22 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
+            <Border Tag="PWR" ToolTip="{Binding Dashboard.SystemPowerHint}" Style="{StaticResource StripSegmentStyle}"
+                    Visibility="{Binding Constructor.ShowTaskbarPower, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ContentControl Content="{Binding Constructor.Taskbar.ByKey[PWR]}" Tag="{StaticResource IconPower}"
+                                    Style="{StaticResource TaskbarMetricLabel}" Focusable="False"/>
+                    <TextBlock Text="{Binding Dashboard.SystemPowerText}" Style="{StaticResource StripValueStyle}" MinWidth="48">
+                        <TextBlock.Foreground>
+                            <MultiBinding Converter="{StaticResource TaskbarInk}">
+                                <Binding Path="Constructor.Taskbar.ByKey[PWR].ValueBrush"/>
+                                <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                            </MultiBinding>
+                        </TextBlock.Foreground>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
             <TextBlock Text="Нет показателей" Style="{StaticResource StripLabelStyle}" VerticalAlignment="Center" Margin="6,0">
                 <TextBlock.Visibility>
                     <MultiBinding Converter="{StaticResource AllHiddenToVisibility}">
@@ -578,6 +594,7 @@
                         <Binding Path="Constructor.ShowTaskbarDisk"/>
                         <Binding Path="Constructor.ShowTaskbarNetwork"/>
                         <Binding Path="Constructor.ShowTaskbarUptime"/>
+                        <Binding Path="Constructor.ShowTaskbarPower"/>
                         <Binding Path="Visibility" ElementName="BatteryRuntimeSegment"/>
                     </MultiBinding>
                 </TextBlock.Visibility>

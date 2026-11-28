@@ -16,6 +16,8 @@ public class HardwareMetrics
     public bool NetworkOnline { get; set; }
     public bool NetworkAvailable { get; set; }
     public TimeSpan SystemUptime { get; set; }
+    public double? PlatformPowerWatts { get; set; }
+    public double? PowerSupplyOutputWatts { get; set; }
 
 
 
@@ -26,12 +28,14 @@ public class HardwareMetrics
     public bool IsElevatedAdmin { get; set; }
     public double? CpuFrequencyGhz { get; set; }
     public double? CpuPowerWatts { get; set; }
+    public bool CpuPowerIsEstimated { get; set; }
 
     public string? GpuName { get; set; }
     public double? GpuUsagePercent { get; set; }
     public double? GpuTemperatureC { get; set; }
     public double? GpuClockMhz { get; set; }
     public double? GpuPowerWatts { get; set; }
+    public bool GpuPowerIsIntegrated { get; set; }
 
     public double? RamUsedGb { get; set; }
     public double? RamAvailableGb { get; set; }

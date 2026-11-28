@@ -24,7 +24,6 @@
     <Window.Resources>
         <!-- White Miniature Hardware Geometries -->
 
-        <SolidColorBrush x:Key="ColorWindowBackground" Color="#191919"/>
         <Style x:Key="BlackWindowSurface" TargetType="Grid">
             <Setter Property="Background" Value="{DynamicResource BrushBg}"/>
             <Style.Triggers>

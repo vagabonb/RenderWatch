@@ -20,13 +20,6 @@ public sealed class BatteryViewModel : ViewModelBase
         BatteryMode.PluggedIn => "От сети",
         _ => "—"
     };
-    public string PowerCaption => Reading?.Mode switch
-    {
-        BatteryMode.OnBattery => "Разряд",
-        BatteryMode.Charging => "Зарядка",
-        _ => "Мощность"
-    };
-    public string PowerText => Reading?.Watts is double watts ? $"{watts:0.0} Вт" : "—";
     public string RemainingText => Reading?.Remaining is TimeSpan remaining ? FormatRemaining(remaining) : "—";
     public string TaskbarRemainingText
     {

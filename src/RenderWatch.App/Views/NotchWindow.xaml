@@ -69,7 +69,7 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="OverviewTile" TargetType="Border">
-            <Setter Property="Background" Value="#232323"/>
+            <Setter Property="Background" Value="{DynamicResource ColorCardFill}"/>
             <Setter Property="CornerRadius" Value="9"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Margin" Value="5"/>
@@ -285,7 +285,7 @@
 
                             <Border Style="{StaticResource OverviewTile}" Padding="3,4"
                                     Visibility="{Binding Dashboard.Battery.IsPresent, Converter={StaticResource BoolToVis}}">
-                                <views:BatteryCard DataContext="{Binding Dashboard.Battery}" Background="Transparent"
+                                <views:BatteryCard DataContext="{Binding Dashboard}" Background="Transparent"
                                                    IsMonochrome="{Binding DataContext.IsBlackStyle, RelativeSource={RelativeSource AncestorType=Window}}"/>
                             </Border>
 

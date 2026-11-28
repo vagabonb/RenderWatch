@@ -294,6 +294,18 @@ public class DisplayConstructorViewModel : ViewModelBase
         }
     }
 
+    public bool ShowTaskbarPower
+    {
+        get => _settings?.ShowTaskbarPower ?? false;
+        set
+        {
+            if (_settings == null || _settings.ShowTaskbarPower == value) return;
+            _settings.ShowTaskbarPower = value;
+            OnPropertyChanged();
+            _ = _settingsManager!.SaveSettingsAsync(_settings);
+        }
+    }
+
     public bool ShowTaskbarBatteryRuntime
     {
         get => _settings?.ShowTaskbarBatteryRuntime ?? false;

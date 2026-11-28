@@ -9,5 +9,10 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="20"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource ColorCardFill}"/>
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

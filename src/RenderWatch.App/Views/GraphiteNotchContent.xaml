@@ -142,7 +142,7 @@
 
         <Border BorderThickness="0,1,0,0" BorderBrush="{StaticResource Hairline}" Margin="0,8,0,0" Padding="0,3,0,0"
                 Visibility="{Binding Dashboard.Battery.IsPresent, Converter={StaticResource BoolToVis}}">
-            <views:BatteryCard DataContext="{Binding Dashboard.Battery}" Background="Transparent" IsMonochrome="True"/>
+            <views:BatteryCard DataContext="{Binding Dashboard}" Background="Transparent" IsMonochrome="True"/>
         </Border>
     </StackPanel>
 </UserControl>

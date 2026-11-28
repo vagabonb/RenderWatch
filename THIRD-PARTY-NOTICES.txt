@@ -1,4 +1,4 @@
-PC Watch 2.2.0
+PC Watch 2.3.0
 Third-party licenses and source code
 
 PC Watch's own source code is available under the MIT License in LICENSE.
@@ -28,7 +28,7 @@ PawnIO.Modules 0.2.11 (GNU Lesser General Public License, version 2.1)
   https://github.com/namazso/PawnIO.Modules/tree/0.2.11
 
   PC Watch's source for rebuilding the application:
-  https://github.com/vagabonb/PCWatch/tree/v2.2.0
+  https://github.com/vagabonb/PCWatch/tree/v2.3.0
   To rebuild the app with modified modules, rebuild LibreHardwareMonitorLib
   with the replacement modules under LibreHardwareMonitorLib/Resources/PawnIo,
   then reference the rebuilt package in src/RenderWatch.Core/RenderWatch.Core.csproj.

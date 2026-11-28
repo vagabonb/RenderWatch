@@ -6,6 +6,8 @@
 
     <sys:Double x:Key="BlackOverviewHeaderHeight">80</sys:Double>
     <sys:Double x:Key="GraphiteOverviewHeaderHeight">100</sys:Double>
+    <SolidColorBrush x:Key="ColorWindowBackground" Color="#191919"/>
+    <SolidColorBrush x:Key="ColorCardFill" Color="#151515"/>
 
     <conv:AnyVisibleConverter x:Key="AnyVisible"/>
     <conv:AllHiddenToVisibilityConverter x:Key="AllHiddenToVisibility"/>
@@ -22,6 +24,7 @@
     <Geometry x:Key="IconDisk">M4,3 H20 V21 H4 Z M4,14 H20 M7,17 H9 M13,17 H17</Geometry>
     <Geometry x:Key="IconNetwork">M7,21 V3 M3,7 L7,3 L11,7 M17,3 V21 M13,17 L17,21 L21,17</Geometry>
     <Geometry x:Key="IconUptime">M12,2 A10,10 0 0 1 12,22 A10,10 0 0 1 12,2 Z M12,6 V12 L16,15</Geometry>
+    <Geometry x:Key="IconPower">M13,2 L5,13 H11 L10,22 L19,10 H13 Z</Geometry>
     <Geometry x:Key="IconBatteryRuntime">M2,6 H20 V18 H2 Z M22,10 V14 M7,10 V14 M11,10 V14 M15,10 V14</Geometry>
 
     <Style x:Key="HardwareSmallIcon" TargetType="Path">

@@ -44,6 +44,12 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="14,12"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ColorCardFill}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
         <Style x:Key="EditorPreview" TargetType="Border">
             <Setter Property="Padding" Value="14,12"/>
@@ -454,6 +460,7 @@
                                     <CheckBox Content="Диски" IsChecked="{Binding ShowTaskbarDisk}" Style="{StaticResource EditorSwitch}"/>
                                     <CheckBox Content="Сеть" IsChecked="{Binding ShowTaskbarNetwork}" Style="{StaticResource EditorSwitch}"/>
                                     <CheckBox Content="Время работы ПК" IsChecked="{Binding ShowTaskbarUptime}" Style="{StaticResource EditorSwitch}"/>
+                                    <CheckBox Content="Потребление" IsChecked="{Binding ShowTaskbarPower}" Style="{StaticResource EditorSwitch}"/>
                                     <CheckBox Content="Осталось от батареи" IsChecked="{Binding ShowTaskbarBatteryRuntime}" Style="{StaticResource EditorSwitch}"/>
                                 </UniformGrid>
                             </StackPanel>

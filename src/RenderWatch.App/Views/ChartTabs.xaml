@@ -69,6 +69,9 @@
                 <DataTrigger Binding="{Binding DataContext.IsGraphiteStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                     <Setter Property="IsFlat" Value="True"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="CardBackground" Value="{DynamicResource ColorCardFill}"/>
+                </DataTrigger>
                 <DataTrigger Binding="{Binding DataContext.UsesBlackLayout, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                     <Setter Property="ShowMetricDetails" Value="True"/>
                     <Setter Property="HeaderIcon" Value="{Binding Tag, RelativeSource={RelativeSource Self}}"/>

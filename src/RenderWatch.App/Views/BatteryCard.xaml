@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
              xmlns:views="clr-namespace:RenderWatch.App.Views"
-             Visibility="{Binding IsPresent, Converter={StaticResource BoolToVis}}"
+             Visibility="{Binding Battery.IsPresent, Converter={StaticResource BoolToVis}}"
              Focusable="False" AutomationProperties.Name="Батарея">
     <UserControl.Template>
         <ControlTemplate TargetType="UserControl">
@@ -24,25 +24,20 @@
             <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
             <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
         </Style>
+        <Style x:Key="BatteryReadout" TargetType="StackPanel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="3,0"/>
+        </Style>
     </UserControl.Resources>
     <Border Background="{Binding Background, RelativeSource={RelativeSource AncestorType=UserControl}}"
             Padding="10,7" CornerRadius="6">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.3*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <Grid Margin="0,0,8,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+        <UniformGrid x:Name="BatteryMetrics" Rows="1">
+            <WrapPanel HorizontalAlignment="Left" VerticalAlignment="Center">
                 <Grid Width="35" Height="35" Margin="0,0,5,0" ToolTip="Оставшийся заряд">
-                    <ctrl:UsageRing Value="{Binding RingFill}" StrokeThickness="2.5">
+                    <ctrl:UsageRing Value="{Binding Battery.RingFill}" StrokeThickness="2.5">
                         <ctrl:UsageRing.Style>
                             <Style TargetType="ctrl:UsageRing">
-                                <Setter Property="AccentBrush" Value="{Binding AccentBrush}"/>
+                                <Setter Property="AccentBrush" Value="{Binding Battery.AccentBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsMonochrome, RelativeSource={RelativeSource AncestorType=views:BatteryCard}}" Value="True">
                                         <Setter Property="AccentBrush" Value="#E7E7E7"/>
@@ -51,23 +46,23 @@
                             </Style>
                         </ctrl:UsageRing.Style>
                     </ctrl:UsageRing>
-                    <TextBlock Text="{Binding ChargeText}" Style="{StaticResource BatteryValue}" FontSize="10"
+                    <TextBlock Text="{Binding Battery.ChargeText}" Style="{StaticResource BatteryValue}" FontSize="10"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Grid>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Батарея" Style="{StaticResource BatteryValue}"/>
-                    <TextBlock Text="{Binding StateText}" ToolTip="{Binding StateText}" Style="{StaticResource BatteryLabel}"/>
+                    <TextBlock Text="{Binding Battery.StateText}" ToolTip="{Binding Battery.StateText}" Style="{StaticResource BatteryLabel}"/>
                 </StackPanel>
-            </Grid>
-            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0">
-                <TextBlock Text="{Binding PowerCaption}" Style="{StaticResource BatteryLabel}"/>
-                <TextBlock Text="{Binding PowerText}" Style="{StaticResource BatteryValue}" Margin="0,2,0,0"/>
+            </WrapPanel>
+            <StackPanel Style="{StaticResource BatteryReadout}" ToolTip="{Binding SystemPowerHint}">
+                <TextBlock Text="{Binding SystemPowerCaption}" Style="{StaticResource BatteryLabel}" TextAlignment="Center"/>
+                <TextBlock Text="{Binding SystemPowerText}" Style="{StaticResource BatteryValue}" TextAlignment="Center" Margin="0,2,0,0"/>
             </StackPanel>
-            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="4,0,0,0">
-                <TextBlock Text="Осталось" Style="{StaticResource BatteryLabel}"/>
-                <TextBlock Text="{Binding RemainingText}" ToolTip="{Binding RemainingText}"
-                           Style="{StaticResource BatteryValue}" Margin="0,2,0,0"/>
+            <StackPanel x:Name="RemainingReadout" Style="{StaticResource BatteryReadout}" HorizontalAlignment="Right">
+                <TextBlock Text="Осталось" Style="{StaticResource BatteryLabel}" TextAlignment="Right"/>
+                <TextBlock Text="{Binding Battery.RemainingText}" ToolTip="{Binding Battery.RemainingText}"
+                           Style="{StaticResource BatteryValue}" TextAlignment="Right" Margin="0,2,0,0"/>
             </StackPanel>
-        </Grid>
+        </UniformGrid>
     </Border>
 </UserControl>

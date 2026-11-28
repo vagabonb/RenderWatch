@@ -10,6 +10,16 @@ namespace RenderWatch.App.Controls;
 
 public class MetricGraphControl : FrameworkElement
 {
+    public static readonly DependencyProperty CardBackgroundProperty = DependencyProperty.Register(
+        nameof(CardBackground), typeof(Brush), typeof(MetricGraphControl),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public Brush? CardBackground
+    {
+        get => (Brush?)GetValue(CardBackgroundProperty);
+        set => SetValue(CardBackgroundProperty, value);
+    }
+
     public static readonly DependencyProperty PointsSourceProperty =
         DependencyProperty.Register(
             nameof(PointsSource),
@@ -232,7 +242,7 @@ public class MetricGraphControl : FrameworkElement
         bool flatChart = IsFlat && !mini;
         bool showDetails = !mini && ShowMetricDetails;
         if (!IsFlat)
-            dc.DrawRoundedRectangle(CardBrush, null, new Rect(0, 0, w, h), mini ? 4 : 8, mini ? 4 : 8);
+            dc.DrawRoundedRectangle(CardBackground ?? CardBrush, null, new Rect(0, 0, w, h), mini ? 4 : 8, mini ? 4 : 8);
 
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 

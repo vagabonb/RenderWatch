@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using System.Windows.Media;
+using RenderWatch.App.Services;
 using RenderWatch.Core.Hardware;
 using RenderWatch.Core.Models;
 using RenderWatch.Core.Tracking;
@@ -66,6 +67,65 @@ public class FanGroupViewModel : ViewModelBase
 public class DashboardViewModel : ViewModelBase
 {
     public BatteryViewModel Battery { get; } = new();
+    private HardwareMetrics? _powerMetrics;
+    private string _systemPowerText = "—";
+    private string _systemPowerCaption = "Расход";
+    private string _systemPowerHint = "Датчики мощности пока недоступны.";
+
+    public string SystemPowerText => _systemPowerText;
+    public string SystemPowerCaption => _systemPowerCaption;
+    public string SystemPowerHint => _systemPowerHint;
+
+    internal void UpdateBattery(BatteryReading? reading)
+    {
+        Battery.Update(reading);
+        RefreshSystemPower();
+    }
+
+    private void RefreshSystemPower()
+    {
+        static bool IsUsable(double? value) => value is double watts && double.IsFinite(watts) && watts > 0;
+
+        var metrics = _powerMetrics;
+        double? cpu = metrics?.CpuPowerIsEstimated == false && IsUsable(metrics.CpuPowerWatts)
+            ? metrics.CpuPowerWatts
+            : null;
+        double? gpu = metrics != null && (!metrics.GpuPowerIsIntegrated || !cpu.HasValue) && IsUsable(metrics.GpuPowerWatts)
+            ? metrics.GpuPowerWatts
+            : null;
+
+        (double? Watts, string Caption, string Hint, bool IsPartial) power = (Battery.Reading, metrics) switch
+        {
+            ({ Mode: BatteryMode.OnBattery, Watts: var watts }, _) when IsUsable(watts) =>
+                (watts, "Расход", "Мощность, которую ноутбук берёт из аккумулятора.", false),
+            (_, { PowerSupplyOutputWatts: var watts }) when IsUsable(watts) =>
+                (watts, "Расход", "Мощность, которую блок питания отдаёт комплектующим.", false),
+            ({ Mode: BatteryMode.Charging, Watts: var watts }, _) when IsUsable(watts) && (cpu.HasValue || gpu.HasValue) =>
+                (watts + cpu.GetValueOrDefault() + gpu.GetValueOrDefault(), "От адаптера",
+                    cpu.HasValue && gpu.HasValue
+                        ? "Учтены процессор, дискретная видеокарта и зарядка аккумулятора."
+                        : cpu.HasValue
+                            ? "Учтены процессор и зарядка аккумулятора."
+                            : "Учтены видеокарта и зарядка аккумулятора.",
+                    true),
+            (_, { PlatformPowerWatts: var watts }) when IsUsable(watts) =>
+                (watts, "Платформа", "Показания аппаратного датчика CPU Platform. Охват датчика зависит от модели ноутбука или ПК.", false),
+            ({ Mode: BatteryMode.Charging, Watts: var watts }, _) when IsUsable(watts) =>
+                (watts, "От адаптера", "Доступно только измерение мощности, которую получает аккумулятор.", true),
+            _ when cpu.HasValue && gpu.HasValue =>
+                (cpu + gpu, "CPU + GPU", "Сумма показаний процессора и дискретной видеокарты.", false),
+            _ when cpu.HasValue => (cpu, "CPU", "Мощность по датчику процессора.", false),
+            _ when gpu.HasValue => (gpu, "GPU", "Мощность по датчику видеокарты.", false),
+            _ => (null, "Расход", "Доступные датчики не сообщают мощность.", false)
+        };
+
+        var reading = power.Watts is double value
+            ? (power.IsPartial ? "≥ " : string.Empty) + $"{value:0.0} Вт"
+            : "—";
+        SetField(ref _systemPowerText, reading, nameof(SystemPowerText));
+        SetField(ref _systemPowerCaption, power.Caption, nameof(SystemPowerCaption));
+        SetField(ref _systemPowerHint, power.Hint, nameof(SystemPowerHint));
+    }
 
     private readonly ObservableCollection<FanMetricViewModel> _fans = new();
     public ReadOnlyObservableCollection<FanMetricViewModel> Fans { get; }
@@ -328,6 +388,8 @@ public class DashboardViewModel : ViewModelBase
 
     public void Update(HardwareMetrics metrics, TrackerUpdateResult tracker)
     {
+        _powerMetrics = metrics;
+        RefreshSystemPower();
         UpdateDiskActivities(metrics.PhysicalDisks);
         DiskRead = FormatRate(metrics.DiskReadBytesPerSecond);
         DiskWrite = FormatRate(metrics.DiskWriteBytesPerSecond);

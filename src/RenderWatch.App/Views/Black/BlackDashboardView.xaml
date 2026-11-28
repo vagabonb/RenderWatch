@@ -87,9 +87,12 @@
 
             <Grid Height="{StaticResource BlackOverviewHeaderHeight}">
                 <DockPanel Margin="0,18,8,22">
-                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
-                        <TextBlock Text="Время работы" Foreground="#999999" FontSize="11" HorizontalAlignment="Right"/>
-                        <TextBlock Text="{Binding Uptime}" Foreground="#F2F2F2" FontSize="16" Margin="0,4,0,0" HorizontalAlignment="Right"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="SystemPowerReadout" Text="{Binding SystemPowerText}" Foreground="#F2F2F2" FontSize="16"
+                                   MinWidth="86" Margin="16,0,28,0" TextAlignment="Right" Typography.NumeralAlignment="Tabular"
+                                   ToolTip="{Binding SystemPowerHint}" AutomationProperties.HelpText="{Binding SystemPowerHint}"/>
+                        <TextBlock x:Name="UptimeReadout" Text="{Binding Uptime}" Foreground="#F2F2F2" FontSize="16"
+                                   Typography.NumeralAlignment="Tabular" ToolTip="Время работы компьютера"/>
                     </StackPanel>
                     <TextBlock Text="Обзор системы" Style="{DynamicResource PageTitle}" VerticalAlignment="Center"/>
                 </DockPanel>
@@ -289,7 +292,18 @@
                     </StackPanel>
                 </Border>
             </UniformGrid>
-            <views:BatteryCard DataContext="{Binding Battery}" Background="{StaticResource BrushSurfaceCard}" Margin="0,0,0,12"/>
+            <views:BatteryCard Margin="0,0,0,12">
+                <views:BatteryCard.Style>
+                    <Style TargetType="views:BatteryCard">
+                        <Setter Property="Background" Value="{StaticResource BrushSurfaceCard}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource ColorCardFill}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </views:BatteryCard.Style>
+            </views:BatteryCard>
 
             <Grid Margin="0,0,0,16" UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
                 <Grid.ColumnDefinitions>
@@ -659,7 +673,7 @@
             </Border>
 
             <!-- 1. Top Control Bar (Polling Interval Switcher & Session Controls) -->
-            <Border Background="{StaticResource BrushSurfaceCard}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0" CornerRadius="8" Padding="16,10" Margin="0,4,0,0">
+            <Border Style="{StaticResource BlackCard}" Padding="16,10" Margin="0,4,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>

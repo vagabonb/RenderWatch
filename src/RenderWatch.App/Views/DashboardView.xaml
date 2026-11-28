@@ -28,9 +28,12 @@
         <StackPanel Margin="37,0,37,30">
             <Grid Height="{StaticResource GraphiteOverviewHeaderHeight}">
                 <DockPanel Margin="0,17,0,40">
-                    <StackPanel DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center" ToolTip="Время работы компьютера">
-                        <TextBlock Text="ВРЕМЯ РАБОТЫ" Style="{StaticResource SectionLabel}" HorizontalAlignment="Right"/>
-                        <TextBlock Text="{Binding Uptime}" Foreground="{StaticResource WhiteInk}" FontSize="17" HorizontalAlignment="Right"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="SystemPowerReadout" Text="{Binding SystemPowerText}" Foreground="{StaticResource WhiteInk}" FontSize="17"
+                                   MinWidth="86" Margin="16,0,28,0" TextAlignment="Right" Typography.NumeralAlignment="Tabular"
+                                   ToolTip="{Binding SystemPowerHint}" AutomationProperties.HelpText="{Binding SystemPowerHint}"/>
+                        <TextBlock x:Name="UptimeReadout" Text="{Binding Uptime}" Foreground="{StaticResource WhiteInk}" FontSize="17"
+                                   Typography.NumeralAlignment="Tabular" ToolTip="Время работы компьютера"/>
                     </StackPanel>
                     <TextBlock Text="Обзор" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
                 </DockPanel>
@@ -181,7 +184,7 @@
             </Grid>
 
             <Border Height="1" Background="{StaticResource Hairline}" Margin="0,0,0,17"/>
-            <views:BatteryCard DataContext="{Binding Battery}" Background="Transparent" IsMonochrome="True" Margin="0,0,0,20"/>
+            <views:BatteryCard Background="Transparent" IsMonochrome="True" Margin="0,0,0,20"/>
             <DockPanel Margin="0,0,0,12">
                 <TextBlock Text="ОХЛАЖДЕНИЕ" Style="{StaticResource SectionLabel}" Margin="0"/>
             </DockPanel>

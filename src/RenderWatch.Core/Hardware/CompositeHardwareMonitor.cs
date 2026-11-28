@@ -89,7 +89,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
 
         try
         {
-            await _lhmProvider.InitializeAsync();
+            await _lhmProvider.InitializeAsync(monitorPowerSupply: !_isMobileSystem);
         }
         catch
         {
@@ -203,6 +203,8 @@ public class CompositeHardwareMonitor : IHardwareMonitor
             {
                 lhmMetrics = await _lhmProvider.GetMetricsAsync();
                 result.IsElevatedAdmin = _isElevated;
+                result.PlatformPowerWatts = lhmMetrics.PlatformPowerWatts;
+                result.PowerSupplyOutputWatts = lhmMetrics.PowerSupplyOutputWatts;
 
                 if (lhmMetrics.CpuTemperatureC.HasValue && lhmMetrics.CpuTemperatureC.Value >= 10.0 && lhmMetrics.CpuTemperatureC.Value <= 115.0)
                 {
@@ -245,7 +247,10 @@ public class CompositeHardwareMonitor : IHardwareMonitor
                     result.GpuClockMhz = lhmMetrics.GpuClockMhz;
 
                 if (!result.GpuPowerWatts.HasValue && lhmMetrics.GpuPowerWatts.HasValue)
+                {
                     result.GpuPowerWatts = lhmMetrics.GpuPowerWatts;
+                    result.GpuPowerIsIntegrated = lhmMetrics.GpuPowerIsIntegrated;
+                }
 
                 if (!result.VramUsedGb.HasValue && lhmMetrics.VramUsedGb.HasValue)
                 {
@@ -429,6 +434,7 @@ public class CompositeHardwareMonitor : IHardwareMonitor
             double maxWatts = _isMobileSystem ? 45.0 : 170.0;
             double loadFraction = Math.Clamp(result.CpuUsagePercent.Value / 100.0, 0.0, 1.0);
             result.CpuPowerWatts = Math.Round(baseWatts + (loadFraction * (maxWatts - baseWatts)), 1);
+            result.CpuPowerIsEstimated = true;
         }
 
         // 7. Laptop GPU Idle Guarantee:

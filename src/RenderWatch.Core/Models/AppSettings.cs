@@ -86,6 +86,7 @@ public class AppSettings
     public bool ShowTaskbarDisk { get; set; }
     public bool ShowTaskbarNetwork { get; set; }
     public bool ShowTaskbarUptime { get; set; }
+    public bool ShowTaskbarPower { get; set; }
     public bool ShowTaskbarBatteryRuntime { get; set; }
     public bool ShowMicroDisk { get; set; }
     public bool ShowMicroNetwork { get; set; }

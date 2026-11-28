@@ -85,7 +85,7 @@ public class MainViewModel : ViewModelBase, IDisposable
 
     internal void UpdateBatteryReading(BatteryReading? battery)
     {
-        Dashboard.Battery.Update(battery);
+        Dashboard.UpdateBattery(battery);
         if (PrimaryNotchReading.Metric == NotchRingMetric.Battery || SecondaryNotchReading.Metric == NotchRingMetric.Battery ||
             (Constructor.NotchShape == NotchLayout.Ring && Constructor.RingMetric == NotchRingMetric.Battery))
             RefreshNotchReadings();

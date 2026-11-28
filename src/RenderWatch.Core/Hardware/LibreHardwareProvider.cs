@@ -14,8 +14,12 @@ public class LibreHardwareProvider : IHardwareMonitor
 
     private Computer? _computer;
     private bool _isInitialized;
+    private long _nextPowerSupplyPoll;
+    private double? _powerSupplyOutputWatts;
 
-    public Task InitializeAsync()
+    public Task InitializeAsync() => InitializeAsync(monitorPowerSupply: false);
+
+    internal Task InitializeAsync(bool monitorPowerSupply)
     {
         try
         {
@@ -76,6 +80,12 @@ public class LibreHardwareProvider : IHardwareMonitor
                     _computer = null;
                 }
             }
+        }
+
+        if (monitorPowerSupply && _isInitialized && _computer != null)
+        {
+            try { _computer.IsPsuEnabled = true; }
+            catch { /* Other hardware monitoring is still available. */ }
         }
 
         return Task.CompletedTask;
@@ -219,6 +229,13 @@ public class LibreHardwareProvider : IHardwareMonitor
                         else if (sensor.SensorType == SensorType.Power && sensor.Value.HasValue && sensor.Value.Value > 1.0)
                         {
                             var sName = sensor.Name;
+                            if (sName.Equals("CPU Platform", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (float.IsFinite(sensor.Value.Value))
+                                    metrics.PlatformPowerWatts ??= sensor.Value.Value;
+                                continue;
+                            }
+
                             if (sName.Contains("Package", StringComparison.OrdinalIgnoreCase) ||
                                 sName.Contains("CPU", StringComparison.OrdinalIgnoreCase) ||
                                 sName.Contains("SMU", StringComparison.OrdinalIgnoreCase) ||
@@ -490,10 +507,22 @@ public class LibreHardwareProvider : IHardwareMonitor
                 catch { }
             }
 
+            long now = Environment.TickCount64;
+            bool pollPowerSupply = now >= _nextPowerSupplyPoll;
+            if (pollPowerSupply)
+            {
+                _nextPowerSupplyPoll = now + 2_000;
+                _powerSupplyOutputWatts = null;
+            }
+
             foreach (var hardware in _computer.Hardware)
             {
-                Traverse(hardware);
+                if (hardware.HardwareType != HardwareType.Psu)
+                    Traverse(hardware);
+                else if (pollPowerSupply)
+                    _powerSupplyOutputWatts ??= ReadPowerSupplyOutput(hardware);
             }
+            metrics.PowerSupplyOutputWatts = _powerSupplyOutputWatts;
 
             // Build FanMetrics with role classification and descriptions
             foreach (var kvp in fanGroup)
@@ -638,6 +667,7 @@ public class LibreHardwareProvider : IHardwareMonitor
             if (chosenPower.HasValue)
             {
                 metrics.GpuPowerWatts = Math.Round(chosenPower.Value, 1);
+                metrics.GpuPowerIsIntegrated = !discreteGpuPower.HasValue;
             }
             if (chosenVramTotalBytes.HasValue && chosenVramTotalBytes.Value > 0)
             {
@@ -659,6 +689,35 @@ public class LibreHardwareProvider : IHardwareMonitor
         }
 
         return Task.FromResult(metrics);
+    }
+
+    private static double? ReadPowerSupplyOutput(IHardware hardware)
+    {
+        try
+        {
+            hardware.Update();
+            double? railTotal = null;
+            int validRails = 0;
+            foreach (var sensor in hardware.Sensors)
+            {
+                if (sensor.SensorType != SensorType.Power ||
+                    sensor.Value is not float watts || !float.IsFinite(watts) || watts < 0)
+                    continue;
+
+                if (sensor.Name == "PSU Out" && watts > 0)
+                    return watts;
+                if (sensor.Name == "Total Output" && watts > 0)
+                    railTotal = watts;
+                if (sensor.Name is "+12V" or "+5V" or "+3.3V")
+                    validRails++;
+            }
+
+            // Corsair's aggregate can still be nonzero when a rail reports no reading.
+            return validRails == 3 ? railTotal : null;
+        }
+        catch { /* A failed PSU read should not interrupt other telemetry. */ }
+
+        return null;
     }
 
     public static bool IsRunningElevated()
