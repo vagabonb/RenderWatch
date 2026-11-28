@@ -12,8 +12,10 @@ public sealed class TaskbarInkConverter : IMultiValueConverter
 
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values[0] is Brush custom) return custom;
+        bool showColors = values.Length < 3 || values[2] is true;
+        if (showColors && values[0] is Brush custom) return custom;
         bool light = values[1] is true;
+        if (!showColors) return light ? LightValue : Brushes.White;
         return Equals(parameter, "Label") ? (light ? LightLabel : DarkLabel) :
             (light ? LightValue : Brushes.White);
     }

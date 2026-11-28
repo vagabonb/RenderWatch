@@ -1,7 +1,11 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ctrl="clr-namespace:RenderWatch.App.Controls"
-                    xmlns:conv="clr-namespace:RenderWatch.App.Converters">
+                    xmlns:conv="clr-namespace:RenderWatch.App.Converters"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:Double x:Key="BlackOverviewHeaderHeight">80</sys:Double>
+    <sys:Double x:Key="GraphiteOverviewHeaderHeight">100</sys:Double>
 
     <conv:AnyVisibleConverter x:Key="AnyVisible"/>
     <conv:AllHiddenToVisibilityConverter x:Key="AllHiddenToVisibility"/>

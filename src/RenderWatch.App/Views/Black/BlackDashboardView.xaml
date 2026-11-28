@@ -83,15 +83,17 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="24,18,24,24">
+        <StackPanel Margin="24,0,24,24">
 
-            <DockPanel Margin="0,0,8,22">
-                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
-                    <TextBlock Text="Время работы" Foreground="#999999" FontSize="11" HorizontalAlignment="Right"/>
-                    <TextBlock Text="{Binding Uptime}" Foreground="#F2F2F2" FontSize="16" Margin="0,4,0,0" HorizontalAlignment="Right"/>
-                </StackPanel>
-                <TextBlock Text="Обзор системы" Style="{DynamicResource PageTitle}" VerticalAlignment="Center"/>
-            </DockPanel>
+            <Grid Height="{StaticResource BlackOverviewHeaderHeight}">
+                <DockPanel Margin="0,18,8,22">
+                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+                        <TextBlock Text="Время работы" Foreground="#999999" FontSize="11" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding Uptime}" Foreground="#F2F2F2" FontSize="16" Margin="0,4,0,0" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                    <TextBlock Text="Обзор системы" Style="{DynamicResource PageTitle}" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Grid>
 
             <!-- 3. Equipment Cards Grid (CPU, GPU, RAM, VRAM) with White Miniature Icons & Larger Digits -->
             <UniformGrid x:Name="HardwareCards" Columns="4" SizeChanged="OnHardwareCardsSizeChanged" Margin="0,0,0,6">

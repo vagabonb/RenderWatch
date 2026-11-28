@@ -111,6 +111,7 @@ public class DashboardViewModel : ViewModelBase
     private string _ramPercentDisplay = "0%";
 
     private string _vramDisplay = "Недоступно";
+    private string _vramPercentDisplay = "—";
     private string _vramUsedDisplay = "Недоступно";
     private string _vramAvailableDisplay = "Недоступно";
     private string _vramTotalDisplay = "Недоступно";
@@ -243,6 +244,7 @@ public class DashboardViewModel : ViewModelBase
     public string RamPercentDisplay { get => _ramPercentDisplay; set => SetField(ref _ramPercentDisplay, value); }
 
     public string VramDisplay { get => _vramDisplay; set => SetField(ref _vramDisplay, value); }
+    public string VramPercentDisplay { get => _vramPercentDisplay; private set => SetField(ref _vramPercentDisplay, value); }
     private string _vramCapacityDisplay = "Недоступно";
     public string VramCapacityDisplay
     {
@@ -378,6 +380,7 @@ public class DashboardViewModel : ViewModelBase
         RamPercentDisplay = metrics.RamPercentDisplay;
 
         VramDisplay = metrics.VramDisplay;
+        VramPercentDisplay = metrics.VramUsagePercent is double vramUsage ? $"{vramUsage:F0}%" : "—";
         VramCapacityDisplay = FormatMemoryCapacity(metrics.VramUsedGb, metrics.VramTotalGb);
         VramPercentValue = metrics.VramUsagePercent ?? 0.0;
 

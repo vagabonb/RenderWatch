@@ -323,7 +323,7 @@
                 </StackPanel>
             </Border>
 
-            <views:SidebarNavigation Grid.Row="1" Grid.Column="0"/>
+            <views:SidebarNavigation Grid.RowSpan="2" Grid.Column="0"/>
 
             <!-- 3. Dynamic Content View -->
             <Grid Grid.Row="1" Grid.Column="1">
@@ -519,7 +519,7 @@
                 </StackPanel>
             </Border>
 
-            <views:SidebarNavigation Grid.Row="1" Grid.Column="0"/>
+            <views:SidebarNavigation Grid.RowSpan="2" Grid.Column="0"/>
 
             <!-- 3. Dynamic Content View -->
             <Grid Grid.Row="1" Grid.Column="1">

@@ -14,6 +14,16 @@ public partial class TaskbarStripContent : UserControl
         set => SetValue(UseDarkInkProperty, value);
     }
 
+    public static readonly DependencyProperty ShowMetricColorsProperty =
+        DependencyProperty.Register(nameof(ShowMetricColors), typeof(bool), typeof(TaskbarStripContent),
+            new PropertyMetadata(true));
+
+    public bool ShowMetricColors
+    {
+        get => (bool)GetValue(ShowMetricColorsProperty);
+        set => SetValue(ShowMetricColorsProperty, value);
+    }
+
     public TaskbarStripContent()
     {
         InitializeComponent();

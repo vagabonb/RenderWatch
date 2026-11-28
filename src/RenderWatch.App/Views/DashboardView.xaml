@@ -25,16 +25,18 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="37,17,37,30">
-            <DockPanel Margin="0,0,0,40">
-                <StackPanel DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center" ToolTip="Время работы компьютера">
-                    <TextBlock Text="ВРЕМЯ РАБОТЫ" Style="{StaticResource SectionLabel}" HorizontalAlignment="Right"/>
-                    <TextBlock Text="{Binding Uptime}" Foreground="{StaticResource WhiteInk}" FontSize="17" HorizontalAlignment="Right"/>
-                </StackPanel>
-                <TextBlock Text="Обзор" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
-            </DockPanel>
+        <StackPanel Margin="37,0,37,30">
+            <Grid Height="{StaticResource GraphiteOverviewHeaderHeight}">
+                <DockPanel Margin="0,17,0,40">
+                    <StackPanel DockPanel.Dock="Right" Margin="16,0,0,0" VerticalAlignment="Center" ToolTip="Время работы компьютера">
+                        <TextBlock Text="ВРЕМЯ РАБОТЫ" Style="{StaticResource SectionLabel}" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding Uptime}" Foreground="{StaticResource WhiteInk}" FontSize="17" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                    <TextBlock Text="Обзор" Style="{StaticResource PageTitle}" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Grid>
 
-            <Grid Margin="0,0,0,34">
+            <Grid x:Name="HardwareCards" Margin="0,0,0,34">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="20"/>

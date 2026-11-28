@@ -15,15 +15,13 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/PCWatch;component/Styles/BlackSurfaces.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-        <Style x:Key="TaskbarFlyoutSurface" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource GraphiteBackdrop}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="8"/>
+        <Style x:Key="TaskbarFlyoutSurface" TargetType="Border" BasedOn="{StaticResource BlackCard}">
+            <Setter Property="Width" Value="246"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding UsesBlackLayout}" Value="True">
-                    <Setter Property="Background" Value="{StaticResource BlackCardFill}"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource BlackCardEdge}"/>
-                    <Setter Property="BorderThickness" Value="0"/>
+                <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource GraphiteBackdrop}"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -41,6 +39,82 @@
             </Style.Triggers>
         </Style>
         <Style TargetType="ToolTip" BasedOn="{StaticResource TaskbarSmallTooltip}"/>
+        <Style x:Key="TaskbarCardTooltip" TargetType="ToolTip">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HasDropShadow" Value="True"/>
+        </Style>
+
+        <Style x:Key="TaskbarFlyoutHeader" TargetType="ContentControl">
+            <Setter Property="Foreground" Value="{StaticResource WhiteInk}"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Style="{StaticResource HardwareSmallIcon}" Data="{TemplateBinding Tag}"
+                                  Stroke="{TemplateBinding Foreground}" Width="15" Height="15" Margin="0,0,8,0"/>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="TaskbarFlyoutCaption" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource SoftInk}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style x:Key="TaskbarFlyoutReading" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontFamily" Value="{StaticResource FontDisplay}"/>
+            <Setter Property="FontSize" Value="30"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Typography.NumeralAlignment" Value="Tabular"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsGraphiteStyle}" Value="True">
+                    <Setter Property="FontWeight" Value="Light"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TaskbarFlyoutTemperature" TargetType="TextBlock" BasedOn="{StaticResource TaskbarFlyoutReading}">
+            <Setter Property="FontSize" Value="19"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="Недоступно">
+                    <Setter Property="FontSize" Value="11"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TaskbarFlyoutThermometer" TargetType="Path" BasedOn="{StaticResource HardwareSmallIcon}">
+            <Setter Property="Data" Value="{StaticResource IconTemperature}"/>
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsColorStyle}" Value="True">
+                    <Setter Property="Stroke" Value="{x:Static ctrl:TelemetryPalette.Orange}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TaskbarFlyoutDetail" TargetType="TextBlock" BasedOn="{StaticResource TaskbarFlyoutCaption}">
+            <Setter Property="Foreground" Value="#F5F2EA"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="8,0,0,0"/>
+        </Style>
+        <Style x:Key="TaskbarFlyoutChart" TargetType="ctrl:MetricSparkline">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="Capacity" Value="40"/>
+            <Setter Property="Margin" Value="0,3,0,2"/>
+        </Style>
+        <Style x:Key="TaskbarFlyoutDivider" TargetType="Border">
+            <Setter Property="Height" Value="1"/>
+            <Setter Property="Background" Value="#22FFFFFF"/>
+            <Setter Property="Margin" Value="0,7,0,6"/>
+        </Style>
 
         <Style x:Key="StripLabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="#ABFFFFFF"/>
@@ -116,6 +190,7 @@
                     <MultiBinding Converter="{StaticResource TaskbarInk}" ConverterParameter="Label">
                         <Binding Path="Content.LabelBrush" RelativeSource="{RelativeSource Self}"/>
                         <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                        <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                     </MultiBinding>
                 </Setter.Value>
             </Setter>
@@ -171,88 +246,39 @@
                         </MultiBinding>
                 </Border.Visibility>
                 <Border.ToolTip>
-                    <ToolTip Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="True">
-                        <Border Style="{StaticResource TaskbarFlyoutSurface}"
-                                Padding="14,12"
-                                Width="285"
-                                SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.85"/>
-                            </Border.Effect>
+                    <ToolTip Style="{StaticResource TaskbarCardTooltip}">
+                        <Border Style="{StaticResource TaskbarFlyoutSurface}">
                             <StackPanel>
-                                <TextBlock Text="ПРОЦЕССОР (CPU)" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11.5" VerticalAlignment="Center" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif" Margin="0,0,0,8"/>
-
-                                <!-- Full CPU Name -->
-                                <TextBlock Text="{Binding Configuration.Config.CpuName}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,9"/>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,0,0,8"/>
-
-                                <!-- Specs & Metrics -->
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Температура:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.CpuTempDisplay}" Foreground="#DCDCDC" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Загрузка ядер:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.CpuUsageDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Текущая частота:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.CpuClockDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Энергопотребление:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.CpuPowerDisplay}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Ядра и потоки:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Configuration.Config.CpuCoresThreads}" Foreground="#F5F2EA" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Сокет платформы:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Configuration.Config.CpuSocket}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,6,0,7"/>
-                                <TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-
-                                <TextBlock Text="Клик — развернуть" Foreground="#A5A49F" FontSize="9" HorizontalAlignment="Center"/>
+                                <ContentControl Content="CPU" Tag="{StaticResource IconCpu}" Style="{StaticResource TaskbarFlyoutHeader}"/>
+                                <TextBlock Text="{Binding Configuration.Config.CpuName}" Style="{StaticResource TaskbarFlyoutCaption}" TextWrapping="Wrap"/>
+                                <UniformGrid Columns="2" Margin="0,7,0,0">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="{Binding Dashboard.CpuUsageMicro}" Style="{StaticResource TaskbarFlyoutReading}" Height="36"/>
+                                        <ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuLoad}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                        <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.CpuLoadMax, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Margin="6,0,0,0">
+                                        <StackPanel Height="36" Orientation="Horizontal" ToolTip="Температура">
+                                            <Path Style="{StaticResource TaskbarFlyoutThermometer}"/>
+                                            <TextBlock Text="{Binding Dashboard.CpuTempDisplay}" Style="{StaticResource TaskbarFlyoutTemperature}"/>
+                                        </StackPanel>
+                                        <ctrl:MetricSparkline Points="{Binding SessionMetrics.CpuTemp}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                        <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.CpuTempMax, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <Border Style="{StaticResource TaskbarFlyoutDivider}"/>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Частота" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.CpuClockDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Мощность" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.CpuPowerDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Ядра и потоки" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Configuration.Config.CpuCoresThreads}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
                             </StackPanel>
                         </Border>
                     </ToolTip>
@@ -265,6 +291,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[CPU].TemperatureBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -273,6 +300,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[CPU].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -289,88 +317,43 @@
                         </MultiBinding>
                 </Border.Visibility>
                 <Border.ToolTip>
-                    <ToolTip Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="True">
-                        <Border Style="{StaticResource TaskbarFlyoutSurface}"
-                                Padding="14,12"
-                                Width="285"
-                                SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.85"/>
-                            </Border.Effect>
+                    <ToolTip Style="{StaticResource TaskbarCardTooltip}">
+                        <Border Style="{StaticResource TaskbarFlyoutSurface}">
                             <StackPanel>
-                                <TextBlock Text="ВИДЕОКАРТА (GPU)" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11.5" VerticalAlignment="Center" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif" Margin="0,0,0,8"/>
-
-                                <!-- Full GPU Name -->
-                                <TextBlock Text="{Binding Dashboard.GpuName}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,9"/>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,0,0,8"/>
-
-                                <!-- Specs & Metrics -->
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Температура GPU:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.GpuTempDisplay}" Foreground="#DCDCDC" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Загрузка чипа:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.GpuUsageDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Частота ядра:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.GpuClockDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Энергопотребление:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.GpuPowerDisplay}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Видеопамять (VRAM):" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.VramDisplay}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Версия драйвера:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Configuration.Config.PrimaryGpuDriver}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,6,0,7"/>
-                                <TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Нагрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Height="30" Width="220" HorizontalAlignment="Left"/>
-<TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Температура · максимум за сессию: "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Height="30" Width="220" HorizontalAlignment="Left"/>
-
-                                <TextBlock Text="Клик — развернуть" Foreground="#A5A49F" FontSize="9" HorizontalAlignment="Center"/>
+                                <ContentControl Content="GPU" Tag="{StaticResource IconGpu}" Style="{StaticResource TaskbarFlyoutHeader}"/>
+                                <TextBlock Text="{Binding Dashboard.GpuName}" Style="{StaticResource TaskbarFlyoutCaption}" TextWrapping="Wrap"/>
+                                <UniformGrid Columns="2" Margin="0,7,0,0">
+                                    <StackPanel Margin="0,0,6,0">
+                                        <TextBlock Text="{Binding Dashboard.GpuUsageMicro}" Style="{StaticResource TaskbarFlyoutReading}" Height="36"/>
+                                        <ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuLoad}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                        <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.GpuLoadMax, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                    <StackPanel Margin="6,0,0,0">
+                                        <StackPanel Height="36" Orientation="Horizontal" ToolTip="Температура">
+                                            <Path Style="{StaticResource TaskbarFlyoutThermometer}"/>
+                                            <TextBlock Text="{Binding Dashboard.GpuTempDisplay}" Style="{StaticResource TaskbarFlyoutTemperature}"/>
+                                        </StackPanel>
+                                        <ctrl:MetricSparkline Points="{Binding SessionMetrics.GpuTemp}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                        <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.GpuTempMax, Mode=OneWay}"/></TextBlock>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <Border Style="{StaticResource TaskbarFlyoutDivider}"/>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Частота" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.GpuClockDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Мощность" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.GpuPowerDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Видеопамять" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.VramDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Драйвер" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Configuration.Config.PrimaryGpuDriver}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
                             </StackPanel>
                         </Border>
                     </ToolTip>
@@ -383,6 +366,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[GPU].TemperatureBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -391,6 +375,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[GPU].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -401,100 +386,30 @@
 
             <Border Tag="RAM" x:Name="RamSegment" Visibility="{Binding Constructor.ShowTaskbarRam, Converter={StaticResource BoolToVis}}" Style="{StaticResource StripSegmentStyle}">
                 <Border.ToolTip>
-                    <ToolTip Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="True">
-                        <Border Style="{StaticResource TaskbarFlyoutSurface}"
-                                Padding="14,12"
-                                Width="285"
-                                SnapsToDevicePixels="True">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.85"/>
-                            </Border.Effect>
+                    <ToolTip Style="{StaticResource TaskbarCardTooltip}">
+                        <Border Style="{StaticResource TaskbarFlyoutSurface}">
                             <StackPanel>
-                                <!-- Header -->
-                                <Grid Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="ОПЕРАТИВНАЯ ПАМЯТЬ" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11.5" VerticalAlignment="Center" FontFamily="Segoe UI Variable Display, Segoe UI, sans-serif"/>
-                                    </StackPanel>
-                                    <Border Grid.Column="2" Background="#353637" BorderBrush="#474849" BorderThickness="1" CornerRadius="3" Padding="5,1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Configuration.Config.RamChannelBadge}" Foreground="#C4C1BB" FontSize="9" FontWeight="SemiBold"/>
-                                    </Border>
-                                </Grid>
-
-                                <!-- Total Capacity & Summary -->
-                                <TextBlock Text="{Binding Dashboard.RamDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,9"/>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,0,0,8"/>
-
-                                <!-- Specs & Metrics -->
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Занято памяти:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.RamUsedDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Свободно памяти:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.RamAvailableDisplay}" Foreground="#DCDCDC" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Всего в системе:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.RamTotalDisplay}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Процент нагрузки:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Dashboard.RamPercentDisplay}" Foreground="#F5F2EA" FontWeight="Bold" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Тип и частота:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding Configuration.Config.RamType}" Foreground="#F5F2EA" FontWeight="SemiBold" FontSize="11" Margin="0,0,4,0"/>
-                                        <TextBlock Text="{Binding Configuration.Config.RamSpeed}" Foreground="#DCDCDC" FontSize="11"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <Grid Margin="0,0,0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Слоты памяти:" Foreground="#B6B4AE" FontSize="11"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Configuration.Config.RamSlotsUsed}" Foreground="#DCDCDC" FontSize="11" HorizontalAlignment="Right"/>
-                                </Grid>
-
-                                <Rectangle Height="1" Fill="#3C3D3E" Margin="0,6,0,7"/>
-                                <TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-
-                                <TextBlock Text="Клик — развернуть" Foreground="#A5A49F" FontSize="9" HorizontalAlignment="Center"/>
+                                <DockPanel LastChildFill="False">
+                                    <ContentControl Content="RAM" AutomationProperties.Name="Оперативная память"
+                                                    Tag="{StaticResource IconRam}" Style="{StaticResource TaskbarFlyoutHeader}"/>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Configuration.Config.RamChannelBadge}" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                </DockPanel>
+                                <TextBlock Text="{Binding Dashboard.RamPercentDisplay}" Style="{StaticResource TaskbarFlyoutReading}"/>
+                                <ctrl:MetricSparkline Points="{Binding SessionMetrics.Ram}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.RamMax, Mode=OneWay}"/></TextBlock>
+                                <Border Style="{StaticResource TaskbarFlyoutDivider}"/>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Занято / всего" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.RamCapacityDisplay}" Style="{StaticResource TaskbarFlyoutDetail}" FontWeight="SemiBold"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Свободно" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.RamAvailableDisplay}" Style="{StaticResource TaskbarFlyoutDetail}"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,0,0,2">
+                                    <TextBlock Text="Тип и частота" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Style="{StaticResource TaskbarFlyoutDetail}"><Run Text="{Binding Configuration.Config.RamType, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding Configuration.Config.RamSpeed, Mode=OneWay}"/></TextBlock>
+                                </DockPanel>
                             </StackPanel>
                         </Border>
                     </ToolTip>
@@ -507,6 +422,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[RAM].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -514,13 +430,23 @@
             </Border>
 
             <Border Tag="VRAM" Style="{StaticResource StripSegmentStyle}" Visibility="{Binding Constructor.ShowTaskbarVram, Converter={StaticResource BoolToVis}}">
-                <Border.ToolTip><ToolTip Style="{StaticResource TaskbarSmallTooltip}">
-    <StackPanel><TextBlock Text="VRAM" Foreground="White" FontWeight="Bold"/><TextBlock Foreground="#C4C1BB" FontSize="10" Margin="0,7,0,2">
-    <Run Text="Загрузка · максимум за сессию: "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/>
-</TextBlock>
-<ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Height="30" Width="220" HorizontalAlignment="Left"/>
-</StackPanel>
-</ToolTip></Border.ToolTip>
+                <Border.ToolTip>
+                    <ToolTip Style="{StaticResource TaskbarCardTooltip}">
+                        <Border Style="{StaticResource TaskbarFlyoutSurface}">
+                            <StackPanel>
+                                <ContentControl Content="Видеопамять" Tag="{StaticResource IconVram}" Style="{StaticResource TaskbarFlyoutHeader}"/>
+                                <TextBlock Text="{Binding Dashboard.VramPercentDisplay}" Style="{StaticResource TaskbarFlyoutReading}"/>
+                                <ctrl:MetricSparkline Points="{Binding SessionMetrics.Vram}" Style="{StaticResource TaskbarFlyoutChart}"/>
+                                <TextBlock Style="{StaticResource TaskbarFlyoutCaption}"><Run Text="Пик "/><Run Text="{Binding SessionMetrics.VramMax, Mode=OneWay}"/></TextBlock>
+                                <Border Style="{StaticResource TaskbarFlyoutDivider}"/>
+                                <DockPanel>
+                                    <TextBlock Text="Занято / всего" Style="{StaticResource TaskbarFlyoutCaption}"/>
+                                    <TextBlock Text="{Binding Dashboard.VramCapacityDisplay}" Style="{StaticResource TaskbarFlyoutDetail}" FontWeight="SemiBold"/>
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+                    </ToolTip>
+                </Border.ToolTip>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <ContentControl Content="{Binding Constructor.Taskbar.ByKey[VRAM]}" Tag="{StaticResource IconVram}" Style="{StaticResource TaskbarMetricLabel}" Focusable="False"/>
                     <TextBlock Text="{Binding Dashboard.VramPercentValue, StringFormat={}{0:F0}%}" Style="{StaticResource StripValueStyle}">
@@ -528,6 +454,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[VRAM].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -535,25 +462,37 @@
             </Border>
             <Border Tag="DISK" Style="{StaticResource StripSegmentStyle}" Visibility="{Binding Constructor.ShowTaskbarDisk, Converter={StaticResource BoolToVis}}">
                 <Border.ToolTip>
-                    <ToolTip Style="{StaticResource TaskbarSmallTooltip}">
-                        <StackPanel>
-                            <TextBlock Text="Диски · МБ/с" Foreground="White" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <ItemsControl ItemsSource="{Binding Dashboard.PhysicalDisks}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,0,0,5">
-                                            <TextBlock Text="{Binding Name}" Foreground="White" FontWeight="SemiBold"/>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="Чтение: " Foreground="#C4C1BB"/>
-                                                <TextBlock Text="{Binding Read}" Foreground="White"/>
-                                                <TextBlock Text="   Запись: " Foreground="#C4C1BB"/>
-                                                <TextBlock Text="{Binding Write}" Foreground="White"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                    <ToolTip Style="{StaticResource TaskbarCardTooltip}">
+                        <Border Style="{StaticResource TaskbarFlyoutSurface}">
+                            <StackPanel Grid.IsSharedSizeScope="True">
+                                <ContentControl Content="Диски" Tag="{StaticResource IconDisk}" Style="{StaticResource TaskbarFlyoutHeader}"/>
+                                <Grid Margin="0,1,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DiskRead"/>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DiskWrite"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="1" Text="Чтение" Style="{StaticResource TaskbarFlyoutCaption}" HorizontalAlignment="Right" Margin="10,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="Запись" Style="{StaticResource TaskbarFlyoutCaption}" HorizontalAlignment="Right" Margin="10,0,0,0"/>
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding Dashboard.PhysicalDisks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,3">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="DiskRead"/>
+                                                    <ColumnDefinition Width="Auto" SharedSizeGroup="DiskWrite"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource TaskbarFlyoutCaption}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Read}" Style="{StaticResource TaskbarFlyoutDetail}" Margin="10,0,0,0"/>
+                                                <TextBlock Grid.Column="2" Text="{Binding Write}" Style="{StaticResource TaskbarFlyoutDetail}" Margin="10,0,0,0"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                     </ToolTip>
                 </Border.ToolTip>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -563,6 +502,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[DISK].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -576,6 +516,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[NET].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -589,6 +530,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[UPTIME].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>
@@ -618,6 +560,7 @@
                             <MultiBinding Converter="{StaticResource TaskbarInk}">
                                 <Binding Path="Constructor.Taskbar.ByKey[BAT].ValueBrush"/>
                                 <Binding Path="UseDarkInk" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
+                                <Binding Path="ShowMetricColors" RelativeSource="{RelativeSource AncestorType=views:TaskbarStripContent}"/>
                             </MultiBinding>
                         </TextBlock.Foreground>
                     </TextBlock>

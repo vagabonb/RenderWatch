@@ -5,6 +5,16 @@
              xmlns:conv="clr-namespace:RenderWatch.App.Converters"
              xmlns:models="clr-namespace:RenderWatch.Core.Models;assembly=RenderWatch.Core"
              xmlns:views="clr-namespace:RenderWatch.App.Views">
+    <UserControl.Style>
+        <Style TargetType="views:DisplayConstructorView">
+            <Setter Property="BorderBrush" Value="#B5B5B5"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="BorderBrush" Value="#8CBFFF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
     <UserControl.Resources>
         <conv:TaskbarInkConverter x:Key="TaskbarInk"/>
 
@@ -13,8 +23,8 @@
         <SolidColorBrush x:Key="EditorHover" Color="#12FFFFFF"/>
         <SolidColorBrush x:Key="EditorSelection" Color="#22FFFFFF"/>
         <SolidColorBrush x:Key="EditorColorSelection" Color="#294A6B"/>
-        <SolidColorBrush x:Key="EditorText" Color="#F1F2F4"/>
-        <SolidColorBrush x:Key="EditorMute" Color="#B4B5BD"/>
+        <SolidColorBrush x:Key="EditorText" Color="#F2F2F2"/>
+        <SolidColorBrush x:Key="EditorMute" Color="#B8B8B8"/>
 
         <Style x:Key="EditorHeading" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource EditorText}"/>
@@ -67,7 +77,7 @@
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Surface" Property="BorderThickness" Value="1"/>
-                                <Setter TargetName="Surface" Property="BorderBrush" Value="#8CBFFF"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Surface" Property="Opacity" Value="0.38"/>
@@ -82,7 +92,16 @@
             <Setter Property="Padding" Value="0"/>
         </Style>
         <Style x:Key="EditorAccentButton" TargetType="Button" BasedOn="{StaticResource EditorButton}">
-            <Setter Property="Background" Value="#34436B"/>
+            <Setter Property="Background" Value="#30FFFFFF"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsColorStyle, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="Background" Value="#34436B"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="EditorColorInput" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Background" Value="#292929"/>
+            <Setter Property="SelectionBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
         </Style>
         <Style x:Key="NotchMetricOption" TargetType="ComboBoxItem">
             <Setter Property="Padding" Value="10,6"/>
@@ -163,7 +182,7 @@
                             <Trigger Property="Tag" Value="Color">
                                 <Setter TargetName="MetricMenuSurface" Property="Background" Value="{StaticResource ColorMetricMenuSurface}"/>
                                 <Setter TargetName="PickerToggle" Property="Background" Value="#20FFFFFF"/>
-                                <Setter TargetName="FocusRing" Property="BorderBrush" Value="#8CBFFF"/>
+                                <Setter TargetName="FocusRing" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
                                 <Setter TargetName="FocusRing" Property="BorderThickness" Value="1"/>
@@ -193,7 +212,7 @@
                                 <Setter TargetName="Surface" Property="Background" Value="{StaticResource EditorHover}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Surface" Property="BorderBrush" Value="#92B4E7"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                                 <Setter TargetName="Surface" Property="BorderThickness" Value="1"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
@@ -223,8 +242,8 @@
                         <Border x:Name="Row" Padding="9,6" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6">
                             <DockPanel MinHeight="17">
                                 <Grid DockPanel.Dock="Right" Width="30" Height="17" VerticalAlignment="Center">
-                                    <Border x:Name="Track" CornerRadius="9" Background="#3C3C43" BorderBrush="#595962" BorderThickness="0.8"/>
-                                    <Ellipse x:Name="Thumb" Width="11" Height="11" Fill="#D5D5DA" HorizontalAlignment="Left" Margin="3,0" VerticalAlignment="Center"/>
+                                    <Border x:Name="Track" CornerRadius="9" Background="#3C3C3C" BorderBrush="#606060" BorderThickness="0.8"/>
+                                    <Ellipse x:Name="Thumb" Width="11" Height="11" Fill="#D8D8D8" HorizontalAlignment="Left" Margin="3,0" VerticalAlignment="Center"/>
                                 </Grid>
                                 <ContentPresenter Margin="0,0,9,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
                             </DockPanel>
@@ -234,10 +253,10 @@
                                 <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorHover}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Track" Property="Background" Value="#85858E"/>
+                                <Setter TargetName="Track" Property="Background" Value="#888888"/>
                                 <Setter TargetName="Track" Property="BorderBrush" Value="Transparent"/>
                                 <Setter TargetName="Thumb" Property="Fill" Value="White"/>
                                 <Setter TargetName="Thumb" Property="HorizontalAlignment" Value="Right"/>
@@ -287,7 +306,7 @@
                                 <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorSelection}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -315,7 +334,7 @@
                                 <Setter TargetName="Row" Property="Background" Value="{StaticResource EditorHover}"/>
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="Row" Property="BorderBrush" Value="#8CBFFF"/>
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=views:DisplayConstructorView}}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Caret" Property="RenderTransform">
@@ -417,7 +436,7 @@
                                 <Border Padding="8,3">
                                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                         <views:TaskbarStripContent DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                  UseDarkInk="False" Height="30"/>
+                                                                  ShowMetricColors="{Binding IsColorStyle}" UseDarkInk="False" Height="30"/>
                                     </ScrollViewer>
                                 </Border>
                             </StackPanel>
@@ -475,7 +494,7 @@
                                                 </Border.Background>
                                             </Border>
                                         </Button>
-                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                        <TextBox Style="{StaticResource EditorColorInput}" DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
                                                  Text="{Binding LabelColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значок или подпись · HEX"/>
                                         <TextBlock Text="Значок или подпись" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
                                     </DockPanel>
@@ -491,7 +510,7 @@
                                                 </Border.Background>
                                             </Border>
                                         </Button>
-                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                        <TextBox Style="{StaticResource EditorColorInput}" DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
                                                  Text="{Binding ValueColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Значение · HEX"/>
                                         <TextBlock Text="Значение" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
                                     </DockPanel>
@@ -507,7 +526,7 @@
                                                 </Border.Background>
                                             </Border>
                                         </Button>
-                                        <TextBox DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
+                                        <TextBox Style="{StaticResource EditorColorInput}" DockPanel.Dock="Right" Width="82" Height="27" MaxLength="7" VerticalContentAlignment="Center" Margin="5,0,7,0"
                                                  Text="{Binding TemperatureColor, Mode=TwoWay, ValidatesOnExceptions=True}" AutomationProperties.Name="Температура · HEX"/>
                                         <TextBlock Text="Температура" Foreground="{StaticResource EditorMute}" VerticalAlignment="Center"/>
                                     </DockPanel>
