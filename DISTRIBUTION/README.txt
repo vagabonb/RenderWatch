@@ -6,5 +6,8 @@ PC Watch — портативный мониторинг ПК и ноутбук�
 Если PC Watch обновился со старой версии автоматически, имя файла может
 остаться RenderWatch.exe. Настройки и история сохраняются.
 
+Контрольные суммы SHA-256 и лицензии доступны на странице релиза.
+https://github.com/vagabonb/PCWatch/releases/latest
+
 Документация и релизы
 https://github.com/vagabonb/PCWatch

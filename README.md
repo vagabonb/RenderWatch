@@ -107,6 +107,16 @@
 
 Для ручного перехода закрой старую версию через трей и замени её файл. Если переименуешь файл в `PCWatch.exe`, обнови ярлыки и заново включи автозапуск из приложения, если он был включён. Настройки и история хранятся в `%LOCALAPPDATA%\RenderWatch`.
 
+## Проверка скачанного файла
+
+Скачивай PC Watch со [страницы релизов](https://github.com/vagabonb/PCWatch/releases/latest). Начиная с версии 2.2, рядом с `PCWatch.exe` доступен файл `SHA256SUMS.txt`. Чтобы проверить скачанный EXE, открой PowerShell в папке с ним и выполни команду.
+
+```powershell
+Get-FileHash -Algorithm SHA256 -LiteralPath .\PCWatch.exe
+```
+
+Сравни значение `Hash` со строкой для `PCWatch.exe` в файле `SHA256SUMS.txt` того же релиза. Совпадение подтверждает целостность скачанного файла. Сборка 2.2 распространяется без цифровой подписи, и Windows может показать предупреждение SmartScreen.
+
 ## Для разработки
 
 Приложение написано на C# и WPF. Для сборки нужен .NET 10 SDK на Windows:
@@ -116,3 +126,7 @@ dotnet publish src/RenderWatch.App/RenderWatch.App.csproj -c Release -o publish
 ```
 
 Готовый файл появится в `publish/PCWatch.exe`.
+
+## Лицензия
+
+Собственный код PC Watch распространяется по [лицензии MIT](LICENSE). Лицензии и исходники сторонних компонентов указаны в [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
